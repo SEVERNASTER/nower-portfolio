@@ -3,18 +3,23 @@ import DashboardLayout from './components/layouts/DashboardLayout';
 import { BasicProfile } from './features/profile/BasicProfile';
 import { ProjectsList } from './features/projects/ProjectsList';
 import { User, FolderGit2, Code, Briefcase } from 'lucide-react';
+import type { NavItem } from './components/navigation/Sidebar';
 
-const navItems = [
+// ==========================================
+// APP
+// ==========================================
+
+const navItems: NavItem[] = [
     { name: 'Perfil Básico', icon: User },
     { name: 'Proyectos', icon: FolderGit2, badge: '2' },
     { name: 'Habilidades', icon: Code },
     { name: 'Experiencia', icon: Briefcase },
 ];
 
-const App = () => {
-    const [activeTab, setActiveTab] = useState('Perfil Básico');
+const App: React.FC = () => {
+    const [activeTab, setActiveTab] = useState<string>('Perfil Básico');
 
-    const renderContent = () => {
+    const renderContent = (): React.ReactNode => {
         switch (activeTab) {
             case 'Perfil Básico':
                 return <BasicProfile />;

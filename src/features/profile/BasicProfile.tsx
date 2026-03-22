@@ -4,7 +4,11 @@ import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 
-export const BasicProfile = () => {
+// ==========================================
+// BASIC PROFILE
+// ==========================================
+
+export const BasicProfile: React.FC = () => {
     return (
         <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#17262C] shadow-sm border border-slate-200 dark:border-slate-800/60">
             {/* Cover Gradient - Updated to Emerald/Teal */}
@@ -33,7 +37,7 @@ export const BasicProfile = () => {
 
                     {/* Quick Stats / Action */}
                     <div className="flex items-center gap-4">
-                        <Badge variant="success" dot>
+                        <Badge variant="success" pulsingDot>
                             PERFIL ACTIVO
                         </Badge>
                         <Button variant="primary" icon={Sparkles}>
@@ -48,7 +52,6 @@ export const BasicProfile = () => {
                         {/* Field: Nombre */}
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nombre Completo</label>
-                            {/* Updated inputs to use new dark bg and focus ring */}
                             <input
                                 type="text"
                                 defaultValue="Alex Developer"
@@ -71,7 +74,7 @@ export const BasicProfile = () => {
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Biografía Profesional</label>
                         <textarea
-                            rows="4"
+                            rows={4}
                             defaultValue="Apasionado por crear soluciones eficientes y escalables. Más de 3 años de experiencia trabajando con tecnologías web modernas como React, Node.js y arquitecturas Cloud."
                             className="w-full resize-none rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#10221C] px-4 py-3 text-sm leading-relaxed text-slate-900 dark:text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                         />

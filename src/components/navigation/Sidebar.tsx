@@ -1,9 +1,30 @@
 import React from 'react';
 import { X, Moon, Sun, LogOut, Globe } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Tab } from './Tab';
 import { Avatar } from '../ui/Avatar';
 
-const Sidebar = ({ isOpen, onClose, isDark, toggleTheme, navItems, activeTab, setActiveTab }) => {
+// ==========================================
+// SIDEBAR
+// ==========================================
+
+export interface NavItem {
+    name: string;
+    icon: LucideIcon;
+    badge?: string;
+}
+
+export interface SidebarProps {
+    isOpen: boolean;
+    onClose: () => void;
+    isDark: boolean;
+    toggleTheme: () => void;
+    navItems: NavItem[];
+    activeTab: string;
+    setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme, navItems, activeTab, setActiveTab }) => {
     return (
         <aside className={`fixed inset-y-0 left-0 z-50 w-72 transform flex-col bg-white dark:bg-[#17262C] border-r border-slate-200 dark:border-slate-800/60 transition-transform duration-300 lg:static lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex`}>
             <div className="flex h-20 items-center gap-3 px-6">

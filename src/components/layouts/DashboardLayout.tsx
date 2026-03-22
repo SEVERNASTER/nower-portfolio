@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Eye, Globe, User, FolderGit2, Code, Briefcase } from 'lucide-react';
+import { Menu, Eye } from 'lucide-react';
 import { ErrorBoundary } from '../core/ErrorBoundary';
 import { Sidebar } from '../navigation/Sidebar';
+import type { NavItem } from '../navigation/Sidebar';
 import { Button } from '../ui/Button';
 
-const DashboardLayout = ({ children, activeTab, setActiveTab, navItems }) => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isDark, setIsDark] = useState(true);
+// ==========================================
+// DASHBOARD LAYOUT
+// ==========================================
+
+export interface DashboardLayoutProps {
+    children: React.ReactNode;
+    activeTab: string;
+    setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+    navItems: NavItem[];
+}
+
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab, setActiveTab, navItems }) => {
+    const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+    const [isDark, setIsDark] = useState<boolean>(true);
 
     useEffect(() => {
         if (isDark) {
@@ -15,8 +27,6 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, navItems }) => {
             document.documentElement.classList.remove('dark');
         }
     }, [isDark]);
-
-
 
     return (
         <ErrorBoundary>
@@ -47,12 +57,10 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, navItems }) => {
                             <div className="hidden sm:flex items-center text-sm font-medium text-slate-500 dark:text-slate-400">
                                 <span className="hover:text-slate-900 dark:hover:text-white cursor-pointer transition-colors">Dashboard</span>
                                 <span className="mx-2">/</span>
-                                {/* FIX 3: Made the header dynamically display the current active tab */}
                                 <span className="text-slate-900 dark:text-white font-bold">{activeTab}</span>
                             </div>
                         </div>
 
-                        {/* FIX 4: Added hidden sm:flex to prevent button from breaking mobile header */}
                         <Button variant="secondary" icon={Eye} className="hidden sm:flex">
                             Preview Público
                         </Button>

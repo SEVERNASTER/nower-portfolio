@@ -1,6 +1,19 @@
 import React from 'react';
+import type { LucideIcon } from 'lucide-react';
 
-export const Tab = ({ icon: Icon, label, active, badge, onClick }) => {
+// ==========================================
+// TAB (Navigation Item)
+// ==========================================
+
+export interface TabProps {
+    icon?: LucideIcon;
+    label: string;
+    active?: boolean;
+    badge?: string;
+    onClick?: () => void;
+}
+
+export const Tab: React.FC<TabProps> = ({ icon: Icon, label, active, badge, onClick }) => {
     return (
         <button
             onClick={onClick}

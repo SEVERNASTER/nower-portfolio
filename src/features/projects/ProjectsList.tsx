@@ -1,26 +1,14 @@
 import React from 'react';
 import { Plus, MoreVertical, FolderOpen } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import type { Project } from '../../data/mockData';
+import { mockProjects } from '../../data/mockData';
 
-// Mock data based on your screenshots
-const MOCK_PROJECTS = [
-    {
-        id: 1,
-        title: "E-commerce API",
-        description: "Microservicio para procesamiento de pagos y gestión de inventario.",
-        status: "PUBLICADO",
-        tags: ["NODE.JS", "EXPRESS", "MONGODB"]
-    },
-    {
-        id: 2,
-        title: "Dashboard Analítico",
-        description: "Panel de control en tiempo real para métricas de usuarios usando WebSockets.",
-        status: "BORRADOR",
-        tags: ["REACT", "TAILWIND", "SOCKET.IO"]
-    }
-];
+// ==========================================
+// PROJECTS LIST
+// ==========================================
 
-export const ProjectsList = () => {
+export const ProjectsList: React.FC = () => {
     return (
         <div className="w-full space-y-6">
             {/* Header Section */}
@@ -42,7 +30,7 @@ export const ProjectsList = () => {
             {/* Projects Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-                {MOCK_PROJECTS.map((project) => (
+                {mockProjects.map((project: Project) => (
                     <div
                         key={project.id}
                         className="flex flex-col rounded-2xl bg-white dark:bg-[#17262C] p-6 border border-slate-200 dark:border-slate-800/60 shadow-sm hover:border-emerald-500/30 dark:hover:border-emerald-500/30 transition-colors group"
@@ -70,7 +58,7 @@ export const ProjectsList = () => {
 
                         {/* Card Footer (Tags) */}
                         <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800/60">
-                            {project.tags.map(tag => (
+                            {project.tags.map((tag: string) => (
                                 <span
                                     key={tag}
                                     className="px-2 py-1 bg-slate-100 dark:bg-[#10221C] text-slate-600 dark:text-slate-300 text-[10px] font-semibold rounded-md uppercase tracking-wider border border-slate-200 dark:border-slate-700/50"
