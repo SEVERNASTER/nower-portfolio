@@ -1,7 +1,7 @@
 -- Schema + seed data for local development
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- 1. CREACIÓN DE TABLAS (Sin cambios, esto ya funcionaba)
+-- 1. CREACION DE TABLAS
 CREATE TABLE IF NOT EXISTS profiles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name text NOT NULL,
@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS profiles (
 CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text UNIQUE NOT NULL,
-  password_hash text NOT NULL,
-  role text NOT NULL DEFAULT 'ADMIN',
+  password_hash text,
+  role text NOT NULL DEFAULT 'USER' CHECK (role IN ('USER', 'ADMIN')),
   profile_id uuid NOT NULL UNIQUE REFERENCES profiles(id) ON DELETE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now()
 );
@@ -58,20 +58,31 @@ CREATE TABLE IF NOT EXISTS experiences (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- 2. SEED DATA (Corregido para evitar errores de sintaxis)
+-- 2. SEED DATA
 
--- Insertar Perfil
+-- Perfil del Usuario normal
 INSERT INTO profiles (full_name, role, bio, avatar_url, status)
 SELECT 'Alex Developer', 'Full Stack Software Engineer', 'Apasionado por crear soluciones...', '/api/placeholder/150/150', 'ACTIVO'
 WHERE NOT EXISTS (SELECT 1 FROM profiles WHERE full_name = 'Alex Developer');
 
--- Insertar Usuario (Password: 123)
+-- Perfil del Administrador
+INSERT INTO profiles (full_name, role, bio, status)
+SELECT 'Alex Admin', 'Administrador del Sistema', 'Cuenta de administración del sistema NOWER.', 'ACTIVO'
+WHERE NOT EXISTS (SELECT 1 FROM profiles WHERE full_name = 'Alex Admin');
+
+-- Usuario normal (Password: 123)
 INSERT INTO users (email, password_hash, role, profile_id)
-SELECT 'admin@gmail.com', crypt('123', gen_salt('bf')), 'ADMIN', id 
+SELECT 'user@gmail.com', crypt('123', gen_salt('bf')), 'USER', id
 FROM profiles WHERE full_name = 'Alex Developer'
 ON CONFLICT (email) DO NOTHING;
 
--- Insertar Proyectos
+-- Usuario admin (Password: 123)
+INSERT INTO users (email, password_hash, role, profile_id)
+SELECT 'admin@gmail.com', crypt('123', gen_salt('bf')), 'ADMIN', id
+FROM profiles WHERE full_name = 'Alex Admin'
+ON CONFLICT (email) DO NOTHING;
+
+-- Proyectos (vinculados al usuario normal)
 INSERT INTO projects (profile_id, title, description, status, tags, repository_url, created_at)
 SELECT id, 'E-commerce API', 'Microservicio de pagos', 'PUBLICADO', ARRAY['NODE.JS','POSTGRES'], 'https://github.com/alexdev/api', now()
 FROM profiles WHERE full_name = 'Alex Developer'
@@ -82,7 +93,7 @@ SELECT id, 'Dashboard Analítico', 'Panel en tiempo real', 'BORRADOR', ARRAY['RE
 FROM profiles WHERE full_name = 'Alex Developer'
 AND NOT EXISTS (SELECT 1 FROM projects WHERE title = 'Dashboard Analítico');
 
--- Insertar Skills
+-- Skills (vinculadas al usuario normal)
 INSERT INTO skills (profile_id, name, category, level)
 SELECT id, 'React / Next.js', 'Técnica', 'Avanzado' FROM profiles WHERE full_name = 'Alex Developer'
 AND NOT EXISTS (SELECT 1 FROM skills WHERE name = 'React / Next.js');
@@ -91,7 +102,7 @@ INSERT INTO skills (profile_id, name, category, level)
 SELECT id, 'Node.js', 'Técnica', 'Avanzado' FROM profiles WHERE full_name = 'Alex Developer'
 AND NOT EXISTS (SELECT 1 FROM skills WHERE name = 'Node.js');
 
--- Insertar Experiencia
+-- Experiencia (vinculada al usuario normal)
 INSERT INTO experiences (profile_id, role, company, location, start_date, is_current, description)
 SELECT id, 'Senior Frontend Developer', 'NOWER Enterprise', 'Remoto', 'Ene 2024', true, 'Liderando arquitectura frontend'
 FROM profiles WHERE full_name = 'Alex Developer'
