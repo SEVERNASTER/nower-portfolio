@@ -24,29 +24,56 @@ final class PortfolioRepository
 {
     public function login(string $email, string $password): ?array
     {
-        $stmt = db()->prepare(
-            'SELECT id::text AS id, profile_id::text AS profile_id, email, role, password_hash
-             FROM users
-             WHERE email = :email
-             LIMIT 1'
-        );
-        $stmt->execute([':email' => $email]);
+        // Admin credentials live in a dedicated table.
+        // (Robustness: if the table wasn't created yet, don't crash the whole login.)
+        $adminsAvailable = true;
+        $adminRow = null;
+        try {
+            $stmt = db()->prepare(
+                'SELECT id::text AS id, profile_id::text AS profile_id, email
+                 FROM admins
+                 WHERE email = :email
+                 AND password_hash = crypt(:password, password_hash)
+                 LIMIT 1'
+            );
+            $stmt->execute([':email' => $email, ':password' => $password]);
+            $adminRow = $stmt->fetch();
+        } catch (\Throwable $e) {
+            $adminsAvailable = false;
+        }
+
+        if ($adminRow) {
+            return [
+                'userId' => $adminRow['id'],
+                'profileId' => $adminRow['profile_id'],
+                'email' => $adminRow['email'],
+                'role' => 'ADMIN',
+            ];
+        }
+
+        if ($adminsAvailable) {
+            $stmt = db()->prepare(
+                'SELECT id::text AS id, profile_id::text AS profile_id, email, role
+                 FROM users
+                 WHERE email = :email
+                 AND role <> :adminRole
+                 AND password_hash = crypt(:password, password_hash)
+                 LIMIT 1'
+            );
+            $stmt->execute([':email' => $email, ':adminRole' => 'ADMIN', ':password' => $password]);
+        } else {
+            // Fallback for older DB schema.
+            $stmt = db()->prepare(
+                'SELECT id::text AS id, profile_id::text AS profile_id, email, role
+                 FROM users
+                 WHERE email = :email
+                 AND password_hash = crypt(:password, password_hash)
+                 LIMIT 1'
+            );
+            $stmt->execute([':email' => $email, ':password' => $password]);
+        }
         $row = $stmt->fetch();
         if (!$row) {
-            return null;
-        }
-
-        $hash = (string)$row['password_hash'];
-        $ok = false;
-
-        // If bcrypt-like hash, verify properly; otherwise allow plain-text for dev.
-        if (str_starts_with($hash, '$2')) {
-            $ok = password_verify($password, $hash);
-        } else {
-            $ok = hash_equals($password, $hash);
-        }
-
-        if (!$ok) {
             return null;
         }
 
