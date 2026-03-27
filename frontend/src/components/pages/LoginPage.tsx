@@ -110,8 +110,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                             </div>
                         </div>
                         <div className="mb-8">
-                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Bienvenido de nuevo</h2>
-                            <p className="text-slate-500 dark:text-slate-400">Inicia sesión para acceder a tu dashboard.</p>
+                            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Bienvenido!!</h2>
+                            <p className="text-slate-500 dark:text-slate-400">Inicia sesión para acceder a tu informacion.</p>
                         </div>
 
                         <form onSubmit={handleLogin} className="space-y-5">
