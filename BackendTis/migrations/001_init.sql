@@ -70,6 +70,11 @@ INSERT INTO profiles (full_name, role, bio, status)
 SELECT 'Alex Admin', 'Administrador del Sistema', 'Cuenta de administración del sistema NOWER.', 'ACTIVO'
 WHERE NOT EXISTS (SELECT 1 FROM profiles WHERE full_name = 'Alex Admin');
 
+-- Perfil del Administrador2
+INSERT INTO profiles (full_name, role, bio, status)
+SELECT 'Diana Admin', 'Administrador del Sistema', 'Cuenta de administración del sistema NOWER.', 'ACTIVO'
+WHERE NOT EXISTS (SELECT 1 FROM profiles WHERE full_name = 'Diana Admin');
+
 -- Usuario normal (Password: 123)
 INSERT INTO users (email, password_hash, role, profile_id)
 SELECT 'user@gmail.com', crypt('123', gen_salt('bf')), 'USER', id
@@ -80,6 +85,12 @@ ON CONFLICT (email) DO NOTHING;
 INSERT INTO users (email, password_hash, role, profile_id)
 SELECT 'admin@gmail.com', crypt('123', gen_salt('bf')), 'ADMIN', id
 FROM profiles WHERE full_name = 'Alex Admin'
+ON CONFLICT (email) DO NOTHING;
+
+-- Usuario admin2 (Password: 123)
+INSERT INTO users (email, password_hash, role, profile_id)
+SELECT 'admin2@gmail.com', crypt('123', gen_salt('bf')), 'ADMIN', id
+FROM profiles WHERE full_name = 'Diana Admin'
 ON CONFLICT (email) DO NOTHING;
 
 -- Proyectos (vinculados al usuario normal)
