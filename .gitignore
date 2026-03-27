@@ -25,3 +25,5 @@ dist-ssr
 
 
 lint_output.txt
+BackendTis/vendor
+BackendTis/.env.development
