@@ -65,6 +65,11 @@ INSERT INTO profiles (full_name, role, bio, avatar_url, status)
 SELECT 'Alex Developer', 'Full Stack Software Engineer', 'Apasionado por crear soluciones...', '/api/placeholder/150/150', 'ACTIVO'
 WHERE NOT EXISTS (SELECT 1 FROM profiles WHERE full_name = 'Alex Developer');
 
+-- Perfil del Usuario normal2
+INSERT INTO profiles (full_name, role, bio, avatar_url, status)
+SELECT 'Aliza Developer', 'Full Stack Software Engineer', 'Apasionado por crear soluciones...', '/api/placeholder/150/150', 'ACTIVO'
+WHERE NOT EXISTS (SELECT 1 FROM profiles WHERE full_name = 'Aliza Developer');
+
 -- Perfil del Administrador
 INSERT INTO profiles (full_name, role, bio, status)
 SELECT 'Alex Admin', 'Administrador del Sistema', 'Cuenta de administración del sistema NOWER.', 'ACTIVO'
@@ -79,6 +84,12 @@ WHERE NOT EXISTS (SELECT 1 FROM profiles WHERE full_name = 'Diana Admin');
 INSERT INTO users (email, password_hash, role, profile_id)
 SELECT 'user@gmail.com', crypt('123', gen_salt('bf')), 'USER', id
 FROM profiles WHERE full_name = 'Alex Developer'
+ON CONFLICT (email) DO NOTHING;
+
+-- Usuario normal2 (Password: 123)
+INSERT INTO users (email, password_hash, role, profile_id)
+SELECT 'user2@gmail.com', crypt('123', gen_salt('bf')), 'USER', id
+FROM profiles WHERE full_name = 'Aliza Developer'
 ON CONFLICT (email) DO NOTHING;
 
 -- Usuario admin (Password: 123)
