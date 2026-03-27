@@ -1,6 +1,18 @@
-import React, { useMemo, useState } from 'react';
-import { BarChart3, Check, FileText, ShieldAlert, UserCog, Users, X } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, {
+  useMemo,
+  useState,
+} from 'react';
+
+import {
+  Check,
+  FileText,
+  X,
+} from 'lucide-react';
+import {
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
+
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 
@@ -50,14 +62,7 @@ const sectionItems: Array<{
     key: AdminSectionKey;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
-}> = [
-    { key: 'metrics', label: 'Métricas del Sistema', icon: BarChart3 },
-    { key: 'users', label: 'Gestionar Usuarios', icon: UserCog },
-    { key: 'profiles', label: 'Gestionar Perfiles', icon: Users },
-    { key: 'moderation', label: 'Moderar Proyectos', icon: ShieldAlert },
-    { key: 'publish', label: 'Aprobar Publicaciones', icon: Check },
-    { key: 'reports', label: 'Generar Reportes', icon: FileText }
-];
+}> = [];
 
 const initialUsers: AdminUser[] = [
     { id: 'USR-001', name: 'Ana Rojas', email: 'ana.rojas@nower.com', status: 'Activo', registeredAt: '2026-01-12' },
