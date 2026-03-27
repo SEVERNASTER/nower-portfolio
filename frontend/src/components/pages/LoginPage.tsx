@@ -12,29 +12,46 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     const [error, setError] = useState('');
 
     const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
+    e.preventDefault();
+    setError('');
 
-        try {
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-                credentials: 'include',
-            });
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
 
-            const data = await res.json().catch(() => ({}));
+    if (!cleanEmail || !cleanPassword) {
+        setError('Completa todos los campos.');
+        return;
+    }
 
-            if (!res.ok || !data?.token) {
-                setError(data?.error ?? 'Credenciales inválidas. Intente de nuevo.');
-                return;
-            }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+        setError('Ingresa un correo válido.');
+        return;
+    }
 
-            onLogin?.();
-        } catch {
-            setError('Error conectando con el servidor.');
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: cleanEmail,
+                password: cleanPassword,
+            }),
+            credentials: 'include',
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            setError(data?.error ?? 'Credenciales inválidas. Intente de nuevo.');
+            return;
         }
-    };
+
+        onLogin?.();
+    } catch {
+        setError('Error conectando con el servidor.');
+    }
+};
 
     return (
         // FIX 1: Rigid h-screen and overflow-hidden ensures absolutely NO vertical scrolling
