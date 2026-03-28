@@ -40,6 +40,7 @@ const AppContent: React.FC<{ isLoggedIn: boolean, onLogin: () => void }> = ({ is
         return (
             <Routes>
                 <Route path="/login" element={<LoginPage onLogin={onLogin} />} />
+                <Route path="/register" element={<RegisterPage onRegister={onLogin} />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
                 <Route path="/register" element={<RegisterPage onLogin={onLogin} />} />
             </Routes>
@@ -51,6 +52,7 @@ const AppContent: React.FC<{ isLoggedIn: boolean, onLogin: () => void }> = ({ is
             <Routes>
                 <Route path="/" element={<Navigate to="/profile" replace />} />
                 <Route path="/login" element={<Navigate to="/profile" replace />} />
+                <Route path="/register" element={<Navigate to="/profile" replace />} />
                 <Route path="/profile" element={<BasicProfile />} />
                 <Route path="/projects" element={<ProjectsList />} />
                 <Route path="/skills" element={<SkillsList />} />

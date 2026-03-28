@@ -61,11 +61,14 @@ export const RegisterPage: React.FC<{ onLogin: () => void }> = ({
     if (emailError) return;
     
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("http://127.0.0.1:8000/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          name: form.fullName,   
+          email: form.email,
+          password: form.password
+        }),
       });
 
       if (!res.ok) {

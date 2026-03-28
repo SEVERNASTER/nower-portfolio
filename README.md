@@ -20,4 +20,5 @@ If you are developing a production application, we recommend using TypeScript wi
 .\scripts\run-frontend.ps1 -ViteHost localhost
 
 
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 .\scripts\run-all.ps1

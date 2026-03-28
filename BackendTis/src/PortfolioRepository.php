@@ -25,7 +25,7 @@ final class PortfolioRepository
     public function login(string $email, string $password): ?array
     {
         $stmt = db()->prepare(
-            'SELECT id::text AS id, profile_id::text AS profile_id, email, role, password_hash
+            'SELECT id::text AS id, profile_id::text AS profile_id, name, email, role, password_hash
              FROM users
              WHERE email = :email
              LIMIT 1'
@@ -53,6 +53,7 @@ final class PortfolioRepository
         return [
             'userId' => $row['id'],
             'profileId' => $row['profile_id'],
+            'name' => $row['name'] ?? null,
             'email' => $row['email'],
             'role' => $row['role'],
         ];

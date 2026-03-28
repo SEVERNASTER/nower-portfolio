@@ -93,6 +93,7 @@ if ($method === 'POST' && $path === '/api/auth/login') {
         'token' => $token,
         'user' => [
             'id' => $user['userId'],
+            'name' => $user['name'] ?? null,
             'email' => $user['email'],
             'role' => $user['role'],
             'profileId' => $user['profileId'],

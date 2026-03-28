@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
   email text UNIQUE NOT NULL,
   password_hash text NOT NULL,
   role text NOT NULL DEFAULT 'ADMIN',
@@ -66,8 +67,8 @@ SELECT 'Alex Developer', 'Full Stack Software Engineer', 'Apasionado por crear s
 WHERE NOT EXISTS (SELECT 1 FROM profiles WHERE full_name = 'Alex Developer');
 
 -- Insertar Usuario (Password: 123)
-INSERT INTO users (email, password_hash, role, profile_id)
-SELECT 'admin@gmail.com', crypt('123', gen_salt('bf')), 'ADMIN', id 
+INSERT INTO users (name, email, password_hash, role, profile_id)
+SELECT 'Alex Developer', 'admin@gmail.com', crypt('123', gen_salt('bf')), 'ADMIN', id 
 FROM profiles WHERE full_name = 'Alex Developer'
 ON CONFLICT (email) DO NOTHING;
 
