@@ -81,7 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
                     </button>
                 </div>
 
-                <button className="flex w-full items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#10221C] p-3 transition-colors hover:border-slate-300 dark:hover:border-slate-600">
+                <div className="flex w-full items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#10221C] p-3 transition-colors hover:border-slate-300 dark:hover:border-slate-600">
                     <Avatar src={userImage} name={userName} size="sm" className="border-2 border-emerald-500" />
                     <div className="flex flex-1 flex-col text-left">
                         <span className="text-sm font-bold text-slate-900 dark:text-white leading-none">{userName}</span>
@@ -94,7 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
                     >
                         <LogOut className="h-4 w-4 text-slate-400 hover:text-red-500 transition-colors" />
                     </button>
-                </button>
+                </div>
             </div>
         </aside>
     );

@@ -145,6 +145,66 @@ if ($method === 'POST' && $path === '/api/auth/google') {
     exit;
 }
 
+if ($method === 'POST' && $path === '/api/auth/clerk-login') {
+        $body = readJsonBody();
+
+        $email = (string) ($body['email'] ?? '');
+        $name = (string) ($body['name'] ?? '');
+
+        if ($email === '' || $name === '') {
+            jsonResponse(['error' => 'Missing data'], 400);
+            exit;
+        }
+
+        // 🔒 Validar dominio
+        if (!str_ends_with($email, '@est.umss.edu')) {
+            jsonResponse(['error' => 'Solo correos institucionales'], 403);
+            exit;
+        }
+
+        // 🔍 Buscar usuario
+        $stmt = db()->prepare('SELECT id, profile_id FROM users WHERE email = :email LIMIT 1');
+        $stmt->execute([':email' => $email]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            // 🔥 Crear usuario automáticamente
+            $repo = new PortfolioRepository();
+
+            // password fake (no se usará)
+            $randomPassword = bin2hex(random_bytes(8));
+
+            $newUser = $repo->register($name, $email, $randomPassword);
+
+            $userId = $newUser['userId'];
+            $profileId = $newUser['profileId'];
+
+        } else {
+            $userId = $user['id'];
+            $profileId = $user['profile_id'];
+        }
+
+        // 🔐 Crear JWT propio
+        $ttl = tokenTtlSeconds();
+        $token = createToken([
+            'sub' => $userId,
+            'pid' => $profileId,
+            'exp' => time() + $ttl,
+        ]);
+
+        jsonResponse([
+            'token' => $token,
+            'user' => [
+                'id' => $userId,
+                'email' => $email,
+                'name' => $name,
+                'profileId' => $profileId,
+            ]
+        ]);
+        exit;
+    }
+
+
 if ($method === 'POST' && $path === '/api/auth/register') {
     $body = readJsonBody();
 
