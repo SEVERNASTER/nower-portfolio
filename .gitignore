@@ -25,3 +25,6 @@ dist-ssr
 
 
 lint_output.txt
+
+*.env
+*.node_modules

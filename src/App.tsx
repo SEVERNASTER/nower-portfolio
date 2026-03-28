@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import DashboardLayout from './components/layouts/DashboardLayout';
 import { BasicProfile } from './features/profile/BasicProfile';
@@ -8,6 +8,7 @@ import { User, FolderGit2, Code, Briefcase } from 'lucide-react';
 import type { NavItem } from './components/navigation/Sidebar';
 import { LoginPage } from './components/pages/LoginPage';
 import { ExperienceList } from './features/experience/ExperienceList';
+import { RegisterPage } from './components/pages/RegisterPage';
 
 // ==========================================
 // APP
@@ -39,6 +40,7 @@ const AppContent: React.FC<{ isLoggedIn: boolean, onLogin: () => void }> = ({ is
         return (
             <Routes>
                 <Route path="/login" element={<LoginPage onLogin={onLogin} />} />
+                <Route path="/register" element={<RegisterPage onRegister={onLogin} />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
         );
@@ -49,6 +51,7 @@ const AppContent: React.FC<{ isLoggedIn: boolean, onLogin: () => void }> = ({ is
             <Routes>
                 <Route path="/" element={<Navigate to="/profile" replace />} />
                 <Route path="/login" element={<Navigate to="/profile" replace />} />
+                <Route path="/register" element={<Navigate to="/profile" replace />} />
                 <Route path="/profile" element={<BasicProfile />} />
                 <Route path="/projects" element={<ProjectsList />} />
                 <Route path="/skills" element={<SkillsList />} />
@@ -68,9 +71,20 @@ const AppContent: React.FC<{ isLoggedIn: boolean, onLogin: () => void }> = ({ is
 };
 
 const App: React.FC = () => {
-    // Basic auth state. Defaulting to false. 
-    // In a real app, you might initialize this from localStorage.
+    // Auth state detectada por cookie (token en Backend con setcookie).
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        fetch('/api/auth/me', { method: 'GET', credentials: 'include' })
+            .then(async (res) => {
+                if (!res.ok) {
+                    setIsLoggedIn(false);
+                    return;
+                }
+                setIsLoggedIn(true);
+            })
+            .catch(() => setIsLoggedIn(false));
+    }, []);
 
     return (
         <BrowserRouter>

@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, FolderOpen } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import type { Project } from '../../data/mockData';
-import { mockProjects } from '../../data/mockData';
 
 import { ProjectCard } from './components/ProjectCard';
 
@@ -11,6 +10,32 @@ import { ProjectCard } from './components/ProjectCard';
 // ==========================================
 
 export const ProjectsList: React.FC = () => {
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch('/api/projects', {
+            credentials: 'include',
+        })
+            .then(async (res) => {
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return [];
+                }
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(data?.error ?? 'Error cargando proyectos');
+                }
+                return data as Project[];
+            })
+            .then((data) => setProjects(data))
+            .catch((e) => {
+                setError(e instanceof Error ? e.message : 'Error cargando proyectos');
+                setProjects([]);
+            });
+    }, []);
+
     return (
         <div className="w-full space-y-6">
             {/* Header Section */}
@@ -29,10 +54,16 @@ export const ProjectsList: React.FC = () => {
                 </Button>
             </div>
 
+            {error && (
+                <div className="text-sm text-red-500 bg-red-50 border border-red-200 p-3 rounded-lg">
+                    {error}
+                </div>
+            )}
+
             {/* Projects Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-                {mockProjects.map((project: Project) => (
+                {projects.map((project: Project) => (
                     <ProjectCard key={project.id} project={project} />
                 ))}
 

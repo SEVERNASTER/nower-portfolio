@@ -1,41 +1,37 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Briefcase, Plus } from 'lucide-react';
 import { ExperienceCard } from './components/ExperienceCard';
 import type { Experience } from './components/ExperienceCard';
 import { Button } from '../../components/ui/Button';
 import { AddExperienceModal } from './AddExperienceModal';
 
-// --- Mock Data ---
-
-const mockExperience: Experience[] = [
-    {
-        id: '1',
-        role: 'Senior Frontend Developer',
-        company: 'NOWER Enterprise',
-        location: 'Remoto',
-        startDate: 'Ene 2024',
-        endDate: 'Presente',
-        current: true,
-        description: 'Liderando el desarrollo de la arquitectura del frontend utilizando React y TailwindCSS. Implementación de sistemas de diseño escalables y optimización del rendimiento web.',
-        skills: ['React', 'TypeScript', 'Tailwind', 'Zustand', 'Vite']
-    },
-    {
-        id: '2',
-        role: 'Full Stack Developer',
-        company: 'Tech Solutions LATAM',
-        location: 'Híbrido - Cochabamba',
-        startDate: 'Mar 2022',
-        endDate: 'Dic 2023',
-        current: false,
-        description: 'Desarrollo de APIs RESTful con Node.js y Express. Creación de dashboards interactivos para gestión de datos de clientes corporativos.',
-        skills: ['Node.js', 'Express', 'MongoDB', 'React', 'Docker']
-    }
-];
-
-
-
 export const ExperienceList: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [experiences, setExperiences] = useState<Experience[]>([]);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch('/api/experience', {
+            credentials: 'include',
+        })
+            .then(async (res) => {
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return [];
+                }
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(data?.error ?? 'Error cargando experiencia');
+                }
+                return data as Experience[];
+            })
+            .then((data) => setExperiences(data))
+            .catch((e) => {
+                setError(e instanceof Error ? e.message : 'Error cargando experiencia');
+                setExperiences([]);
+            });
+    }, []);
 
     return (
         <div className="w-full max-w-5xl mx-auto space-y-8 animate-fade-in">
@@ -56,10 +52,16 @@ export const ExperienceList: React.FC = () => {
                 </Button>
             </div>
 
+            {error && (
+                <div className="text-sm text-red-500 bg-red-50 border border-red-200 p-3 rounded-lg">
+                    {error}
+                </div>
+            )}
+
             {/* Timeline Container - Tinted the line slightly purple! */}
             <div className="relative border-l-2 border-purple-100 dark:border-slate-800 ml-4 md:ml-6 space-y-8 pb-4">
 
-                {mockExperience.map((exp) => (
+                {experiences.map((exp) => (
                     <ExperienceCard key={exp.id} exp={exp} />
                 ))}
             </div>

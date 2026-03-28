@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Code2, BrainCircuit, Blocks } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { CustomDropdown } from '../../components/ui/CustomDropdown';
 import { SkillCard } from './components/SkillCard';
-import { Skill, SkillLevel, mockSkills } from '../../data/mockData';
+import type { Skill, SkillLevel } from '../../data/mockData';
 
 export const SkillsList: React.FC = () => {
     // ==========================================
@@ -11,7 +11,27 @@ export const SkillsList: React.FC = () => {
     // ==========================================
 
     // 1. Manage the list of skills in state
-    const [skills, setSkills] = useState<Skill[]>(mockSkills);
+    const [skills, setSkills] = useState<Skill[]>([]);
+
+    useEffect(() => {
+        fetch('/api/skills', {
+            credentials: 'include',
+        })
+            .then(async (res) => {
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return [];
+                }
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(data?.error ?? 'Error cargando habilidades');
+                }
+                return data as Skill[];
+            })
+            .then((data) => setSkills(data))
+            .catch(() => setSkills([]));
+    }, []);
 
     // 2. Form state for the inputs
     const [newSkillName, setNewSkillName] = useState('');

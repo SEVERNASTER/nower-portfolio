@@ -1,14 +1,69 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Camera, Sparkles } from 'lucide-react';
 import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+
+type ProfileDto = {
+    id: string;
+    fullName: string;
+    role: string;
+    bio: string;
+    avatarUrl?: string | null;
+    coverUrl?: string | null;
+    status: 'ACTIVO' | 'INACTIVO';
+};
 
 // ==========================================
 // BASIC PROFILE
 // ==========================================
 
 export const BasicProfile: React.FC = () => {
+    const [profile, setProfile] = useState<ProfileDto | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetch('/api/profile', {
+            credentials: 'include',
+        })
+            .then(async (res) => {
+                if (res.status === 401) {
+                    window.location.href = '/login';
+                    return null;
+                }
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(data?.error ?? 'Error cargando perfil');
+                }
+                return data as ProfileDto;
+            })
+            .then((data) => {
+                if (!data) return;
+                setProfile(data);
+            })
+            .catch((e) => {
+                setError(e instanceof Error ? e.message : 'Error cargando perfil');
+                setProfile(null);
+            });
+    }, []);
+
+    if (error) {
+        return (
+            <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#17262C] shadow-sm border border-slate-200 dark:border-slate-800/60 p-6">
+                <p className="text-sm text-red-500">{error}</p>
+            </div>
+        );
+    }
+
+    if (!profile) {
+        return (
+            <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#17262C] shadow-sm border border-slate-200 dark:border-slate-800/60 p-6">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Cargando perfil...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#17262C] shadow-sm border border-slate-200 dark:border-slate-800/60">
             {/* Cover Gradient - Updated to Emerald/Teal */}
@@ -28,7 +83,12 @@ export const BasicProfile: React.FC = () => {
 
                     {/* Avatar - Updated border for new dark bg */}
                     <div className="relative">
-                        <Avatar src="" name="Alex Developer" size="lg" className="border-4 border-white dark:border-[#17262C] shadow-xl" />
+                        <Avatar
+                            src={profile.avatarUrl ?? undefined}
+                            name={profile.fullName}
+                            size="lg"
+                            className="border-4 border-white dark:border-[#17262C] shadow-xl"
+                        />
                         {/* Updated Avatar Camera Button to Emerald */}
                         <button className="absolute bottom-2 right-2 rounded-full bg-emerald-600 p-2 text-white shadow-lg hover:bg-emerald-700 transition-colors">
                             <Camera className="h-4 w-4" />
@@ -38,7 +98,7 @@ export const BasicProfile: React.FC = () => {
                     {/* Quick Stats / Action */}
                     <div className="flex items-center gap-4">
                         <Badge variant="success" pulsingDot>
-                            PERFIL ACTIVO
+                            {profile.status === 'ACTIVO' ? 'PERFIL ACTIVO' : 'PERFIL INACTIVO'}
                         </Badge>
                         <Button variant="primary" icon={Sparkles}>
                             Guardar Cambios
@@ -47,14 +107,14 @@ export const BasicProfile: React.FC = () => {
                 </div>
 
                 {/* Form Grid */}
-                <form className="space-y-8">
+                <form className="space-y-8" key={profile.id}>
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Field: Nombre */}
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nombre Completo</label>
                             <input
                                 type="text"
-                                defaultValue="Alex Developer"
+                                defaultValue={profile.fullName}
                                 className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                             />
                         </div>
@@ -64,7 +124,7 @@ export const BasicProfile: React.FC = () => {
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Profesión / Cargo</label>
                             <input
                                 type="text"
-                                defaultValue="Full Stack Software Engineer"
+                                defaultValue={profile.role}
                                 className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                             />
                         </div>
@@ -75,7 +135,7 @@ export const BasicProfile: React.FC = () => {
                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Biografía Profesional</label>
                         <textarea
                             rows={4}
-                            defaultValue="Apasionado por crear soluciones eficientes y escalables. Más de 3 años de experiencia trabajando con tecnologías web modernas como React, Node.js y arquitecturas Cloud."
+                            defaultValue={profile.bio}
                             className="w-full resize-none rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#10221C] px-4 py-3 text-sm leading-relaxed text-slate-900 dark:text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                         />
                         <p className="text-right text-xs text-slate-500 dark:text-slate-500">164 / 500 caracteres</p>
