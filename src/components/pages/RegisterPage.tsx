@@ -1,30 +1,61 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Lock, Eye, EyeOff } from "lucide-react";
 
-export const RegisterPage: React.FC = () => {
+export const RegisterPage: React.FC<{ onLogin: () => void }> = ({
+  onLogin,
+}) => {
   const navigate = useNavigate();
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailError, setEmailError] = useState("");
   const [form, setForm] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  const isPasswordValid = form.password.length >= 6;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+
+  setForm({
+    ...form,
+    [name]: value,
+  });
+
+  if (name === "email") {
+    const isValid = /\S+@\S+\.\S+/.test(value);
+
+    if (!isValid) {
+      setEmailError("Correo inválido");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/auth/check-email?email=${value}`);
+
+      const data = await res.json();
+
+      if (data.exists) {
+        setEmailError("Este correo ya está registrado");
+      } else {
+        setEmailError("");
+      }
+    } catch {
+      setEmailError("Error verificando el correo");
+    }
+  }
+};
+
+  const passwordsMatch =
+    form.password !== "" &&
+    form.confirmPassword !== "" &&
+    form.password === form.confirmPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (form.password !== form.confirmPassword) {
-      alert("Las contraseñas no coinciden");
-      return;
-    }
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -35,11 +66,42 @@ export const RegisterPage: React.FC = () => {
       });
 
       if (!res.ok) {
-        alert("Error al registrarse");
+        const data = await res.json();
+
+        if (res.status === 409) {
+          alert("El correo ya está registrado");
+        } else if (res.status === 400) {
+          alert(data.error || "Datos inválidos");
+        } else {
+          alert("Error del servidor, intenta más tarde");
+        }
+
+        return;
+      }
+      if (!isPasswordValid) return;
+
+      const loginRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Error al registrarse");
         return;
       }
 
-      navigate("/login");
+      if (!loginRes.ok) {
+        alert("Registro exitoso, pero fallo el login");
+        return;
+      }
+
+      onLogin();
+      navigate("/profile");
     } catch (err) {
       console.error(err);
       alert("Error de conexión");
@@ -98,40 +160,86 @@ export const RegisterPage: React.FC = () => {
               placeholder="Nombre completo"
               value={form.fullName}
               onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
               required
             />
 
             <input
               type="email"
               name="email"
-              placeholder="nombre@ejemplo.com"
+              placeholder="Correo electrónico"
               value={form.email}
               onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
               required
             />
+            {emailError && (
+              <p className="text-xs mt-1 text-red-500">{emailError}</p>
+            )}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <Lock className="h-4 w-4" />
+              </div>
 
-            <input
-              type="password"
-              name="password"
-              placeholder="Contraseña"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white"
-              required
-            />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Contraseña"
+                value={form.password}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-slate-300 bg-white pl-11 pr-12 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                required
+              />
 
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirmar contraseña"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white"
-              required
-            />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
 
+            {form.password !== "" && !isPasswordValid && (
+              <p className="text-xs mt-1 text-red-500">
+                La contraseña debe tener al menos 6 caracteres
+              </p>
+            )}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <Lock className="h-4 w-4" />
+              </div>
+
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                placeholder="Confirmar contraseña"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-slate-300 bg-white pl-11 pr-12 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                required
+              />
+              {form.confirmPassword !== "" && !passwordsMatch && (
+                <p className="text-xs mt-1 text-red-500">
+                  Las contraseñas no coinciden
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
             <button
               type="submit"
               className="w-full py-3 rounded-lg text-white font-medium"

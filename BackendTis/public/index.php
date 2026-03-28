@@ -113,15 +113,23 @@ if ($method === 'POST' && $path === '/api/auth/register') {
         exit;
     }
 
-    $user = $repo->register($fullName, $email, $password);
-
     try {
-        $user = $repo->register($username, $email, $password);
+        $user = $repo->register($fullName, $email, $password);
 
         jsonResponse([
             'message' => 'User created',
             'user' => $user
         ], 201);
+
+    } catch (InvalidArgumentException $e) {
+        if ($e->getMessage() === 'INVALID_EMAIL') {
+            jsonResponse(['error' => 'Invalid email'], 400);
+        } elseif ($e->getMessage() === 'PASSWORD_TOO_SHORT') {
+            jsonResponse(['error' => 'Password too short'], 400);
+        } else {
+            jsonResponse(['error' => 'Invalid data'], 400);
+        }
+
     } catch (RuntimeException $e) {
         if ($e->getMessage() === 'EMAIL_TAKEN') {
             jsonResponse(['error' => 'Email already exists'], 409);
@@ -130,6 +138,23 @@ if ($method === 'POST' && $path === '/api/auth/register') {
         }
     }
 
+    exit;
+}
+// para verificar en el registro que ya existe un usuario con el mismo email
+if ($method === 'GET' && $path === '/api/auth/check-email') {
+    $email = $_GET['email'] ?? '';
+
+    if ($email === '') {
+        jsonResponse(['error' => 'Missing email'], 400);
+        exit;
+    }
+
+    $stmt = db()->prepare('SELECT 1 FROM users WHERE email = :email LIMIT 1');
+    $stmt->execute([':email' => $email]);
+
+    $exists = (bool) $stmt->fetchColumn();
+
+    jsonResponse(['exists' => $exists]);
     exit;
 }
 

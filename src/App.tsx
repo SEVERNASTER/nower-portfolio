@@ -41,7 +41,7 @@ const AppContent: React.FC<{ isLoggedIn: boolean, onLogin: () => void }> = ({ is
             <Routes>
                 <Route path="/login" element={<LoginPage onLogin={onLogin} />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
-                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/register" element={<RegisterPage onLogin={onLogin} />} />
             </Routes>
         );
     }

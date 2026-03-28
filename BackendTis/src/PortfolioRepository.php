@@ -203,6 +203,14 @@ final class PortfolioRepository
             throw new RuntimeException('EMAIL_TAKEN');
         }
 
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('INVALID_EMAIL');
+        }
+
+        if (strlen($password) < 6) {
+            throw new InvalidArgumentException('PASSWORD_TOO_SHORT');
+        }
+
         $pdo = db();
         $pdo->beginTransaction();
 
