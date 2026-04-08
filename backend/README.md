@@ -2,83 +2,97 @@
 
 ## Requisitos Previos
 
-Antes de empezar, asegúrate de tener instalado lo siguiente en tu entorno local:
+Antes de empezar, asegúrate de tener instalado lo siguiente en tu sistema:
 
-- PHP (v8.2 o superior)
-- Composer
+- **PHP** (v8.2 o superior)
+- **Composer**
+- **PostgreSQL** (Instalado localmente y en funcionamiento)
 
 ---
 
-## Paso 1: Configuración de PHP 
+## Paso 1: Configuración de PHP
 
-1. Busca tu archivo `php.ini` (usualmente en `C:\php\php.ini` o dentro de la carpeta de instalación de tu entorno local).
-2. Ábrelo con cualquier editor de texto y elimina el punto y coma (`;`) al inicio de estas líneas exactas para habilitarlas:
+Para que Laravel pueda comunicarse con PostgreSQL, necesitas habilitar ciertos controladores en tu instalación de PHP.
+
+1. Busca tu archivo `php.ini` (comúnmente se encuentra en la carpeta donde instalaste PHP o dentro de tu entorno local como XAMPP/Laragon).
+
+2. Ábrelo con un editor de texto y busca las siguientes líneas. Elimina el punto y coma (`;`) que aparece al principio de cada una para activarlas:
 
 ```ini
 extension=fileinfo
 extension=pdo_pgsql
 extension=pgsql
 ```
----
 
-## Paso 2: Instalar Dependencias
+3. Guarda el archivo y cierra el editor.
 
-Abre tu terminal dentro de la carpeta `backend` y ejecuta:
+## Paso 2: Instalación de Dependencias
+
+Abre una terminal en la carpeta raíz del proyecto y ejecuta el siguiente comando para descargar las librerías necesarias:
 
 ```bash
 composer install
 ```
 
-> **Nota:** Si en algún momento da un error de "timeout" con el paquete `laravel/pint`, ignóralo, es solo un formateador de código y no afecta a la API.
+## Paso 3: Configuración del Entorno (.env)
 
----
+Laravel utiliza un archivo llamado `.env` para guardar configuraciones sensibles como contraseñas y claves de acceso.
 
-## Paso 3: Configurar las Variables de Entorno (`.env`)
+1. Copia el contenido del archivo `.env.example` y crea un nuevo archivo llamado `.env` en la misma carpeta.
 
-Crea un archivo nuevo llamado exactamente `.env` (sin extensión `.txt`) en la raíz de la carpeta `backend` y pega la siguiente configuración.
+2. Genera una clave de seguridad única para tu aplicación ejecutando:
 
-> **Importante:** Crea las variables `CLERK_PUBLISHABLE_KEY` y `CLERK_SECRET_KEY`. También asegúrate de colocar la contraseña correcta de tu usuario local de Postgres en `DB_PASSWORD`.
+```bash
+php artisan key:generate
+```
+
+
+3. Configura la conexión a tu base de datos local. Asegúrate de que los siguientes valores coincidan con tu instalación de PostgreSQL:
 
 ```env
-APP_NAME=NowerAPI
-APP_ENV=local
-APP_KEY=base64:QwnhiW11F2YnE5HlNLmAnU4DSBP0fNBwbyEraKbZIaw=
-APP_DEBUG=true
-APP_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:5173
-
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=nower_db
 DB_USERNAME=postgres
-DB_PASSWORD=
-
-# Clerk Configuration
-CLERK_PUBLISHABLE_KEY=*********
-CLERK_SECRET_KEY=*********
+DB_PASSWORD=TuContraseñaDePostgres
 ```
 
-## Paso 4: Iniciar el Servidor
-Levanta el servidor local de desarrollo de Laravel con el siguiente comando:
+Asegúrate de completar las llaves de Clerk que se proporcionaron:
+
+```env
+CLERK_PUBLISHABLE_KEY=tu_llave_publica
+CLERK_SECRET_KEY=tu_llave_secreta
+```
+
+**Paso 4: Preparación de la Base de Datos**
+
+Antes de ejecutar el servidor, debes preparar la base de datos para que tenga la estructura que definimos en los modelos.
+
+1. Abre tu herramienta de gestión de base de datos (como pgAdmin o la terminal de Postgres) y crea una base de datos vacía llamada exactamente `nower_db`.
+
+2. En la terminal de tu proyecto, ejecuta las migraciones. Este comando leerá el código de Laravel y creará las tablas automáticamente en tu PostgreSQL:
+
+```bash
+php artisan migrate
+```
+
+**Paso 5: Iniciar el Servidor**
+
+Para poner en marcha la API, ejecuta el siguiente comando:
 
 ```bash
 php artisan serve
 ```
 
-La API ahora estará corriendo en http://localhost:8000.
+El backend estará disponible en `http://localhost:8000`.
 
+**Paso 6: Verificación de Funcionamiento**
 
-## Paso 5: Probar que funcione
-Para verificar que todo se levantó correctamente, abre tu navegador y entra a la ruta pública de prueba:
+Para comprobar que el servidor y la base de datos están conectados correctamente, abre tu navegador y visita:
 
+```text
 http://localhost:8000/api/health
-
-Deberías ver esta respuesta en formato JSON:
-
-```json
-{
-    "status": "ok",
-    "message": "El backend esta funcionando "
-}
 ```
+
+Si todo está bien configurado, recibirás un mensaje confirmando que el estado es "ok". Si recibes un mensaje de error, revisa nuevamente que tu usuario y contraseña en el archivo `.env` sean los mismos que configuraste al instalar PostgreSQL.
