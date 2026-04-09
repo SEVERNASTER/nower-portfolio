@@ -1,8 +1,7 @@
-import React from 'react';
-import { X, Moon, Sun, LogOut, Globe } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Moon, Sun, LogOut, Globe, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Tab } from './Tab';
-import { Avatar } from '../ui/Avatar';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { mockProfile } from '../../data/mockData';
 
@@ -30,10 +29,39 @@ export interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme, navItems, activeTab, setActiveTab }) => {
     const { user } = useUser();
     const { signOut } = useClerk();
+    const [userImage, setUserImage] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Cargar imagen del localStorage
+        const storedImage = localStorage.getItem('userProfileImage');
+        if (storedImage) {
+            setUserImage(storedImage);
+        }
+    }, []);
+
+    // Escuchar cambios en localStorage y eventos personalizados
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const storedImage = localStorage.getItem('userProfileImage');
+            setUserImage(storedImage);
+        };
+
+        const handleUserImageChange = (event: CustomEvent) => {
+            setUserImage(event.detail.imageUrl);
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('userImageChanged', handleUserImageChange as EventListener);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('userImageChanged', handleUserImageChange as EventListener);
+        };
+    }, []);
 
     const userName = user?.fullName || mockProfile.fullName;
-    const userImage = user?.imageUrl || mockProfile.avatarUrl;
-    const userRole = mockProfile.role; // Clerk doesn't provide a 'role' by default, keeping mock for now
+    const avatarUrl = userImage || user?.imageUrl;
+
     return (
         <aside className={`fixed inset-y-0 left-0 z-50 w-72 transform flex-col bg-white dark:bg-[#17262C] border-r border-slate-200 dark:border-slate-800/60 transition-transform duration-300 lg:static lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex`}>
             <div className="flex h-20 items-center gap-3 px-6">
@@ -82,10 +110,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
                 </div>
 
                 <div className="flex w-full items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-[#10221C] p-3 transition-colors hover:border-slate-300 dark:hover:border-slate-600">
-                    <Avatar src={userImage} name={userName} size="sm" className="border-2 border-emerald-500" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-300 dark:bg-slate-700 overflow-hidden">
+                        {avatarUrl ? (
+                            <img 
+                                src={avatarUrl} 
+                                alt={userName} 
+                                className="h-full w-full object-cover"
+                            />
+                        ) : (
+                            <User className="h-5 w-5 text-slate-500 dark:text-slate-300" />
+                        )}
+                    </div>
                     <div className="flex flex-1 flex-col text-left">
                         <span className="text-sm font-bold text-slate-900 dark:text-white leading-none">{userName}</span>
-                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-1 uppercase">{userRole}</span>
+                        <div className="mt-1 flex items-center gap-2 text-slate-500 dark:text-slate-400 uppercase">
+                            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
+                                <User className="h-3 w-3 text-slate-500 dark:text-slate-300" />
+                            </div>
+                        </div>
                     </div>
                     <button 
                         onClick={() => signOut()}

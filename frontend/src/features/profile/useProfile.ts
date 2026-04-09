@@ -61,5 +61,6 @@ export function useProfile() {
     saveProfile,
     setErrors,
     setSuccess,
+    setLoading,
   };
 }

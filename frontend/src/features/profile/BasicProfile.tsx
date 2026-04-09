@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Camera, Sparkles, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
@@ -30,9 +30,11 @@ export const BasicProfile: React.FC = () => {
     saveProfile,
     setErrors,
     setSuccess,
+    setLoading,
   } = useProfile();
 
   const { user } = useUser();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -42,6 +44,72 @@ export const BasicProfile: React.FC = () => {
     city: "",
   });
 
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [backendImageUrl, setBackendImageUrl] = useState<string | null>(null);
+
+  // Cargar datos del usuario desde el backend
+  const loadUserData = async () => {
+    if (!user) return;
+
+    try {
+      const email = user.primaryEmailAddress?.emailAddress;
+      if (!email) return;
+
+      const formData = new FormData();
+      formData.append("clerk_id", user.id);
+      formData.append("full_name", user.fullName || "");
+      formData.append("email", email);
+
+      const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.user) {
+        // Cargar datos del formulario
+        setForm({
+          fullName: data.user.full_name || "",
+          profession: data.user.profession || "",
+          bio: data.user.bio || "",
+          phone: data.user.phone || "",
+          city: data.user.city || "",
+        });
+
+        // Cargar imagen del backend si existe
+        if (data.user.imagen_profile) {
+          setBackendImageUrl(data.user.imagen_profile);
+          localStorage.setItem('userProfileImage', data.user.imagen_profile);
+          
+          // Notificar a otros componentes que la imagen cambió
+          window.dispatchEvent(new CustomEvent('userImageChanged', { 
+            detail: { imageUrl: data.user.imagen_profile } 
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  };
+
+  // Cargar datos del usuario cuando esté disponible
+  useEffect(() => {
+    if (user) {
+      // Cargar imagen desde localStorage inicialmente
+      const savedImage = localStorage.getItem('userProfileImage');
+      if (savedImage) {
+        setBackendImageUrl(savedImage);
+      }
+
+      // Cargar datos completos desde el backend
+      loadUserData();
+    }
+  }, [user]);
   // Cargar datos del usuario cuando esté disponible
   useEffect(() => {
     if (!user?.id) return;
@@ -79,16 +147,36 @@ export const BasicProfile: React.FC = () => {
     setSuccess("");
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.includes("image")) {
+      setErrors({ image: "Solo se permiten imágenes JPG o PNG" });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setErrors({ image: "La imagen no puede exceder 2MB" });
+      return;
+    }
+
+    setSelectedImage(file);
+    setPreviewImage(URL.createObjectURL(file));
+    if (errors.image) {
+      setErrors((prev) => ({ ...prev, image: "" }));
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
 
     const newErrors: Record<string, string> = {};
 
     if (!form.fullName.trim()) newErrors.fullName = "El nombre es obligatorio.";
-    if (!form.profession.trim())
-      newErrors.profession = "La profesión es obligatoria.";
+    if (!form.profession.trim()) newErrors.profession = "La profesión es obligatoria.";
     if (!form.bio.trim()) newErrors.bio = "La biografía es obligatoria.";
-    if (!/^\d{8}$/.test(form.phone)) newErrors.phone = "Teléfono inválido.";
+    if (!/^[0-9]{8}$/.test(form.phone)) newErrors.phone = "Teléfono inválido.";
     if (!form.city.trim()) newErrors.city = "La ciudad es obligatoria.";
 
     if (Object.keys(newErrors).length > 0) {
@@ -96,21 +184,88 @@ export const BasicProfile: React.FC = () => {
       return;
     }
 
-    await saveProfile({
-      clerk_id: user.id,
-      full_name: form.fullName,
-      profession: form.profession,
-      bio: form.bio,
-      phone: form.phone,
-      city: form.city,
-    });
+    setLoading(true);
+    setErrors({});
+    setSuccess("");
+
+    const email = user.primaryEmailAddress?.emailAddress;
+    if (!email) {
+      setErrors({ server: "No se encontró email del usuario" });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("clerk_id", user.id);
+      formData.append("full_name", form.fullName);
+      formData.append("email", email);
+      formData.append("profession", form.profession);
+      formData.append("bio", form.bio);
+
+      if (selectedImage) {
+        console.log("Enviando imagen:", selectedImage.name, selectedImage.size);
+        formData.append("image", selectedImage);
+      }
+
+      const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+      console.log("Response:", res.status, data);
+
+      if (!res.ok) {
+        if (res.status === 422) {
+          const validationErrors: Record<string, string> = {};
+          if (data.errors) {
+            for (const key in data.errors) {
+              const formKey = key === "full_name" ? "fullName" : key;
+              validationErrors[formKey] = data.errors[key][0];
+            }
+          }
+          setErrors(validationErrors);
+        } else {
+          setErrors({ server: data.message || data.error || "Ocurrió un error inesperado en el servidor." });
+        }
+        return;
+      }
+
+      if (data.user?.imagen_profile) {
+        setBackendImageUrl(data.user.imagen_profile);
+        setPreviewImage(null);
+        setSelectedImage(null);
+        localStorage.setItem("userProfileImage", data.user.imagen_profile);
+        window.dispatchEvent(new CustomEvent("userImageChanged", {
+          detail: { imageUrl: data.user.imagen_profile },
+        }));
+      }
+
+      await saveProfile({
+        clerk_id: user.id,
+        full_name: form.fullName,
+        profession: form.profession,
+        bio: form.bio,
+        phone: form.phone,
+        city: form.city,
+      });
+    } catch (error) {
+      console.error(error);
+      setErrors({ server: "Error de conexión con el servidor. Verifica que esté funcionando." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Initialize with Clerk data if available, otherwise fallback to mock
   const profile: ProfileDto = {
     ...mockProfile,
     fullName: user?.fullName || mockProfile.fullName,
-    avatarUrl: user?.imageUrl || mockProfile.avatarUrl,
+    avatarUrl: null,
     id: user?.id || mockProfile.id,
   };
 
@@ -127,6 +282,8 @@ export const BasicProfile: React.FC = () => {
       setErrors((prev) => ({ ...prev, phone: "" }));
     }
   };
+
+  const avatarUrl = previewImage || backendImageUrl || user?.imageUrl;
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#17262C] shadow-sm border border-slate-200 dark:border-slate-800/60">
@@ -147,15 +304,27 @@ export const BasicProfile: React.FC = () => {
           {/* Avatar - Updated border for new dark bg */}
           <div className="relative">
             <Avatar
-              src={profile.avatarUrl ?? undefined}
+              src={avatarUrl}
               name={profile.fullName}
               size="lg"
               className="border-4 border-white dark:border-[#17262C] shadow-xl"
             />
             {/* Updated Avatar Camera Button to Emerald */}
-            <button className="absolute bottom-2 right-2 rounded-full bg-emerald-600 p-2 text-white shadow-lg hover:bg-emerald-700 transition-colors">
+            <button 
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-2 right-2 rounded-full bg-emerald-600 p-2 text-white shadow-lg hover:bg-emerald-700 transition-colors"
+            >
               <Camera className="h-4 w-4" />
             </button>
+            {/* Input file oculto */}
+            <input
+              type="file"
+              accept="image/png, image/jpeg"
+              ref={fileInputRef}
+              onChange={handleImageChange}
+              className="hidden"
+            />
           </div>
 
           {/* Quick Stats / Action */}
@@ -187,6 +356,12 @@ export const BasicProfile: React.FC = () => {
           <div className="mb-6 rounded-xl bg-red-500/10 border border-red-500/20 p-4 flex items-center gap-3 text-red-600 dark:text-red-400 text-sm font-medium">
             <AlertCircle className="h-5 w-5" />
             {errors.server}
+          </div>
+        )}
+        {errors.image && (
+          <div className="mb-6 rounded-xl bg-red-500/10 border border-red-500/20 p-4 flex items-center gap-3 text-red-600 dark:text-red-400 text-sm font-medium">
+            <AlertCircle className="h-5 w-5" />
+            {errors.image}
           </div>
         )}
 
