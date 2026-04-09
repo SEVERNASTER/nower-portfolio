@@ -13,7 +13,7 @@ class UserController extends Controller
     public function sync(Request $request)
     {
         try {
-            // Validaciones
+            // Validaciones básicas (SOLO identidad)
             $validator = Validator::make($request->all(), [
                 'clerk_id' => 'required|string',
                 'full_name' => 'required|string|max:100',
@@ -111,19 +111,32 @@ class UserController extends Controller
                     }
                 }
             }
+                    'message' => 'Error de validación',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Crear o actualizar usuario
+            $user = User::updateOrCreate(
+                ['clerk_id' => $request->clerk_id],
+                [
+                    'full_name' => $request->full_name,
+                    'email' => $request->email,
+                ]
+            );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Perfil sincronizado correctamente',
+                'message' => 'Usuario sincronizado correctamente',
                 'user' => $user
-            ], 200);
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Sync Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Ocurrió un error interno en el servidor.',
-                'error' => config('app.debug') ? $e->getMessage() : 'Error 500'
+                'message' => 'Error interno del servidor',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }

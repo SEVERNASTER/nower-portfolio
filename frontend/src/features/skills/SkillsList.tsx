@@ -1,9 +1,61 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Code2, BrainCircuit, Blocks } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
 import { Button } from '../../components/ui/Button';
 import { CustomDropdown } from '../../components/ui/CustomDropdown';
 import { SkillCard } from './components/SkillCard';
 import type { Skill, SkillLevel } from '../../data/mockData';
+
+interface BackendSkill {
+    id: number | string;
+    name: string;
+    type: 'technical' | 'soft';
+    proficiency_level: number;
+}
+
+const translateTypeToCategory = (type: 'technical' | 'soft'): 'Técnica' | 'Blanda' =>
+    type === 'technical' ? 'Técnica' : 'Blanda';
+
+const translateCategoryToType = (category: 'Técnica' | 'Blanda'): 'technical' | 'soft' =>
+    category === 'Técnica' ? 'technical' : 'soft';
+
+const translateLevelToProficiency = (level: SkillLevel): number => {
+    switch (level) {
+        case 'Básico':
+            return 1;
+        case 'Intermedio':
+            return 2;
+        case 'Avanzado':
+            return 3;
+        case 'Experto':
+            return 4;
+        default:
+            return 1;
+    }
+};
+
+const translateProficiencyToLevel = (proficiency: number): SkillLevel => {
+    switch (proficiency) {
+        case 1:
+            return 'Básico';
+        case 2:
+            return 'Intermedio';
+        case 3:
+            return 'Avanzado';
+        case 4:
+        case 5:
+            return 'Experto';
+        default:
+            return 'Básico';
+    }
+};
+
+const mapBackendSkill = (skill: BackendSkill): Skill => ({
+    id: String(skill.id),
+    name: skill.name,
+    category: translateTypeToCategory(skill.type),
+    level: translateProficiencyToLevel(skill.proficiency_level),
+});
 
 export const SkillsList: React.FC = () => {
     // ==========================================
@@ -12,26 +64,49 @@ export const SkillsList: React.FC = () => {
 
     // 1. Manage the list of skills in state
     const [skills, setSkills] = useState<Skill[]>([]);
+    const { getToken, isLoaded, isSignedIn } = useAuth();
 
     useEffect(() => {
-        fetch('http://localhost:8000/api/skills', {
-            credentials: 'include',
-        })
-            .then(async (res) => {
+        if (!isLoaded) return;
+        if (!isSignedIn) {
+            window.location.href = '/login';
+            return;
+        }
+
+        const loadSkills = async () => {
+            try {
+                const token = await getToken();
+                const res = await fetch('http://localhost:8000/api/skills', {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
                 if (res.status === 401) {
                     window.location.href = '/login';
-                    return [];
+                    return;
                 }
 
-                const data = await res.json().catch(() => ({}));
+                const data = await res.json();
                 if (!res.ok) {
-                    throw new Error(data?.error ?? 'Error cargando habilidades');
+                    throw new Error(data?.message ?? 'Error cargando habilidades');
                 }
-                return data as Skill[];
-            })
-            .then((data) => setSkills(data))
-            .catch(() => setSkills([]));
-    }, []);
+
+                const backendSkills: BackendSkill[] = [
+                    ...(data.technical ?? []),
+                    ...(data.soft ?? []),
+                ];
+
+                setSkills(backendSkills.map(mapBackendSkill));
+            } catch (error) {
+                console.error('Error cargando habilidades:', error);
+                setSkills([]);
+            }
+        };
+
+        loadSkills();
+    }, [getToken, isLoaded, isSignedIn]);
 
     // 2. Form state for the inputs
     const [newSkillName, setNewSkillName] = useState('');
@@ -39,32 +114,69 @@ export const SkillsList: React.FC = () => {
     const [newSkillCategory, setNewSkillCategory] = useState<'Técnica' | 'Blanda' | ''>('');
 
     // 3. Handler to add a new skill to the list
-    const handleAddSkill = (e: React.FormEvent) => {
+    const handleAddSkill = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Prevent adding incomplete skills
         if (!newSkillName.trim() || !newSkillCategory || !newSkillLevel) return;
+        if (!isLoaded || !isSignedIn) return;
 
-        const newSkill: Skill = {
-            // Generate a unique temporary ID
-            id: `sk_${Date.now()}`,
-            name: newSkillName.trim(),
-            level: newSkillLevel as SkillLevel,
-            category: newSkillCategory as 'Técnica' | 'Blanda'
-        };
+        try {
+            const token = await getToken();
+            const body = {
+                name: newSkillName.trim(),
+                type: translateCategoryToType(newSkillCategory),
+                proficiency_level: translateLevelToProficiency(newSkillLevel),
+            };
 
-        // Update state: add new skill to the end
-        setSkills([...skills, newSkill]);
+            const res = await fetch('http://localhost:8000/api/skills', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(body),
+            });
 
-        // Reset the form
-        setNewSkillName('');
-        setNewSkillCategory('');
-        setNewSkillLevel('');
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data?.message ?? 'Error creando habilidad');
+            }
+
+            const createdSkill = mapBackendSkill(data.data);
+            setSkills((current) => [...current, createdSkill]);
+            setNewSkillName('');
+            setNewSkillCategory('');
+            setNewSkillLevel('');
+        } catch (error) {
+            console.error('Error creando habilidad:', error);
+        }
     };
 
     // 4. Handler to remove a skill
-    const handleRemoveSkill = (idToRemove: string) => {
-        setSkills(skills.filter(skill => skill.id !== idToRemove));
+    const handleRemoveSkill = async (idToRemove: string) => {
+        if (!isLoaded || !isSignedIn) {
+            setSkills(skills.filter(skill => skill.id !== idToRemove));
+            return;
+        }
+
+        try {
+            const token = await getToken();
+            const res = await fetch(`http://localhost:8000/api/skills/${idToRemove}`, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => null);
+                throw new Error(data?.message ?? 'Error eliminando habilidad');
+            }
+
+            setSkills(skills.filter(skill => skill.id !== idToRemove));
+        } catch (error) {
+            console.error('Error eliminando habilidad:', error);
+        }
     };
 
     // Derived state for filtering categories

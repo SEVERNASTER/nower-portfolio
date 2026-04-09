@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { useUser } from "@clerk/clerk-react";
 import { mockProfile } from "../../data/mockData";
+import { useProfile } from "./useProfile";
 
 type ProfileDto = {
   id: string;
@@ -21,6 +22,17 @@ type ProfileDto = {
 // ==========================================
 
 export const BasicProfile: React.FC = () => {
+  const {
+    loading,
+    errors,
+    success,
+    fetchProfile,
+    saveProfile,
+    setErrors,
+    setSuccess,
+    setLoading,
+  } = useProfile();
+
   const { user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,11 +40,10 @@ export const BasicProfile: React.FC = () => {
     fullName: "",
     profession: "",
     bio: "",
+    phone: "",
+    city: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [backendImageUrl, setBackendImageUrl] = useState<string | null>(null);
@@ -66,6 +77,8 @@ export const BasicProfile: React.FC = () => {
           fullName: data.user.full_name || "",
           profession: data.user.profession || "",
           bio: data.user.bio || "",
+          phone: data.user.phone || "",
+          city: data.user.city || "",
         });
 
         // Cargar imagen del backend si existe
@@ -97,13 +110,33 @@ export const BasicProfile: React.FC = () => {
       loadUserData();
     }
   }, [user]);
+  // Cargar datos del usuario cuando esté disponible
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const load = async () => {
+      const data = await fetchProfile(user.id);
+
+      if (data) {
+        setForm({
+          fullName: data.user.full_name || "",
+          profession: data.user.profession || "",
+          bio: data.user.bio || "",
+          phone: data.user.phone || "",
+          city: data.user.city || "",
+        });
+      }
+    };
+
+    load();
+  }, [user?.id]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    
+    setForm((prev) => ({ ...prev, [name]: value }));
+
     // Limpiar error del campo modificado en tiempo real
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -138,20 +171,32 @@ export const BasicProfile: React.FC = () => {
   const handleSave = async () => {
     if (!user) return;
 
+    const newErrors: Record<string, string> = {};
+
+    if (!form.fullName.trim()) newErrors.fullName = "El nombre es obligatorio.";
+    if (!form.profession.trim()) newErrors.profession = "La profesión es obligatoria.";
+    if (!form.bio.trim()) newErrors.bio = "La biografía es obligatoria.";
+    if (!/^[0-9]{8}$/.test(form.phone)) newErrors.phone = "Teléfono inválido.";
+    if (!form.city.trim()) newErrors.city = "La ciudad es obligatoria.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     setLoading(true);
-    setSuccess("");
     setErrors({});
+    setSuccess("");
+
+    const email = user.primaryEmailAddress?.emailAddress;
+    if (!email) {
+      setErrors({ server: "No se encontró email del usuario" });
+      setLoading(false);
+      return;
+    }
 
     try {
       const formData = new FormData();
-      
-      const email = user.primaryEmailAddress?.emailAddress;
-      if (!email) {
-        setErrors({ server: "No se encontró email del usuario" });
-        setLoading(false);
-        return;
-      }
-
       formData.append("clerk_id", user.id);
       formData.append("full_name", form.fullName);
       formData.append("email", email);
@@ -176,34 +221,38 @@ export const BasicProfile: React.FC = () => {
 
       if (!res.ok) {
         if (res.status === 422) {
-           const newErrors: Record<string, string> = {};
-           if (data.errors) {
-               for (const key in data.errors) {
-                   const formKey = key === 'full_name' ? 'fullName' : key;
-                   newErrors[formKey] = data.errors[key][0];
-               }
-           }
-           setErrors(newErrors);
+          const validationErrors: Record<string, string> = {};
+          if (data.errors) {
+            for (const key in data.errors) {
+              const formKey = key === "full_name" ? "fullName" : key;
+              validationErrors[formKey] = data.errors[key][0];
+            }
+          }
+          setErrors(validationErrors);
         } else {
-           setErrors({ server: data.message || data.error || "Ocurrió un error inesperado en el servidor." });
+          setErrors({ server: data.message || data.error || "Ocurrió un error inesperado en el servidor." });
         }
         return;
       }
 
-      // Actualizar imagen del servidor
       if (data.user?.imagen_profile) {
         setBackendImageUrl(data.user.imagen_profile);
         setPreviewImage(null);
         setSelectedImage(null);
-        localStorage.setItem('userProfileImage', data.user.imagen_profile);
-        
-        // Notificar a otros componentes que la imagen cambió
-        window.dispatchEvent(new CustomEvent('userImageChanged', { 
-          detail: { imageUrl: data.user.imagen_profile } 
+        localStorage.setItem("userProfileImage", data.user.imagen_profile);
+        window.dispatchEvent(new CustomEvent("userImageChanged", {
+          detail: { imageUrl: data.user.imagen_profile },
         }));
       }
 
-      setSuccess("Perfil actualizado correctamente");
+      await saveProfile({
+        clerk_id: user.id,
+        full_name: form.fullName,
+        profession: form.profession,
+        bio: form.bio,
+        phone: form.phone,
+        city: form.city,
+      });
     } catch (error) {
       console.error(error);
       setErrors({ server: "Error de conexión con el servidor. Verifica que esté funcionando." });
@@ -211,15 +260,28 @@ export const BasicProfile: React.FC = () => {
       setLoading(false);
     }
   };
-  
 
   // Initialize with Clerk data if available, otherwise fallback to mock
-  const [profile] = useState<ProfileDto>({
+  const profile: ProfileDto = {
     ...mockProfile,
     fullName: user?.fullName || mockProfile.fullName,
     avatarUrl: null,
     id: user?.id || mockProfile.id,
-  } as ProfileDto);
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+
+    value = value.replace(/\D/g, "");
+
+    value = value.slice(0, 8);
+
+    setForm((prev) => ({ ...prev, phone: value }));
+
+    if (errors.phone) {
+      setErrors((prev) => ({ ...prev, phone: "" }));
+    }
+  };
 
   const avatarUrl = previewImage || backendImageUrl || user?.imageUrl;
 
@@ -309,8 +371,14 @@ export const BasicProfile: React.FC = () => {
             {/* Field: Nombre */}
             <div className="space-y-2">
               <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <span>Nombre Completo <span className="text-red-500">*</span></span>
-                <span className={form.fullName.length >= 100 ? "text-red-500" : ""}>{form.fullName.length}/100</span>
+                <span>
+                  Nombre Completo <span className="text-red-400">*</span>
+                </span>
+                <span
+                  className={form.fullName.length >= 100 ? "text-red-400" : ""}
+                >
+                  {form.fullName.length}/100
+                </span>
               </label>
               <input
                 type="text"
@@ -319,16 +387,25 @@ export const BasicProfile: React.FC = () => {
                 onChange={handleChange}
                 maxLength={100}
                 required
-                className={`w-full rounded-xl border ${errors.fullName ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-emerald-500'} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
+                className={`w-full rounded-xl border ${errors.fullName ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
               />
-              {errors.fullName && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3"/>{errors.fullName}</p>}
+              {errors.fullName && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.fullName}
+                </p>
+              )}
             </div>
 
             {/* Field: Profesión */}
             <div className="space-y-2">
               <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <span>Profesión / Cargo</span>
-                <span className={form.profession.length >= 80 ? "text-red-500" : ""}>{form.profession.length}/80</span>
+                <span
+                  className={form.profession.length >= 80 ? "text-red-500" : ""}
+                >
+                  {form.profession.length}/80
+                </span>
               </label>
               <input
                 type="text"
@@ -337,9 +414,14 @@ export const BasicProfile: React.FC = () => {
                 onChange={handleChange}
                 placeholder={profile.role}
                 maxLength={80}
-                className={`w-full rounded-xl border ${errors.profession ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-emerald-500'} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
+                className={`w-full rounded-xl border ${errors.profession ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
               />
-              {errors.profession && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3"/>{errors.profession}</p>}
+              {errors.profession && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.profession}
+                </p>
+              )}
             </div>
           </div>
 
@@ -347,7 +429,13 @@ export const BasicProfile: React.FC = () => {
           <div className="space-y-2">
             <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <span>Biografía Profesional</span>
-              <span className={form.bio.length >= 500 ? "text-red-500 font-bold" : "text-slate-500"}>
+              <span
+                className={
+                  form.bio.length >= 500
+                    ? "text-red-500 font-bold"
+                    : "text-slate-500"
+                }
+              >
                 {form.bio.length} / 500 caracteres
               </span>
             </label>
@@ -358,11 +446,159 @@ export const BasicProfile: React.FC = () => {
               onChange={handleChange}
               placeholder={profile.bio}
               maxLength={500}
-              className={`w-full resize-none rounded-xl border ${errors.bio ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-emerald-500'} bg-white dark:bg-[#10221C] px-4 py-3 text-sm leading-relaxed text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
+              className={`w-full resize-none rounded-xl border ${errors.bio ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm leading-relaxed text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
             />
-            {errors.bio && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3"/>{errors.bio}</p>}
+            {errors.bio && (
+              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.bio}
+              </p>
+            )}
           </div>
         </form>
+        {/* FORM DATOS DE CONTACTO */}
+
+        <div className="mt-10 pt-8 border-t border-slate-300 dark:border-slate-800/60">
+          <h3 className="text-xs font-bold dark:text-slate-400 uppercase tracking-wider mb-5">
+            INFORMACIÓN DE CONTACTO
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* EMAIL */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Email
+              </label>
+              <input
+                type="email"
+                value={user?.primaryEmailAddress?.emailAddress || ""}
+                disabled
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-500 cursor-not-allowed focus:outline-none transition-colors opacity-80"
+              />
+              <p className="text-[10px] text-slate-500 mt-1">
+                Este correo está vinculado a tu cuenta y no se puede modificar.
+              </p>
+            </div>
+
+            {/* TELÉFONO */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Teléfono <span className="text-red-500">*</span>
+              </label>
+
+              <div className="relative">
+                {/* Prefijo visual */}
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
+                  +591
+                </span>
+
+                <input
+                  type="tel"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handlePhoneChange}
+                  required
+                  className={`w-full rounded-xl border ${
+                    errors.phone
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"
+                  } bg-white dark:bg-[#10221C] px-4 pl-16 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
+                />
+              </div>
+
+              {errors.phone && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.phone}
+                </p>
+              )}
+            </div>
+
+            {/* CIUDAD FULL WIDTH */}
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Ciudad <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="city"
+                value={form.city}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, city: e.target.value }));
+                  if (errors.city) setErrors((prev) => ({ ...prev, city: "" }));
+                }}
+                required
+                className={`w-full rounded-xl border ${errors.city ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-transparent"} bg-white/50 dark:bg-white/5 backdrop-blur-md px-4 py-3 text-sm text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 focus:border-emerald-500 focus:bg-white dark:focus:bg-[#10221C] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer`}
+              >
+                <option
+                  value=""
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  Selecciona una ciudad
+                </option>
+                <option
+                  value="La Paz"
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  La Paz
+                </option>
+                <option
+                  value="Cochabamba"
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  Cochabamba
+                </option>
+                <option
+                  value="Santa Cruz"
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  Santa Cruz
+                </option>
+                <option
+                  value="Oruro"
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  Oruro
+                </option>
+                <option
+                  value="Potosí"
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  Potosí
+                </option>
+                <option
+                  value="Chuquisaca"
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  Chuquisaca
+                </option>
+                <option
+                  value="Tarija"
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  Tarija
+                </option>
+                <option
+                  value="Beni"
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  Beni
+                </option>
+                <option
+                  value="Pando"
+                  className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white"
+                >
+                  Pando
+                </option>
+              </select>
+              {errors.city && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.city}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

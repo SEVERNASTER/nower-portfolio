@@ -17,10 +17,7 @@ import type { NavItem } from "./components/navigation/Sidebar";
 import { LoginPage } from "./components/pages/LoginPage";
 import { ExperienceList } from "./features/experience/ExperienceList";
 import { RegisterPage } from "./components/pages/RegisterPage";
-import SsoCallback from "./components/pages/SsoCallback";
-
-import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
-import { useUser } from "@clerk/clerk-react";
+import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 
 const navItems: NavItem[] = [
@@ -37,33 +34,6 @@ const AppContent: React.FC = () => {
   const { user, isLoaded } = useUser();
   const [synced, setSynced] = useState(false);
 
-  useEffect(() => {
-    if (!isLoaded || !user || synced) return;
-
-    const sendToBackend = async () => {
-      const email = user.primaryEmailAddress?.emailAddress;
-      const name = user.firstName || "Usuario";
-
-      if (!email) return;
-
-      if (!email.endsWith("@est.umss.edu")) {
-        alert("Solo correos institucionales");
-        return;
-      }
-
-      await fetch("http://127.0.0.1:8000/api/sync-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, name }),
-      });
-
-      setSynced(true);
-    };
-
-    sendToBackend();
-  }, [user, isLoaded, synced]);
   const activeItem = navItems.find((item) => item.path === location.pathname);
   const activeTab = activeItem ? activeItem.name : "Perfil Básico";
 
@@ -74,16 +44,24 @@ const AppContent: React.FC = () => {
     }
   };
 
-  React.useEffect(() => {
-    if (user) {
-      console.log(" Enviando a backend:", user);
-      sendToBackend(user);
-    }
-  }, [user]);
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+    if (synced) return;
+
+    sendToBackend(user);
+    setSynced(true);
+  }, [user, isLoaded, synced]);
 
   async function sendToBackend(user: any) {
     try {
-      console.log(" Enviando usuario:", user);
+      const email = user.primaryEmailAddress?.emailAddress;
+
+      if (!email) return;
+
+      if (!email.endsWith("@est.umss.edu")) {
+        alert("Solo correos institucionales");
+        return;
+      }
 
       const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
         method: "POST",
@@ -93,7 +71,7 @@ const AppContent: React.FC = () => {
         body: JSON.stringify({
           clerk_id: user.id,
           full_name: user.fullName || user.firstName,
-          email: user.primaryEmailAddress?.emailAddress,
+          email: email,
         }),
       });
 
@@ -103,44 +81,9 @@ const AppContent: React.FC = () => {
       console.error(" Error enviando usuario:", error);
     }
   }
-
-  useEffect(() => {
-    if (user) {
-      sendToBackend(user);
-    }
-  }, [user]);
-  useEffect(() => {
-    if (!isLoaded || !user || synced) return;
-
-    const sendToBackend = async () => {
-      const email = user.primaryEmailAddress?.emailAddress;
-      const name = user.firstName || "Usuario";
-
-      if (!email) return;
-
-      if (!email.endsWith("@est.umss.edu")) {
-        alert("Solo correos institucionales");
-        return;
-      }
-
-      await fetch("http://127.0.0.1:8000/api/sync-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, name }),
-      });
-
-      setSynced(true);
-    };
-
-    sendToBackend();
-  }, [user, isLoaded, synced]);
   return (
     <Routes>
-      <Route
-        path="/sso-callback" element={<AuthenticateWithRedirectCallback />}
-      />
+      <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
       {/* PUBLIC ROUTES (Wrapped in SignedOut) */}
       <Route
         path="/login"
