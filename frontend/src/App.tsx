@@ -17,7 +17,7 @@ import type { NavItem } from "./components/navigation/Sidebar";
 import { LoginPage } from "./components/pages/LoginPage";
 import { ExperienceList } from "./features/experience/ExperienceList";
 import { RegisterPage } from "./components/pages/RegisterPage";
-import SsoCallback from './components/pages/SsoCallback';
+import SsoCallback from "./components/pages/SsoCallback";
 
 import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
 import { useUser } from "@clerk/clerk-react";
@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
 const AppContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const { user, isLoaded } = useUser();
   const [synced, setSynced] = useState(false);
 
@@ -51,8 +51,7 @@ const AppContent: React.FC = () => {
         return;
       }
 
-      await fetch("http://127.0.0.1:8000/api/auth/clerk-login", {
-        
+      await fetch("http://127.0.0.1:8000/api/sync-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,6 +73,42 @@ const AppContent: React.FC = () => {
       navigate(item.path);
     }
   };
+
+  React.useEffect(() => {
+    if (user) {
+      console.log(" Enviando a backend:", user);
+      sendToBackend(user);
+    }
+  }, [user]);
+
+  async function sendToBackend(user: any) {
+    try {
+      console.log(" Enviando usuario:", user);
+
+      const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clerk_id: user.id,
+          full_name: user.fullName || user.firstName,
+          email: user.primaryEmailAddress?.emailAddress,
+        }),
+      });
+
+      const data = await res.json();
+      console.log(" Guardado en BD:", data);
+    } catch (error) {
+      console.error(" Error enviando usuario:", error);
+    }
+  }
+
+  useEffect(() => {
+    if (user) {
+      sendToBackend(user);
+    }
+  }, [user]);
   useEffect(() => {
     if (!isLoaded || !user || synced) return;
 
@@ -88,7 +123,7 @@ const AppContent: React.FC = () => {
         return;
       }
 
-      await fetch("http://127.0.0.1:8000/api/auth/clerk-login", {
+      await fetch("http://127.0.0.1:8000/api/sync-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
