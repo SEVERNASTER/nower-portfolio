@@ -11,54 +11,41 @@ class UserController extends Controller
     public function sync(Request $request)
     {
         try {
-            // Validaciones
+            // Validaciones básicas (SOLO identidad)
             $validator = Validator::make($request->all(), [
                 'clerk_id' => 'required|string',
                 'full_name' => 'required|string|max:100',
                 'email' => 'required|email|max:150',
-                'profession' => 'required|string|max:80',
-                'bio' => 'required|string|max:500',
-            ], [
-                'full_name.required' => 'El nombre completo es obligatorio.',
-                'full_name.max' => 'El nombre no puede exceder 100 caracteres.',
-                'profession.required' => 'La profesión es obligatoria.',
-                'profession.max' => 'La profesión no puede exceder 80 caracteres.',
-                'bio.required' => 'La biografía es obligatoria.',
-                'bio.max' => 'La biografía no puede exceder 500 caracteres.',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error de validación de datos',
+                    'message' => 'Error de validación',
                     'errors' => $validator->errors()
                 ], 422);
             }
 
-            // Crear o Actualizar
+            // Crear o actualizar usuario
             $user = User::updateOrCreate(
                 ['clerk_id' => $request->clerk_id],
                 [
                     'full_name' => $request->full_name,
                     'email' => $request->email,
-                    'profession' => $request->profession,
-                    'bio' => $request->bio,
-                    'role' => $request->role ?? 'user',
                 ]
             );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Perfil sincronizado correctamente',
+                'message' => 'Usuario sincronizado correctamente',
                 'user' => $user
-            ], 200);
+            ]);
 
         } catch (\Exception $e) {
-            // Manejo de errores de servidor (Ej: BD caída)
             return response()->json([
                 'success' => false,
-                'message' => 'Ocurrió un error interno en el servidor.',
-                'error' => config('app.debug') ? $e->getMessage() : 'Error 500'
+                'message' => 'Error interno del servidor',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
