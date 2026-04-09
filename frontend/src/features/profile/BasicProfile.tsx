@@ -117,7 +117,7 @@ export const BasicProfile: React.FC = () => {
   const [profile] = useState<ProfileDto>({
     ...mockProfile,
     fullName: user?.fullName || mockProfile.fullName,
-    avatarUrl: user?.imageUrl || mockProfile.avatarUrl,
+    avatarUrl: null,
     id: user?.id || mockProfile.id,
   } as ProfileDto);
 
