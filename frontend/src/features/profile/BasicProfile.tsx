@@ -48,7 +48,7 @@ export const BasicProfile: React.FC = () => {
   ) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-    
+
     // Limpiar error del campo modificado en tiempo real
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -71,7 +71,7 @@ export const BasicProfile: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           clerk_id: user.id,
@@ -86,19 +86,22 @@ export const BasicProfile: React.FC = () => {
 
       if (!res.ok) {
         if (res.status === 422) {
-           // Errores de validación Laravel
-           const newErrors: Record<string, string> = {};
-           if (data.errors) {
-               for (const key in data.errors) {
-                   // Frontend mappings for keys: Laravel (full_name) -> React (fullName)
-                   const formKey = key === 'full_name' ? 'fullName' : key;
-                   newErrors[formKey] = data.errors[key][0];
-               }
-           }
-           setErrors(newErrors);
+          // Errores de validación Laravel
+          const newErrors: Record<string, string> = {};
+          if (data.errors) {
+            for (const key in data.errors) {
+              // Frontend mappings for keys: Laravel (full_name) -> React (fullName)
+              const formKey = key === "full_name" ? "fullName" : key;
+              newErrors[formKey] = data.errors[key][0];
+            }
+          }
+          setErrors(newErrors);
         } else {
-           // Errores 500 u otros
-           setErrors({ server: data.message || "Ocurrió un error inesperado en el servidor." });
+          // Errores 500 u otros
+          setErrors({
+            server:
+              data.message || "Ocurrió un error inesperado en el servidor.",
+          });
         }
         return;
       }
@@ -106,12 +109,14 @@ export const BasicProfile: React.FC = () => {
       setSuccess("Perfil actualizado correctamente");
     } catch (error) {
       console.error(error);
-      setErrors({ server: "Error de conexión con el servidor. Verifica que esté funcionando." });
+      setErrors({
+        server:
+          "Error de conexión con el servidor. Verifica que esté funcionando.",
+      });
     } finally {
       setLoading(false);
     }
   };
-  
 
   // Initialize with Clerk data if available, otherwise fallback to mock
   const [profile] = useState<ProfileDto>({
@@ -120,6 +125,135 @@ export const BasicProfile: React.FC = () => {
     avatarUrl: user?.imageUrl || mockProfile.avatarUrl,
     id: user?.id || mockProfile.id,
   } as ProfileDto);
+
+  //datos de contacto
+
+  const [contactForm, setContactForm] = useState({
+    email: "",
+    phone: "",
+    city: "",
+  });
+
+  const validateContact = () => {
+    if (!contactForm.email.includes("@")) return "Email inválido";
+    if (contactForm.phone.length < 7) return "Teléfono inválido";
+    if (!contactForm.city) return "Ciudad requerida";
+    return null;
+  };
+
+  const handleSaveContact = async () => {
+    const error = validateContact();
+    if (error) {
+      const handleSaveContact = async () => {
+        setContactError("");
+        setContactSuccess("");
+
+        const error = validateContact();
+        if (error) {
+          setContactError(error);
+          return;
+        }
+
+        if (!user) return;
+
+        try {
+          const res = await fetch("http://127.0.0.1:8000/api/profile/contact", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              clerk_id: user.id,
+              email: contactForm.email,
+              phone: contactForm.phone,
+              city: contactForm.city,
+            }),
+          });
+
+          if (!res.ok) {
+            setContactError("Error al guardar contacto");
+            return;
+          }
+
+          setContactSuccess("Contacto guardado correctamente");
+        } catch (err) {
+          setContactError("Error de conexión con el servidor");
+        }
+      };
+      return;
+    }
+
+    if (!user) return;
+
+    await fetch("http://127.0.0.1:8000/api/profile/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        clerk_id: user.id,
+        email: contactForm.email,
+        phone: contactForm.phone,
+        city: contactForm.city,
+      }),
+    });
+
+    const handleSaveContact = async () => {
+      setContactError("");
+      setContactSuccess("");
+
+      const error = validateContact();
+      if (error) {
+        setContactError(error);
+        return;
+      }
+
+      if (!user) return;
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/profile/contact", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            clerk_id: user.id,
+            email: contactForm.email,
+            phone: contactForm.phone,
+            city: contactForm.city,
+          }),
+        });
+
+        if (!res.ok) {
+          setContactError("Error al guardar contacto");
+          return;
+        }
+
+        setContactSuccess("Contacto guardado correctamente");
+      } catch (err) {
+        setContactError("Error de conexión con el servidor");
+      }
+    };
+  };
+
+  useEffect(() => {
+    if (user) {
+      setContactForm((prev) => ({
+        ...prev,
+        email: user.primaryEmailAddress?.emailAddress || "",
+      }));
+    }
+  }, [user]);
+
+  const [contactSuccess, setContactSuccess] = useState("");
+  const [contactError, setContactError] = useState("");
+
+  useEffect(() => {
+    if (contactSuccess) {
+      const timer = setTimeout(() => setContactSuccess(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [contactSuccess]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#17262C] shadow-sm border border-slate-200 dark:border-slate-800/60">
@@ -189,8 +323,14 @@ export const BasicProfile: React.FC = () => {
             {/* Field: Nombre */}
             <div className="space-y-2">
               <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <span>Nombre Completo <span className="text-red-500">*</span></span>
-                <span className={form.fullName.length >= 100 ? "text-red-500" : ""}>{form.fullName.length}/100</span>
+                <span>
+                  Nombre Completo <span className="text-red-500">*</span>
+                </span>
+                <span
+                  className={form.fullName.length >= 100 ? "text-red-500" : ""}
+                >
+                  {form.fullName.length}/100
+                </span>
               </label>
               <input
                 type="text"
@@ -199,16 +339,25 @@ export const BasicProfile: React.FC = () => {
                 onChange={handleChange}
                 maxLength={100}
                 required
-                className={`w-full rounded-xl border ${errors.fullName ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-emerald-500'} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
+                className={`w-full rounded-xl border ${errors.fullName ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
               />
-              {errors.fullName && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3"/>{errors.fullName}</p>}
+              {errors.fullName && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.fullName}
+                </p>
+              )}
             </div>
 
             {/* Field: Profesión */}
             <div className="space-y-2">
               <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <span>Profesión / Cargo</span>
-                <span className={form.profession.length >= 80 ? "text-red-500" : ""}>{form.profession.length}/80</span>
+                <span
+                  className={form.profession.length >= 80 ? "text-red-500" : ""}
+                >
+                  {form.profession.length}/80
+                </span>
               </label>
               <input
                 type="text"
@@ -217,9 +366,14 @@ export const BasicProfile: React.FC = () => {
                 onChange={handleChange}
                 placeholder={profile.role}
                 maxLength={80}
-                className={`w-full rounded-xl border ${errors.profession ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-emerald-500'} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
+                className={`w-full rounded-xl border ${errors.profession ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
               />
-              {errors.profession && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3"/>{errors.profession}</p>}
+              {errors.profession && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.profession}
+                </p>
+              )}
             </div>
           </div>
 
@@ -227,7 +381,13 @@ export const BasicProfile: React.FC = () => {
           <div className="space-y-2">
             <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <span>Biografía Profesional</span>
-              <span className={form.bio.length >= 500 ? "text-red-500 font-bold" : "text-slate-500"}>
+              <span
+                className={
+                  form.bio.length >= 500
+                    ? "text-red-500 font-bold"
+                    : "text-slate-500"
+                }
+              >
                 {form.bio.length} / 500 caracteres
               </span>
             </label>
@@ -238,11 +398,98 @@ export const BasicProfile: React.FC = () => {
               onChange={handleChange}
               placeholder={profile.bio}
               maxLength={500}
-              className={`w-full resize-none rounded-xl border ${errors.bio ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-emerald-500'} bg-white dark:bg-[#10221C] px-4 py-3 text-sm leading-relaxed text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
+              className={`w-full resize-none rounded-xl border ${errors.bio ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm leading-relaxed text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
             />
-            {errors.bio && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3"/>{errors.bio}</p>}
+            {errors.bio && (
+              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.bio}
+              </p>
+            )}
           </div>
         </form>
+        {/* FORM DATOS DE CONTACTO */}
+
+        <div className="mt-10 pt-8 border-t border-slate-800/60">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            INFORMACIÓN DE CONTACTO
+          </h3>
+          {contactSuccess && (
+            <div className="mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 flex items-center gap-2 text-emerald-400 text-sm">
+              <CheckCircle2 className="w-4 h-4" />
+              {contactSuccess}
+            </div>
+          )}
+
+          {contactError && (
+            <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2 text-red-400 text-sm">
+              <AlertCircle className="w-4 h-4" />
+              {contactError}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* EMAIL */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Email
+              </label>
+              <input
+                type="email"
+                value={contactForm.email}
+                disabled
+                className="w-full rounded-xl border border-slate-700 bg-[#10221C] px-4 py-3 text-sm text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+              />
+            </div>
+
+            {/* TELÉFONO */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Teléfono
+              </label>
+              <input
+                type="text"
+                name="phone"
+                value={contactForm.phone}
+                onChange={(e) =>
+                  setContactForm({ ...contactForm, phone: e.target.value })
+                }
+                className="w-full rounded-xl border border-slate-700 bg-[#10221C] px-4 py-3 text-sm text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+              />
+            </div>
+
+            {/* CIUDAD FULL WIDTH */}
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Ciudad
+              </label>
+              <select
+                name="city"
+                value={contactForm.city}
+                onChange={(e) =>
+                  setContactForm({ ...contactForm, city: e.target.value })
+                }
+                className="w-full rounded-xl border border-slate-700 bg-[#10221C] px-4 py-3 text-sm text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+              >
+                <option value="">Selecciona una ciudad</option>
+                <option value="La Paz">La Paz</option>
+                <option value="Cochabamba">Cochabamba</option>
+                <option value="Santa Cruz">Santa Cruz</option>
+                <option value="Oruro">Oruro</option>
+                <option value="Potosí">Potosí</option>
+                <option value="Chuquisaca">Chuquisaca</option>
+                <option value="Tarija">Tarija</option>
+                <option value="Beni">Beni</option>
+                <option value="Pando">Pando</option>
+              </select>
+            </div>
+          </div>
+
+          {/* BOTONES */}
+          <div className="flex justify-end gap-3 mt-6">
+            <Button onClick={handleSaveContact}>Guardar contacto</Button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -12,6 +12,8 @@ Route::get('/health', function () {
 
 Route::post('/sync-user', [UserController::class, 'sync']);
 
+Route::post('/profile/contact', [UserController::class, 'saveContact']);
+
 // PROTECTED route. MUST have a Clerk token to enter.
 Route::middleware([ClerkAuth::class])->group(function () {
 
