@@ -10,8 +10,6 @@ export async function updateProfile(data: {
   full_name: string;
   profession: string;
   bio: string;
-  phone: string;
-  city: string;
 }) {
   const res = await fetch(`${API_URL}/profile`, {
     method: "PUT",
@@ -23,10 +21,25 @@ export async function updateProfile(data: {
   });
 
   const json = await res.json();
+  if (!res.ok) throw json;
+  return json;
+}
 
-  if (!res.ok) {
-    throw json;
-  }
+export async function updateContact(data: {
+  clerk_id: string;
+  phone: string;
+  city: string;
+}) {
+  const res = await fetch(`${API_URL}/profile/contact`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(data),
+  });
 
+  const json = await res.json();
+  if (!res.ok) throw json;
   return json;
 }

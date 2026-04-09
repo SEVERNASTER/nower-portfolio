@@ -37,33 +37,6 @@ const AppContent: React.FC = () => {
   const { user, isLoaded } = useUser();
   const [synced, setSynced] = useState(false);
 
-  useEffect(() => {
-    if (!isLoaded || !user || synced) return;
-
-    const sendToBackend = async () => {
-      const email = user.primaryEmailAddress?.emailAddress;
-      const name = user.firstName || "Usuario";
-
-      if (!email) return;
-
-      if (!email.endsWith("@est.umss.edu")) {
-        alert("Solo correos institucionales");
-        return;
-      }
-
-      await fetch("http://127.0.0.1:8000/api/sync-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, name }),
-      });
-
-      setSynced(true);
-    };
-
-    sendToBackend();
-  }, [user, isLoaded, synced]);
   const activeItem = navItems.find((item) => item.path === location.pathname);
   const activeTab = activeItem ? activeItem.name : "Perfil Básico";
 
@@ -73,17 +46,22 @@ const AppContent: React.FC = () => {
       navigate(item.path);
     }
   };
+  useEffect(() => {
+    if (!isLoaded || !user || synced) return;
 
-  React.useEffect(() => {
-    if (user) {
-      console.log(" Enviando a backend:", user);
-      sendToBackend(user);
-    }
-  }, [user]);
-
+    sendToBackend(user);
+    setSynced(true);
+  }, [user, isLoaded]);
   async function sendToBackend(user: any) {
     try {
-      console.log(" Enviando usuario:", user);
+      const email = user.primaryEmailAddress?.emailAddress;
+
+      if (!email) return;
+
+      if (!email.endsWith("@est.umss.edu")) {
+        alert("Solo correos institucionales");
+        return;
+      }
 
       const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
         method: "POST",
@@ -93,7 +71,7 @@ const AppContent: React.FC = () => {
         body: JSON.stringify({
           clerk_id: user.id,
           full_name: user.fullName || user.firstName,
-          email: user.primaryEmailAddress?.emailAddress,
+          email: email,
         }),
       });
 
@@ -104,38 +82,6 @@ const AppContent: React.FC = () => {
     }
   }
 
-  useEffect(() => {
-    if (user) {
-      sendToBackend(user);
-    }
-  }, [user]);
-  useEffect(() => {
-    if (!isLoaded || !user || synced) return;
-
-    const sendToBackend = async () => {
-      const email = user.primaryEmailAddress?.emailAddress;
-      const name = user.firstName || "Usuario";
-
-      if (!email) return;
-
-      if (!email.endsWith("@est.umss.edu")) {
-        alert("Solo correos institucionales");
-        return;
-      }
-
-      await fetch("http://127.0.0.1:8000/api/sync-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, name }),
-      });
-
-      setSynced(true);
-    };
-
-    sendToBackend();
-  }, [user, isLoaded, synced]);
   return (
     <Routes>
       <Route path="/sso-callback" element={<SsoCallback />} />

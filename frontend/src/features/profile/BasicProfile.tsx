@@ -17,7 +17,6 @@ type ProfileDto = {
   status: "ACTIVO" | "INACTIVO";
 };
 
-
 // ==========================================
 // BASIC PROFILE
 // ==========================================
@@ -46,24 +45,23 @@ export const BasicProfile: React.FC = () => {
   // Cargar datos del usuario cuando esté disponible
   useEffect(() => {
     if (!user?.id) return;
-  
+
     const load = async () => {
       const data = await fetchProfile(user.id);
-  
+
       if (data) {
         setForm({
-          fullName: data.full_name || "",
-          profession: data.profession || "",
-          bio: data.bio || "",
-          phone: data.phone || "",
-          city: data.city || "",
+          fullName: data.user.full_name || "",
+          profession: data.user.profession || "",
+          bio: data.user.bio || "",
+          phone: data.user.phone || "",
+          city: data.user.city || "",
         });
       }
     };
-  
+
     load();
   }, [user?.id]);
-
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -83,20 +81,21 @@ export const BasicProfile: React.FC = () => {
 
   const handleSave = async () => {
     if (!user) return;
-  
+
     const newErrors: Record<string, string> = {};
-  
+
     if (!form.fullName.trim()) newErrors.fullName = "El nombre es obligatorio.";
-    if (!form.profession.trim()) newErrors.profession = "La profesión es obligatoria.";
+    if (!form.profession.trim())
+      newErrors.profession = "La profesión es obligatoria.";
     if (!form.bio.trim()) newErrors.bio = "La biografía es obligatoria.";
     if (!/^\d{8}$/.test(form.phone)) newErrors.phone = "Teléfono inválido.";
     if (!form.city.trim()) newErrors.city = "La ciudad es obligatoria.";
-  
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-  
+
     await saveProfile({
       clerk_id: user.id,
       full_name: form.fullName,
@@ -198,10 +197,10 @@ export const BasicProfile: React.FC = () => {
             <div className="space-y-2">
               <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <span>
-                  Nombre Completo <span className="text-red-500">*</span>
+                  Nombre Completo <span className="text-red-400">*</span>
                 </span>
                 <span
-                  className={form.fullName.length >= 100 ? "text-red-500" : ""}
+                  className={form.fullName.length >= 100 ? "text-red-400" : ""}
                 >
                   {form.fullName.length}/100
                 </span>
@@ -285,7 +284,7 @@ export const BasicProfile: React.FC = () => {
         {/* FORM DATOS DE CONTACTO */}
 
         <div className="mt-10 pt-8 border-t border-slate-300 dark:border-slate-800/60">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-8">
+          <h3 className="text-xs font-bold dark:text-slate-400 uppercase tracking-wider mb-5">
             INFORMACIÓN DE CONTACTO
           </h3>
 
@@ -349,7 +348,7 @@ export const BasicProfile: React.FC = () => {
                 name="city"
                 value={form.city}
                 onChange={(e) => {
-                  setForm({ ...form, city: e.target.value });
+                  setForm((prev) => ({ ...prev, city: e.target.value }));
                   if (errors.city) setErrors((prev) => ({ ...prev, city: "" }));
                 }}
                 required

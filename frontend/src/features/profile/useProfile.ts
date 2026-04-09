@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getProfile, updateProfile } from "./profileService";
+import { getProfile, updateProfile, updateContact } from "./profileService";
 
 export function useProfile() {
   const [loading, setLoading] = useState(false);
@@ -20,8 +20,21 @@ export function useProfile() {
     setSuccess("");
 
     try {
-      await updateProfile(data);
-      setSuccess("Perfil actualizado correctamente");
+      await Promise.all([
+        updateProfile({
+          clerk_id: data.clerk_id,
+          full_name: data.full_name,
+          profession: data.profession,
+          bio: data.bio,
+        }),
+        updateContact({
+          clerk_id: data.clerk_id,
+          phone: data.phone,
+          city: data.city,
+        }),
+      ]);
+
+      setSuccess("Perfil y contacto actualizados correctamente");
     } catch (err: any) {
       if (err.errors) {
         const formatted: Record<string, string> = {};

@@ -4,6 +4,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\ClerkAuth;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ContactController;
+
 
 // PUBLIC route. Anyone can see it.
 Route::get('/health', function () {
@@ -12,11 +15,12 @@ Route::get('/health', function () {
 
 Route::post('/sync-user', [UserController::class, 'sync']);
 
-use App\Http\Controllers\ProfileController;
 
 
 Route::get('/profile', [ProfileController::class, 'getProfile']);
 Route::put('/profile', [ProfileController::class, 'updateProfile']);
+Route::put('/profile/contact', [ContactController::class, 'updateContact']);
+
 
 // PROTECTED route. MUST have a Clerk token to enter.
 Route::middleware([ClerkAuth::class])->group(function () {
