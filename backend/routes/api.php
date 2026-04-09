@@ -18,6 +18,8 @@ use App\Http\Controllers\ProfileController;
 
 Route::post('/profile/contact', [ProfileController::class, 'saveContact']);
 
+Route::get('/profile', [ProfileController::class, 'getProfile']);
+Route::put('/profile', [ProfileController::class, 'updateProfile']);
 
 // PROTECTED route. MUST have a Clerk token to enter.
 Route::middleware([ClerkAuth::class])->group(function () {

@@ -37,4 +37,48 @@ class ProfileController extends Controller
             'user' => $user
         ]);
     }
+
+    public function getProfile(Request $request)
+{
+    $clerkId = $request->query('clerk_id');
+
+    $user = User::where('clerk_id', $clerkId)->first();
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'Usuario no encontrado'
+        ], 404);
+    }
+
+    return response()->json($user);
+}
+
+public function updateProfile(Request $request)
+{
+    $request->validate([
+        'clerk_id' => 'required|string',
+        'full_name' => 'required|string|max:150',
+        'profession' => 'nullable|string|max:100',
+        'bio' => 'nullable|string|max:500',
+    ]);
+
+    $user = User::where('clerk_id', $request->clerk_id)->first();
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'Usuario no encontrado'
+        ], 404);
+    }
+
+    $user->update([
+        'full_name' => $request->full_name,
+        'profession' => $request->profession,
+        'bio' => $request->bio,
+    ]);
+
+    return response()->json([
+        'message' => 'Perfil actualizado correctamente',
+        'user' => $user
+    ]);
+}
 }

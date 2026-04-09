@@ -49,6 +49,34 @@ export const BasicProfile: React.FC = () => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
 
+    // cargar datos desde la bd
+
+    useEffect(() => {
+      if (!user) return;
+
+      const fetchProfile = async () => {
+        try {
+          const res = await fetch(
+            `http://127.0.0.1:8000/api/profile?clerk_id=${user.id}`,
+          );
+
+          const data = await res.json();
+
+          if (res.ok) {
+            setForm({
+              fullName: data.full_name || "",
+              profession: data.profession || "",
+              bio: data.bio || "",
+            });
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      fetchProfile();
+    }, [user]);
+
     // Limpiar error del campo modificado en tiempo real
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -64,7 +92,8 @@ export const BasicProfile: React.FC = () => {
 
     const newErrors: Record<string, string> = {};
     if (!form.fullName.trim()) newErrors.fullName = "El nombre es obligatorio.";
-    if (!form.profession.trim()) newErrors.profession = "La profesión es obligatoria.";
+    if (!form.profession.trim())
+      newErrors.profession = "La profesión es obligatoria.";
     if (!form.bio.trim()) newErrors.bio = "La biografía es obligatoria.";
 
     if (Object.keys(newErrors).length > 0) {
@@ -77,16 +106,15 @@ export const BasicProfile: React.FC = () => {
     setErrors({});
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
-        method: "POST",
+      const res = await fetch("http://127.0.0.1:8000/api/profile", {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
         body: JSON.stringify({
           clerk_id: user.id,
-          full_name: form.fullName, // Enviamos lo que el usuario editó en el input
-          email: user.primaryEmailAddress?.emailAddress,
+          full_name: form.fullName,
           profession: form.profession,
           bio: form.bio,
         }),
@@ -146,7 +174,8 @@ export const BasicProfile: React.FC = () => {
 
   const validateContact = () => {
     if (!contactForm.email.includes("@")) return "Email inválido";
-    if (contactForm.phone.length < 8) return "Por favor ingresa un número de teléfono válido";
+    if (contactForm.phone.length < 8)
+      return "Por favor ingresa un número de teléfono válido";
     if (!contactForm.city) return "La ciudad es obligatoria";
     return null;
   };
@@ -393,7 +422,9 @@ export const BasicProfile: React.FC = () => {
                 disabled
                 className="w-full rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-500 cursor-not-allowed focus:outline-none transition-colors"
               />
-              <p className="text-[10px] text-slate-500 mt-1">Este correo está vinculado a tu cuenta y no puede modificarse.</p>
+              <p className="text-[10px] text-slate-500 mt-1">
+                Este correo está vinculado a tu cuenta y no puede modificarse.
+              </p>
             </div>
 
             {/* TELÉFONO */}
@@ -425,16 +456,36 @@ export const BasicProfile: React.FC = () => {
                 }
                 className="w-full rounded-xl border border-white/10 bg-white/5 backdrop-blur-md px-4 py-3 text-sm text-white hover:bg-white/10 focus:border-emerald-500 focus:bg-[#10221C] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer appearance-none"
               >
-                <option value="" className="bg-[#10221C] text-white">Selecciona una ciudad</option>
-                <option value="La Paz" className="bg-[#10221C] text-white">La Paz</option>
-                <option value="Cochabamba" className="bg-[#10221C] text-white">Cochabamba</option>
-                <option value="Santa Cruz" className="bg-[#10221C] text-white">Santa Cruz</option>
-                <option value="Oruro" className="bg-[#10221C] text-white">Oruro</option>
-                <option value="Potosí" className="bg-[#10221C] text-white">Potosí</option>
-                <option value="Chuquisaca" className="bg-[#10221C] text-white">Chuquisaca</option>
-                <option value="Tarija" className="bg-[#10221C] text-white">Tarija</option>
-                <option value="Beni" className="bg-[#10221C] text-white">Beni</option>
-                <option value="Pando" className="bg-[#10221C] text-white">Pando</option>
+                <option value="" className="bg-[#10221C] text-white">
+                  Selecciona una ciudad
+                </option>
+                <option value="La Paz" className="bg-[#10221C] text-white">
+                  La Paz
+                </option>
+                <option value="Cochabamba" className="bg-[#10221C] text-white">
+                  Cochabamba
+                </option>
+                <option value="Santa Cruz" className="bg-[#10221C] text-white">
+                  Santa Cruz
+                </option>
+                <option value="Oruro" className="bg-[#10221C] text-white">
+                  Oruro
+                </option>
+                <option value="Potosí" className="bg-[#10221C] text-white">
+                  Potosí
+                </option>
+                <option value="Chuquisaca" className="bg-[#10221C] text-white">
+                  Chuquisaca
+                </option>
+                <option value="Tarija" className="bg-[#10221C] text-white">
+                  Tarija
+                </option>
+                <option value="Beni" className="bg-[#10221C] text-white">
+                  Beni
+                </option>
+                <option value="Pando" className="bg-[#10221C] text-white">
+                  Pando
+                </option>
               </select>
             </div>
           </div>
