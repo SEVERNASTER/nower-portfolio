@@ -17,10 +17,7 @@ import type { NavItem } from "./components/navigation/Sidebar";
 import { LoginPage } from "./components/pages/LoginPage";
 import { ExperienceList } from "./features/experience/ExperienceList";
 import { RegisterPage } from "./components/pages/RegisterPage";
-import SsoCallback from './components/pages/SsoCallback';
-
-import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
-import { useUser } from "@clerk/clerk-react";
+import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
 
 const navItems: NavItem[] = [
@@ -74,36 +71,10 @@ const AppContent: React.FC = () => {
       navigate(item.path);
     }
   };
-  useEffect(() => {
-    if (!isLoaded || !user || synced) return;
 
-    const sendToBackend = async () => {
-      const email = user.primaryEmailAddress?.emailAddress;
-      const name = user.firstName || "Usuario";
-
-      if (!email) return;
-
-      if (!email.endsWith("@est.umss.edu")) {
-        alert("Solo correos institucionales");
-        return;
-      }
-
-      await fetch("http://127.0.0.1:8000/api/auth/clerk-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, name }),
-      });
-
-      setSynced(true);
-    };
-
-    sendToBackend();
-  }, [user, isLoaded, synced]);
   return (
     <Routes>
-      <Route path="/sso-callback" element={<SsoCallback />} />
+      <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
       {/* PUBLIC ROUTES (Wrapped in SignedOut) */}
       <Route
         path="/login"
