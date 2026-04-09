@@ -14,6 +14,11 @@ Route::post('/sync-user', [UserController::class, 'sync']);
 
 Route::post('/profile/contact', [UserController::class, 'saveContact']);
 
+use App\Http\Controllers\ProfileController;
+
+Route::post('/profile/contact', [ProfileController::class, 'saveContact']);
+
+
 // PROTECTED route. MUST have a Clerk token to enter.
 Route::middleware([ClerkAuth::class])->group(function () {
 
