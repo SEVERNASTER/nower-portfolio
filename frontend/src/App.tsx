@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
 const AppContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const { user, isLoaded } = useUser();
   const [synced, setSynced] = useState(false);
 
@@ -52,7 +52,7 @@ const AppContent: React.FC = () => {
       }
 
       await fetch("http://127.0.0.1:8000/api/auth/clerk-login", {
-        
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -103,7 +103,9 @@ const AppContent: React.FC = () => {
   }, [user, isLoaded, synced]);
   return (
     <Routes>
-      <Route path="/sso-callback" element={<SsoCallback />} />
+      <Route
+        path="/sso-callback" element={<AuthenticateWithRedirectCallback />}
+      />
       {/* PUBLIC ROUTES (Wrapped in SignedOut) */}
       <Route
         path="/login"
