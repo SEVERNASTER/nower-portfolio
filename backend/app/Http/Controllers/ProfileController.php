@@ -13,8 +13,13 @@ class ProfileController extends Controller
         $request->validate([
             'clerk_id' => 'required|string',
             'email' => 'required|email',
-            'phone' => 'nullable|string|max:20',
-            'city' => 'nullable|string|max:100',
+            'phone' => 'required|string|max:20',
+            'city' => 'required|string|max:100',
+        ], [
+            'phone.required' => 'El teléfono es obligatorio.',
+            'phone.max' => 'El teléfono es demasiado largo.',
+            'city.required' => 'La ciudad es obligatoria.',
+            'city.max' => 'La ciudad es demasiado larga.',
         ]);
 
         // Buscar usuario

@@ -27,6 +27,8 @@ export const BasicProfile: React.FC = () => {
     fullName: "",
     profession: "",
     bio: "",
+    phone: "+591 ",
+    city: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -95,6 +97,8 @@ export const BasicProfile: React.FC = () => {
     if (!form.profession.trim())
       newErrors.profession = "La profesión es obligatoria.";
     if (!form.bio.trim()) newErrors.bio = "La biografía es obligatoria.";
+    if (!form.phone.trim() || form.phone === "+591" || form.phone === "+591 ") newErrors.phone = "El teléfono es obligatorio.";
+    if (!form.city.trim()) newErrors.city = "La ciudad es obligatoria.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -106,8 +110,9 @@ export const BasicProfile: React.FC = () => {
     setErrors({});
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/profile", {
-        method: "PUT",
+      // Request 1: Sync Basic Profile
+      const resProfile = await fetch("http://127.0.0.1:8000/api/sync-user", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -120,31 +125,51 @@ export const BasicProfile: React.FC = () => {
         }),
       });
 
-      const data = await res.json();
+      // Request 2: Sync Contact info in ProfileController
+      const resContact = await fetch("http://127.0.0.1:8000/api/profile/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          clerk_id: user.id,
+          email: user.primaryEmailAddress?.emailAddress,
+          phone: form.phone,
+          city: form.city,
+        }),
+      });
 
-      if (!res.ok) {
-        if (res.status === 422) {
-          // Errores de validación Laravel
-          const newErrors: Record<string, string> = {};
-          if (data.errors) {
-            for (const key in data.errors) {
-              // Frontend mappings for keys: Laravel (full_name) -> React (fullName)
-              const formKey = key === "full_name" ? "fullName" : key;
-              newErrors[formKey] = data.errors[key][0];
-            }
+      const dataProfile = await resProfile.json();
+      const dataContact = await resContact.json();
+
+      if (!resProfile.ok || !resContact.ok) {
+        const errorsToSet: Record<string, string> = {};
+        
+        if (!resProfile.ok && resProfile.status === 422 && dataProfile.errors) {
+          for (const key in dataProfile.errors) {
+            const formKey = key === "full_name" ? "fullName" : key;
+            errorsToSet[formKey] = dataProfile.errors[key][0];
           }
-          setErrors(newErrors);
+        }
+        
+        if (!resContact.ok && resContact.status === 422 && dataContact.errors) {
+          for (const key in dataContact.errors) {
+            errorsToSet[key] = dataContact.errors[key][0];
+          }
+        }
+        
+        if (Object.keys(errorsToSet).length > 0) {
+          setErrors(errorsToSet);
         } else {
-          // Errores 500 u otros
           setErrors({
-            server:
-              data.message || "Ocurrió un error inesperado en el servidor.",
+            server: dataProfile.message || dataContact.message || "Ocurrió un error inesperado en el servidor.",
           });
         }
         return;
       }
 
-      setSuccess("Perfil actualizado correctamente");
+      setSuccess("Perfil y contacto actualizados correctamente");
     } catch (error) {
       console.error(error);
       setErrors({
@@ -164,78 +189,18 @@ export const BasicProfile: React.FC = () => {
     id: user?.id || mockProfile.id,
   } as ProfileDto);
 
-  //datos de contacto
-
-  const [contactForm, setContactForm] = useState({
-    email: "",
-    phone: "+591 ",
-    city: "",
-  });
-
-  const validateContact = () => {
-    if (!contactForm.email.includes("@")) return "Email inválido";
-    if (contactForm.phone.length < 8)
-      return "Por favor ingresa un número de teléfono válido";
-    if (!contactForm.city) return "La ciudad es obligatoria";
-    return null;
-  };
-
-  const handleSaveContact = async () => {
-    setContactError("");
-    setContactSuccess("");
-
-    const error = validateContact();
-    if (error) {
-      setContactError(error);
-      return;
-    }
-
-    if (!user) return;
-
-    try {
-      const res = await fetch("http://127.0.0.1:8000/api/profile/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          clerk_id: user.id,
-          email: contactForm.email,
-          phone: contactForm.phone,
-          city: contactForm.city,
-        }),
-      });
-
-      if (!res.ok) {
-        setContactError("Error al guardar contacto");
-        return;
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    if (!val.startsWith("+591 ")) {
+      if (val.startsWith("+591")) {
+        val = "+591 " + val.slice(4);
+      } else {
+        val = "+591 ";
       }
-
-      setContactSuccess("Contacto guardado correctamente");
-    } catch (err) {
-      setContactError("Error de conexión con el servidor");
     }
+    setForm({ ...form, phone: val });
+    if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }));
   };
-
-  useEffect(() => {
-    if (user) {
-      setContactForm((prev) => ({
-        ...prev,
-        email: user.primaryEmailAddress?.emailAddress || "",
-      }));
-    }
-  }, [user]);
-
-  const [contactSuccess, setContactSuccess] = useState("");
-  const [contactError, setContactError] = useState("");
-
-  useEffect(() => {
-    if (contactSuccess) {
-      const timer = setTimeout(() => setContactSuccess(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [contactSuccess]);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#17262C] shadow-sm border border-slate-200 dark:border-slate-800/60">
@@ -392,107 +357,80 @@ export const BasicProfile: React.FC = () => {
         </form>
         {/* FORM DATOS DE CONTACTO */}
 
-        <div className="mt-10 pt-8 border-t border-slate-800/60">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-6">
+        <div className="mt-10 pt-8 border-t border-slate-300 dark:border-slate-800/60">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-8">
             INFORMACIÓN DE CONTACTO
           </h3>
-          {contactSuccess && (
-            <div className="mb-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 flex items-center gap-2 text-emerald-400 text-sm">
-              <CheckCircle2 className="w-4 h-4" />
-              {contactSuccess}
-            </div>
-          )}
-
-          {contactError && (
-            <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-2 text-red-400 text-sm">
-              <AlertCircle className="w-4 h-4" />
-              {contactError}
-            </div>
-          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* EMAIL */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Email
               </label>
               <input
                 type="email"
-                value={contactForm.email}
+                value={user?.primaryEmailAddress?.emailAddress || ""}
                 disabled
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-500 cursor-not-allowed focus:outline-none transition-colors"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/50 px-4 py-3 text-sm text-slate-500 cursor-not-allowed focus:outline-none transition-colors opacity-80"
               />
-              <p className="text-[10px] text-slate-500 mt-1">
-                Este correo está vinculado a tu cuenta y no puede modificarse.
-              </p>
+              <p className="text-[10px] text-slate-500 mt-1">Este correo está vinculado a tu cuenta y no se puede modificar.</p>
             </div>
 
             {/* TELÉFONO */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Teléfono
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Teléfono <span className="text-red-500">*</span>
               </label>
               <input
-                type="text"
+                type="tel"
                 name="phone"
-                value={contactForm.phone}
-                onChange={(e) =>
-                  setContactForm({ ...contactForm, phone: e.target.value })
-                }
-                className="w-full rounded-xl border border-slate-700 bg-[#10221C] px-4 py-3 text-sm text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                value={form.phone}
+                onChange={handlePhoneChange}
+                required
+                className={`w-full rounded-xl border ${errors.phone ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
               />
+              {errors.phone && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.phone}
+                </p>
+              )}
             </div>
 
             {/* CIUDAD FULL WIDTH */}
             <div className="space-y-2 md:col-span-2">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Ciudad <span className="text-red-500">*</span>
               </label>
               <select
                 name="city"
-                value={contactForm.city}
-                onChange={(e) =>
-                  setContactForm({ ...contactForm, city: e.target.value })
-                }
-                className="w-full rounded-xl border border-white/10 bg-white/5 backdrop-blur-md px-4 py-3 text-sm text-white hover:bg-white/10 focus:border-emerald-500 focus:bg-[#10221C] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer appearance-none"
+                value={form.city}
+                onChange={(e) => {
+                  setForm({ ...form, city: e.target.value });
+                  if (errors.city) setErrors((prev) => ({ ...prev, city: "" }));
+                }}
+                required
+                className={`w-full rounded-xl border ${errors.city ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-transparent"} bg-white/50 dark:bg-white/5 backdrop-blur-md px-4 py-3 text-sm text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 focus:border-emerald-500 focus:bg-white dark:focus:bg-[#10221C] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer`}
               >
-                <option value="" className="bg-[#10221C] text-white">
-                  Selecciona una ciudad
-                </option>
-                <option value="La Paz" className="bg-[#10221C] text-white">
-                  La Paz
-                </option>
-                <option value="Cochabamba" className="bg-[#10221C] text-white">
-                  Cochabamba
-                </option>
-                <option value="Santa Cruz" className="bg-[#10221C] text-white">
-                  Santa Cruz
-                </option>
-                <option value="Oruro" className="bg-[#10221C] text-white">
-                  Oruro
-                </option>
-                <option value="Potosí" className="bg-[#10221C] text-white">
-                  Potosí
-                </option>
-                <option value="Chuquisaca" className="bg-[#10221C] text-white">
-                  Chuquisaca
-                </option>
-                <option value="Tarija" className="bg-[#10221C] text-white">
-                  Tarija
-                </option>
-                <option value="Beni" className="bg-[#10221C] text-white">
-                  Beni
-                </option>
-                <option value="Pando" className="bg-[#10221C] text-white">
-                  Pando
-                </option>
+                <option value="" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">Selecciona una ciudad</option>
+                <option value="La Paz" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">La Paz</option>
+                <option value="Cochabamba" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">Cochabamba</option>
+                <option value="Santa Cruz" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">Santa Cruz</option>
+                <option value="Oruro" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">Oruro</option>
+                <option value="Potosí" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">Potosí</option>
+                <option value="Chuquisaca" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">Chuquisaca</option>
+                <option value="Tarija" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">Tarija</option>
+                <option value="Beni" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">Beni</option>
+                <option value="Pando" className="bg-white dark:bg-[#10221C] text-slate-900 dark:text-white">Pando</option>
               </select>
+              {errors.city && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.city}
+                </p>
+              )}
             </div>
-          </div>
-
-          {/* BOTONES */}
-          <div className="flex justify-end gap-3 mt-6">
-            <Button onClick={handleSaveContact}>Guardar contacto</Button>
           </div>
         </div>
       </div>

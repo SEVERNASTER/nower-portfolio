@@ -16,12 +16,14 @@ class UserController extends Controller
                 'clerk_id' => 'required|string',
                 'full_name' => 'required|string|max:100',
                 'email' => 'required|email|max:150',
-                'profession' => 'nullable|string|max:80',
-                'bio' => 'nullable|string|max:500',
+                'profession' => 'required|string|max:80',
+                'bio' => 'required|string|max:500',
             ], [
                 'full_name.required' => 'El nombre completo es obligatorio.',
                 'full_name.max' => 'El nombre no puede exceder 100 caracteres.',
+                'profession.required' => 'La profesión es obligatoria.',
                 'profession.max' => 'La profesión no puede exceder 80 caracteres.',
+                'bio.required' => 'La biografía es obligatoria.',
                 'bio.max' => 'La biografía no puede exceder 500 caracteres.',
             ]);
 
@@ -39,8 +41,8 @@ class UserController extends Controller
                 [
                     'full_name' => $request->full_name,
                     'email' => $request->email,
-                    'profession' => $request->profession ?? null,
-                    'bio' => $request->bio ?? null,
+                    'profession' => $request->profession,
+                    'bio' => $request->bio,
                     'role' => $request->role ?? 'user',
                 ]
             );
