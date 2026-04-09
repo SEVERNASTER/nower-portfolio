@@ -9,7 +9,6 @@ const ALLOWED_DOMAINS = ["@est.umss.edu", "@ms.umss.edu"];
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoaded, signUp, setActive } = useSignUp();
-
   // Standard UI State
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -28,7 +27,9 @@ export const RegisterPage: React.FC = () => {
   });
 
   const isPasswordValid = form.password.length >= 8; // Clerk's default minimum is usually 8
-  const passwordsMatch = form.password !== "" && form.password === form.confirmPassword;
+  const passwordsMatch =
+    form.password !== "" && form.password === form.confirmPassword;
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -49,9 +50,13 @@ export const RegisterPage: React.FC = () => {
     setError("");
 
     try {
-      const isDomainValid = ALLOWED_DOMAINS.some(domain => form.emailAddress.toLowerCase().endsWith(domain));
+      const isDomainValid = ALLOWED_DOMAINS.some((domain) =>
+        form.emailAddress.toLowerCase().endsWith(domain),
+      );
       if (!isDomainValid) {
-        setError(`Debes registrarte con tu correo institucional (${ALLOWED_DOMAINS.join(" o ")})`);
+        setError(
+          `Debes registrarte con tu correo institucional (${ALLOWED_DOMAINS.join(" o ")})`,
+        );
         return;
       }
       // 1. Create the user in Clerk
@@ -110,23 +115,33 @@ export const RegisterPage: React.FC = () => {
           {/* ... Your exact same left-side branding code here ... */}
           <div>
             <div className="flex items-center gap-4 mb-12">
-              <img src="/nowerLogo.png" alt="NOWER Logo" className="h-16 w-auto object-contain" />
+              <img
+                src="/nowerLogo.png"
+                alt="NOWER Logo"
+                className="h-16 w-auto object-contain"
+              />
               <div className="flex flex-col justify-center">
-                <h1 className="text-4xl font-black tracking-tight text-white leading-none">NOWER</h1>
-                <p className="text-[10px] -mt-6 sm:text-[11px] font-semibold text-slate-300 tracking-widest uppercase">Efficient Web Performance</p>
+                <h1 className="text-4xl font-black tracking-tight text-white leading-none">
+                  NOWER
+                </h1>
+                <p className="text-[10px] -mt-6 sm:text-[11px] font-semibold text-slate-300 tracking-widest uppercase">
+                  Efficient Web Performance
+                </p>
               </div>
             </div>
             <h1 className="text-4xl font-bold leading-tight">
-              Tu Portafolio y <br /><span className="text-purple-400">Espacio de Trabajo</span>
+              Tu Portafolio y <br />
+              <span className="text-purple-400">Espacio de Trabajo</span>
             </h1>
-            <p className="mt-4 text-slate-300">Regístrate y comienza a gestionar tu perfil profesional.</p>
+            <p className="mt-4 text-slate-300">
+              Regístrate y comienza a gestionar tu perfil profesional.
+            </p>
           </div>
           <p className="text-sm text-slate-400">© 2026 NOWER Workspaces</p>
         </div>
 
         {/* RIGHT SIDE (Dynamic Form) */}
         <div className="bg-white p-10 flex flex-col justify-center">
-
           {/* INLINE ERROR STATE (Replaces `alert()`) */}
           {error && (
             <div className="mb-4 p-3 text-sm text-red-500 bg-red-100/50 border border-red-200 rounded-lg">
@@ -137,8 +152,12 @@ export const RegisterPage: React.FC = () => {
           {/* DYNAMIC RENDER: Show OTP Form OR Registration Form */}
           {!pendingVerification ? (
             <>
-              <h2 className="text-2xl font-bold mb-2 text-black">Crear cuenta</h2>
-              <p className="text-sm text-slate-500 mb-6">Completa los datos para registrarte</p>
+              <h2 className="text-2xl font-bold mb-2 text-black">
+                Crear cuenta
+              </h2>
+              <p className="text-sm text-slate-500 mb-6">
+                Completa los datos para registrarte
+              </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <input
@@ -160,7 +179,8 @@ export const RegisterPage: React.FC = () => {
                   required
                 />
                 <p className="text-[10px] font-medium text-slate-500 px-1 italic -mt-2">
-                  * Solo se permite el registro con correos institucionales (@est.umss.edu o @ms.umss.edu)
+                  * Solo se permite el registro con correos institucionales
+                  (@est.umss.edu o @ms.umss.edu)
                 </p>
 
                 <div className="relative">
@@ -176,12 +196,22 @@ export const RegisterPage: React.FC = () => {
                     className="w-full rounded-xl border border-slate-300 bg-white pl-11 pr-12 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                     required
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600">
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
                 {form.password !== "" && !isPasswordValid && (
-                  <p className="text-xs text-red-500">La contraseña debe tener al menos 8 caracteres.</p>
+                  <p className="text-xs text-red-500">
+                    La contraseña debe tener al menos 8 caracteres.
+                  </p>
                 )}
 
                 <div className="relative">
@@ -197,19 +227,31 @@ export const RegisterPage: React.FC = () => {
                     className="w-full rounded-xl border border-slate-300 bg-white pl-11 pr-12 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                     required
                   />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600">
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
                 {form.confirmPassword !== "" && !passwordsMatch && (
-                  <p className="text-xs text-red-500">Las contraseñas no coinciden.</p>
+                  <p className="text-xs text-red-500">
+                    Las contraseñas no coinciden.
+                  </p>
                 )}
 
                 <button
                   type="submit"
                   disabled={isLoading}
                   className="w-full py-3 rounded-lg text-white font-medium disabled:opacity-50"
-                  style={{ background: "linear-gradient(90deg, #9333ea, #7c3aed)" }}
+                  style={{
+                    background: "linear-gradient(90deg, #9333ea, #7c3aed)",
+                  }}
                 >
                   {isLoading ? "Cargando..." : "Registrarse"}
                 </button>
@@ -217,7 +259,10 @@ export const RegisterPage: React.FC = () => {
 
               <p className="text-sm text-center mt-6">
                 ¿Ya tienes cuenta?{" "}
-                <span className="text-purple-600 cursor-pointer font-medium" onClick={() => navigate("/login")}>
+                <span
+                  className="text-purple-600 cursor-pointer font-medium"
+                  onClick={() => navigate("/login")}
+                >
                   Inicia sesión
                 </span>
               </p>
@@ -225,8 +270,13 @@ export const RegisterPage: React.FC = () => {
           ) : (
             // --- VERIFICATION UI ---
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold mb-2 text-black">Verifica tu correo</h2>
-              <p className="text-sm text-slate-500 mb-6">Hemos enviado un código de 6 dígitos a <strong>{form.emailAddress}</strong></p>
+              <h2 className="text-2xl font-bold mb-2 text-black">
+                Verifica tu correo
+              </h2>
+              <p className="text-sm text-slate-500 mb-6">
+                Hemos enviado un código de 6 dígitos a{" "}
+                <strong>{form.emailAddress}</strong>
+              </p>
 
               <form onSubmit={handleVerify} className="space-y-4">
                 <input
@@ -241,7 +291,9 @@ export const RegisterPage: React.FC = () => {
                   type="submit"
                   disabled={isLoading}
                   className="w-full py-3 rounded-lg text-white font-medium disabled:opacity-50"
-                  style={{ background: "linear-gradient(90deg, #10b981, #059669)" }}
+                  style={{
+                    background: "linear-gradient(90deg, #10b981, #059669)",
+                  }}
                 >
                   {isLoading ? "Verificando..." : "Verificar Código"}
                 </button>

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Lock, Layers, ShieldCheck } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useSignIn } from "@clerk/clerk-react";
+import { useSignIn  } from "@clerk/clerk-react";
 const ALLOWED_DOMAINS = ["@est.umss.edu", "@ms.umss.edu"];
 
 export const LoginPage: React.FC = () => {
@@ -14,7 +14,6 @@ export const LoginPage: React.FC = () => {
   const [isMicrosoftAuthLoading, setIsMicrosoftAuthLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
   // Handle errors from redirect (URL params)
   React.useEffect(() => {
     const errorParam = searchParams.get("error") || searchParams.get("clerk_error");
@@ -32,6 +31,7 @@ export const LoginPage: React.FC = () => {
 
   // Initialize Clerk's signIn object
   const { signIn, isLoaded } = useSignIn();
+
 
   // Handle Custom Email/Password Login via Clerk
   const handleLogin = async (e: React.FormEvent) => {

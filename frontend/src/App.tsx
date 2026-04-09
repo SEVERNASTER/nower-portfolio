@@ -30,38 +30,10 @@ const navItems: NavItem[] = [
 const AppContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const { user, isLoaded } = useUser();
   const [synced, setSynced] = useState(false);
 
-  useEffect(() => {
-    if (!isLoaded || !user || synced) return;
-
-    const sendToBackend = async () => {
-      const email = user.primaryEmailAddress?.emailAddress;
-      const name = user.firstName || "Usuario";
-
-      if (!email) return;
-
-      if (!email.endsWith("@est.umss.edu")) {
-        alert("Solo correos institucionales");
-        return;
-      }
-
-      await fetch("http://127.0.0.1:8000/api/auth/clerk-login", {
-        
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, name }),
-      });
-
-      setSynced(true);
-    };
-
-    sendToBackend();
-  }, [user, isLoaded, synced]);
   const activeItem = navItems.find((item) => item.path === location.pathname);
   const activeTab = activeItem ? activeItem.name : "Perfil Básico";
 
@@ -72,6 +44,43 @@ const AppContent: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+    if (synced) return;
+
+    sendToBackend(user);
+    setSynced(true);
+  }, [user, isLoaded, synced]);
+
+  async function sendToBackend(user: any) {
+    try {
+      const email = user.primaryEmailAddress?.emailAddress;
+
+      if (!email) return;
+
+      if (!email.endsWith("@est.umss.edu")) {
+        alert("Solo correos institucionales");
+        return;
+      }
+
+      const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clerk_id: user.id,
+          full_name: user.fullName || user.firstName,
+          email: email,
+        }),
+      });
+
+      const data = await res.json();
+      console.log(" Guardado en BD:", data);
+    } catch (error) {
+      console.error(" Error enviando usuario:", error);
+    }
+  }
   return (
     <Routes>
       <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
