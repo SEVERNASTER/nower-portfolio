@@ -58,9 +58,24 @@ class UserController extends Controller
             $user->clerk_id = $request->clerk_id;
             $user->full_name = $request->full_name;
             $user->email = $request->email;
-            $user->profession = $request->profession ?? null;
-            $user->bio = $request->bio ?? null;
-            $user->role = $request->role ?? 'user';
+
+            if ($request->filled('profession')) {
+                $user->profession = $request->profession;
+            }
+
+            if ($request->filled('bio')) {
+                $user->bio = $request->bio;
+            }
+
+            if ($request->filled('phone')) {
+                $user->phone = $request->phone;
+            }
+
+            if ($request->filled('city')) {
+                $user->city = $request->city;
+            }
+
+            $user->role = $request->role ?? $user->role ?? 'user';
             $user->save();
 
             // Procesar imagen si se envía
@@ -111,19 +126,6 @@ class UserController extends Controller
                     }
                 }
             }
-                    'message' => 'Error de validación',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            // Crear o actualizar usuario
-            $user = User::updateOrCreate(
-                ['clerk_id' => $request->clerk_id],
-                [
-                    'full_name' => $request->full_name,
-                    'email' => $request->email,
-                ]
-            );
 
             return response()->json([
                 'success' => true,
