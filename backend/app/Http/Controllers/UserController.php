@@ -20,6 +20,7 @@ class UserController extends Controller
                 'email' => 'required|email|max:150',
                 'profession' => 'nullable|string|max:80',
                 'bio' => 'nullable|string|max:500',
+                'imagen_profile' => 'nullable|url|max:255',
                 'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             ], [
                 'full_name.required' => 'El nombre completo es obligatorio.',
@@ -78,52 +79,39 @@ class UserController extends Controller
             $user->role = $request->role ?? $user->role ?? 'user';
             $user->save();
 
-            // Procesar imagen si se envía
-            if ($request->hasFile('image')) {
+            // Guardar URL remota de imagen si se recibe
+            if ($request->filled('imagen_profile')) {
+                $user->imagen_profile = $request->input('imagen_profile');
+                $user->save();
+            } elseif ($request->hasFile('image')) {
                 $file = $request->file('image');
-                
+
                 try {
                     // Crear ID público único
                     $publicId = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '_', $user->full_name)) . '_' . time();
 
-                    // Usar CloudinaryService
+                    // Subir a Cloudinary
                     $cloudinaryService = new CloudinaryService();
                     $uploadResult = $cloudinaryService->upload($file, $publicId);
 
-                    if ($uploadResult['success']) {
-                        // Guardar URL en la base de datos
-                        $user->imagen_profile = $uploadResult['url'];
-                        $user->save();
-                    } else {
-                        // Fallback local: guardar archivo en public/profile_images
-                        try {
-                            $localUrl = $this->saveLocalImage($file, $publicId);
-                            $user->imagen_profile = $localUrl;
-                            $user->save();
-                        } catch (\Exception $localException) {
-                            \Log::error('Local image fallback failed: ' . $localException->getMessage());
-                            return response()->json([
-                                'success' => false,
-                                'message' => 'Error al subir imagen',
-                                'error' => $uploadResult['error'] ?? $localException->getMessage()
-                            ], 500);
-                        }
-                    }
-                    
-                } catch (\Exception $e) {
-                    \Log::error('Upload Error: ' . $e->getMessage());
-                    try {
+                    if (!isset($uploadResult['success']) || !$uploadResult['success']) {
+                        \Log::warning('Cloudinary falló, usando fallback local: ' . ($uploadResult['error'] ?? 'Fallo en la subida a Cloudinary'));
+
                         $localUrl = $this->saveLocalImage($file, $publicId);
                         $user->imagen_profile = $localUrl;
                         $user->save();
-                    } catch (\Exception $localException) {
-                        \Log::error('Local image fallback failed: ' . $localException->getMessage());
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Error al subir imagen a Cloudinary',
-                            'error' => $e->getMessage()
-                        ], 500);
+                    } else {
+                        $user->imagen_profile = $uploadResult['url'];
+                        $user->save();
                     }
+                } catch (\Exception $e) {
+                    \Log::error('Upload Error: ' . $e->getMessage());
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Error al subir imagen',
+                        'error' => $e->getMessage(),
+                    ], 500);
                 }
             }
 
@@ -145,16 +133,16 @@ class UserController extends Controller
 
     private function saveLocalImage(UploadedFile $file, string $publicId): string
     {
-        $storagePath = public_path('profile_images');
-        if (!is_dir($storagePath) && !mkdir($storagePath, 0755, true) && !is_dir($storagePath)) {
-            throw new \Exception('No se pudo crear el directorio de imágenes locales.');
+        $folder = public_path('profile_images');
+        if (!is_dir($folder)) {
+            mkdir($folder, 0755, true);
         }
 
-        $extension = $file->getClientOriginalExtension() ?: $file->extension();
-        $filename = $publicId . '.' . ($extension ?: 'png');
-
-        $file->move($storagePath, $filename);
+        $extension = $file->getClientOriginalExtension() ?: 'png';
+        $filename = $publicId . '.' . $extension;
+        $file->move($folder, $filename);
 
         return asset('profile_images/' . $filename);
     }
+
 }
