@@ -36,3 +36,18 @@ Route::middleware([ClerkAuth::class])->group(function () {
         'index', 'store', 'update', 'destroy',
     ]);
 });
+
+// ADMIN routes. MUST have Clerk token AND Admin role to enter.
+Route::middleware([\App\Http\Middleware\ClerkAuth::class, \App\Http\Middleware\AdminAuth::class])->group(function () {
+    
+    // Endpoint para frontend de verificación si el AdminAuth es exitoso
+    Route::get('/admin/validate', function (Request $request) {
+        $user = $request->attributes->get('auth_user');
+        return response()->json([
+            'message' => 'Validación de administrador exitosa',
+            'user' => $user
+        ]);
+    });
+
+    // Aquí irían el resto de rutas de moderación y reportes...
+});

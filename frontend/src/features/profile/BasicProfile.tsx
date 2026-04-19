@@ -334,14 +334,6 @@ export const BasicProfile: React.FC = () => {
                 ? "PERFIL ACTIVO"
                 : "PERFIL INACTIVO"}
             </Badge>
-            <Button
-              onClick={handleSave}
-              disabled={loading}
-              variant="primary"
-              icon={Sparkles}
-            >
-              {loading ? "Guardando..." : "Guardar Cambios"}
-            </Button>
           </div>
         </div>
 
@@ -400,7 +392,9 @@ export const BasicProfile: React.FC = () => {
             {/* Field: Profesión */}
             <div className="space-y-2">
               <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <span>Profesión / Cargo</span>
+                <span>
+                  Profesión / Cargo <span className="text-red-400">*</span>
+                </span>
                 <span
                   className={form.profession.length >= 80 ? "text-red-500" : ""}
                 >
@@ -414,6 +408,7 @@ export const BasicProfile: React.FC = () => {
                 onChange={handleChange}
                 placeholder={profile.role}
                 maxLength={80}
+                required
                 className={`w-full rounded-xl border ${errors.profession ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
               />
               {errors.profession && (
@@ -428,7 +423,9 @@ export const BasicProfile: React.FC = () => {
           {/* Field: Biografía */}
           <div className="space-y-2">
             <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              <span>Biografía Profesional</span>
+              <span>
+                Biografía Profesional <span className="text-red-400">*</span>
+              </span>
               <span
                 className={
                   form.bio.length >= 500
@@ -446,6 +443,7 @@ export const BasicProfile: React.FC = () => {
               onChange={handleChange}
               placeholder={profile.bio}
               maxLength={500}
+              required
               className={`w-full resize-none rounded-xl border ${errors.bio ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm leading-relaxed text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
             />
             {errors.bio && (
@@ -598,6 +596,20 @@ export const BasicProfile: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Botón Guardar - Movido al final */}
+          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800/60 flex items-center justify-end">
+            <Button
+              onClick={handleSave}
+              disabled={loading}
+              variant="primary"
+              icon={Sparkles}
+              className="w-full sm:w-auto px-8"
+            >
+              {loading ? "Guardando..." : "Guardar Cambios"}
+            </Button>
+          </div>
+
         </div>
       </div>
     </div>

