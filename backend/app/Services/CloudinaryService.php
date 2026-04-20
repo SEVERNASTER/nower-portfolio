@@ -45,15 +45,14 @@ class CloudinaryService
      */
     public function upload(UploadedFile $file, string $publicId, string $folder = 'profile_images'): array
     {
-        $path = $file->getRealPath();
+        $realPath = $file->getRealPath();
 
-        if (!$path || !file_exists($path)) {
+        if (!$realPath || !file_exists($realPath)) {
             throw new \Exception('El archivo temporal no existe o no es legible.');
         }
 
         // El SDK de Cloudinary PHP sube directamente desde la ruta temporal del servidor.
-        // PHP ya gestiona el archivo en /tmp — no necesitamos moverlo a disco.
-        $result = $this->cloudinary->uploadApi()->upload($path, [
+        $uploadOptions = [
             'folder'        => $folder,
             'public_id'     => $publicId,
             'overwrite'     => true,
@@ -62,7 +61,13 @@ class CloudinaryService
             'transformation' => [
                 ['width' => 400, 'height' => 400, 'crop' => 'fill', 'gravity' => 'face'],
             ],
-        ]);
+        ];
+
+        if ($uploadPreset = config('cloudinary.upload_preset')) {
+            $uploadOptions['upload_preset'] = $uploadPreset;
+        }
+
+        $result = $this->cloudinary->uploadApi()->upload($realPath, $uploadOptions);
 
         if (empty($result['secure_url'])) {
             throw new \Exception('Cloudinary no devolvió una URL segura.');

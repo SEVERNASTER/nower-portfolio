@@ -66,6 +66,11 @@ class UserController extends Controller
 
             // Opción B: se sube un archivo — se manda a Cloudinary, NUNCA a disco local
             } elseif ($request->hasFile('image')) {
+                Log::info('ENTRA A CLOUDINARY', [
+                    'filename' => $request->file('image')->getClientOriginalName(),
+                    'size' => $request->file('image')->getSize(),
+                ]);
+
                 $file = $request->file('image');
 
                 // Generar public_id limpio para Cloudinary
