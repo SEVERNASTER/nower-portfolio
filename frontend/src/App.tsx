@@ -48,11 +48,11 @@ const AppContent: React.FC = () => {
     if (!isLoaded || !user) return;
     if (synced) return;
 
-    sendToBackend(user);
+    syncBackendUser(user);
     setSynced(true);
   }, [user, isLoaded, synced]);
 
-  async function sendToBackend(user: any) {
+  async function syncBackendUser(user: any) {
     try {
       const email = user.primaryEmailAddress?.emailAddress;
 
@@ -63,22 +63,37 @@ const AppContent: React.FC = () => {
         return;
       }
 
+      const profileRes = await fetch(`http://127.0.0.1:8000/api/profile?clerk_id=${encodeURIComponent(user.id)}`, {
+        headers: { Accept: "application/json" },
+      });
+
+      if (profileRes.ok) {
+        // El usuario ya existe en backend; no debemos reescribir datos al refrescar.
+        return;
+      }
+
+      if (profileRes.status !== 404) {
+        console.error("Error verificando usuario en backend:", await profileRes.json());
+        return;
+      }
+
       const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           clerk_id: user.id,
           full_name: user.fullName || user.firstName,
-          email: email,
+          email,
         }),
       });
 
       const data = await res.json();
-      console.log(" Guardado en BD:", data);
+      console.log("Usuario creado en backend:", data);
     } catch (error) {
-      console.error(" Error enviando usuario:", error);
+      console.error("Error sincronizando usuario en backend:", error);
     }
   }
   return (

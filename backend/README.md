@@ -96,3 +96,74 @@ http://localhost:8000/api/health
 ```
 
 Si todo está bien configurado, recibirás un mensaje confirmando que el estado es "ok". Si recibes un mensaje de error, revisa nuevamente que tu usuario y contraseña en el archivo `.env` sean los mismos que configuraste al instalar PostgreSQL.
+
+---
+
+## ⚠️ Problema SSL con Cloudinary (Windows)
+
+Si al subir imágenes a Cloudinary aparece el siguiente error:
+
+```text
+cURL error 60: SSL certificate problem: unable to get local issuer certificate
+```
+
+Esto ocurre porque PHP/cURL no tiene configurado un certificado SSL válido en tu entorno local.
+
+### Solución completa paso a paso
+
+1. **Descargar certificado SSL**
+   - Abre: https://curl.se/ca/cacert.pem
+   - Descarga el archivo `cacert.pem`.
+
+2. **Crear carpeta en PHP**
+   - Localiza tu instalación de PHP, por ejemplo:
+     ```
+     C:\Program Files\php-8.5.4-Win32-vs17-x64\
+     ```
+   - Crea la carpeta:
+     ```
+     extras\ssl\
+     ```
+   - La ruta final debe ser:
+     ```
+     C:\Program Files\php-8.5.4-Win32-vs17-x64\extras\ssl\
+     ```
+
+3. **Guardar el archivo**
+   - Copia el `cacert.pem` descargado a:
+     ```text
+     C:\Program Files\php-8.5.4-Win32-vs17-x64\extras\ssl\cacert.pem
+     ```
+
+4. **Configurar `php.ini`**
+   - Abre como Administrador el archivo:
+     ```text
+     C:\Program Files\php-8.5.4-Win32-vs17-x64\php.ini
+     ```
+   - Agrega al final del archivo estas líneas:
+     ```ini
+     curl.cainfo = "C:\Program Files\php-8.5.4-Win32-vs17-x64\extras\ssl\cacert.pem"
+     openssl.cafile = "C:\Program Files\php-8.5.4-Win32-vs17-x64\extras\ssl\cacert.pem"
+     ```
+
+5. **Reiniciar el servidor**
+   ```bash
+   php artisan serve
+   ```
+
+6. **Verificar configuración**
+   Ejecuta:
+   ```bash
+   php -i | findstr cafile
+   ```
+   Resultado esperado:
+   ```text
+   openssl.cafile => C:\Program Files\php-8.5.4-Win32-vs17-x64\extras\ssl\cacert.pem
+   ```
+
+### Notas importantes
+
+- Este problema es específico del entorno local en Windows.
+- No modifiques el código del proyecto para solucionarlo.
+- No uses `verify => false` en las llamadas HTTP/Cloudinary.
+- Una vez configurado correctamente, las subidas a Cloudinary deberían funcionar sin errores 500 ni falsos bloqueos de CORS.
