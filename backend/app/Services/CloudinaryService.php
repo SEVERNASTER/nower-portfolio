@@ -16,7 +16,10 @@ class CloudinaryService
         $apiSecret = config('cloudinary.api_secret');
 
         if (!$cloudName || !$apiKey || !$apiSecret) {
-            throw new \Exception('Credenciales de Cloudinary no configuradas');
+            throw new \Exception(
+                'Credenciales de Cloudinary no configuradas. ' .
+                'Asegúrate de definir CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET en tu .env'
+            );
         }
 
         $this->cloudinary = new Cloudinary([
@@ -25,44 +28,50 @@ class CloudinaryService
                 'api_key' => $apiKey,
                 'api_secret' => $apiSecret,
             ],
+            'url' => [
+                'secure' => true,   // siempre HTTPS
+            ],
         ]);
     }
 
     /**
-     * Subir archivo a Cloudinary y devolver URL segura.
+     * Sube un archivo a Cloudinary directamente desde su ruta temporal.
+     * NO guarda ningún archivo en disco local.
+     *
+     * @param  UploadedFile  $file      Archivo recibido por el endpoint
+     * @param  string        $publicId  Identificador público en Cloudinary
+     * @param  string        $folder    Carpeta dentro de Cloudinary
+     * @return array{success: bool, url?: string, public_id?: string, error?: string}
      */
     public function upload(UploadedFile $file, string $publicId, string $folder = 'profile_images'): array
     {
-        try {
-            $path = $file->getRealPath();
+        $path = $file->getRealPath();
 
-            if (!$path || !file_exists($path)) {
-                throw new \Exception('El archivo temporal no existe');
-            }
-
-            $uploadResult = $this->cloudinary->uploadApi()->upload($path, [
-                'folder' => $folder,
-                'public_id' => $publicId,
-                'overwrite' => true,
-                'resource_type' => 'image',
-            ]);
-
-            if (!isset($uploadResult['secure_url'])) {
-                throw new \Exception('No se obtuvo URL segura de Cloudinary');
-            }
-
-            return [
-                'success' => true,
-                'url' => $uploadResult['secure_url'],
-                'public_id' => $uploadResult['public_id'] ?? $publicId,
-            ];
-        } catch (\Exception $e) {
-            \Log::error('Cloudinary Upload Error: ' . $e->getMessage());
-
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-            ];
+        if (!$path || !file_exists($path)) {
+            throw new \Exception('El archivo temporal no existe o no es legible.');
         }
+
+        // El SDK de Cloudinary PHP sube directamente desde la ruta temporal del servidor.
+        // PHP ya gestiona el archivo en /tmp — no necesitamos moverlo a disco.
+        $result = $this->cloudinary->uploadApi()->upload($path, [
+            'folder'        => $folder,
+            'public_id'     => $publicId,
+            'overwrite'     => true,
+            'resource_type' => 'image',
+            // Transformaciones opcionales al subir
+            'transformation' => [
+                ['width' => 400, 'height' => 400, 'crop' => 'fill', 'gravity' => 'face'],
+            ],
+        ]);
+
+        if (empty($result['secure_url'])) {
+            throw new \Exception('Cloudinary no devolvió una URL segura.');
+        }
+
+        return [
+            'success'   => true,
+            'url'       => $result['secure_url'],
+            'public_id' => $result['public_id'] ?? "{$folder}/{$publicId}",
+        ];
     }
 }
