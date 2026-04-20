@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Avatar }  from '../../components/ui/Avatar';
-import { Button }  from '../../components/ui/Button';
-import { Badge }   from '../../components/ui/Badge';
+import { Avatar } from '../../components/ui/Avatar';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
 import { useUser } from '@clerk/clerk-react';
 import { mockProfile } from '../../data/mockData';
-import { useProfile }  from './useProfile';
-import { syncUser, getProfile }    from './profileService';
+import { useProfile } from './useProfile';
+import { syncUser, getProfile } from './profileService';
 
 // ─── BasicProfile ─────────────────────────────────────────────────────────────
 
@@ -23,9 +23,9 @@ export const BasicProfile: React.FC = () => {
     fullName: '', profession: '', bio: '', phone: '', city: '',
   });
 
-  const [selectedImage,   setSelectedImage]   = useState<File | null>(null);
-  const [previewImage,    setPreviewImage]     = useState<string | null>(null);
-  const [backendImageUrl, setBackendImageUrl]  = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [backendImageUrl, setBackendImageUrl] = useState<string | null>(null);
 
   // ─── Carga inicial ─────────────────────────────────────────────────────────
 
@@ -40,11 +40,11 @@ export const BasicProfile: React.FC = () => {
         if (data.user) {
           const u = data.user as Record<string, string>;
           setForm({
-            fullName:   u.full_name   ?? '',
-            profession: u.profession  ?? '',
-            bio:        u.bio         ?? '',
-            phone:      u.phone       ?? '',
-            city:       u.city        ?? '',
+            fullName: u.full_name ?? '',
+            profession: u.profession ?? '',
+            bio: u.bio ?? '',
+            phone: u.phone ?? '',
+            city: u.city ?? '',
           });
 
           if (u.imagen_profile) {
@@ -68,8 +68,8 @@ export const BasicProfile: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-    if (errors[name])   setErrors(prev => ({ ...prev, [name]: '' }));
-    if (errors.server)  setErrors(prev => ({ ...prev, server:  '' }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    if (errors.server) setErrors(prev => ({ ...prev, server: '' }));
     setSuccess('');
   };
 
@@ -102,11 +102,11 @@ export const BasicProfile: React.FC = () => {
 
     // Validación local
     const newErrors: Record<string, string> = {};
-    if (!form.fullName.trim())              newErrors.fullName   = 'El nombre es obligatorio.';
-    if (!form.profession.trim())            newErrors.profession = 'La profesión es obligatoria.';
-    if (!form.bio.trim())                   newErrors.bio        = 'La biografía es obligatoria.';
-    if (!/^[0-9]{8}$/.test(form.phone))     newErrors.phone      = 'Teléfono inválido (8 dígitos).';
-    if (!form.city.trim())                  newErrors.city       = 'La ciudad es obligatoria.';
+    if (!form.fullName.trim()) newErrors.fullName = 'El nombre es obligatorio.';
+    if (!form.profession.trim()) newErrors.profession = 'La profesión es obligatoria.';
+    if (!form.bio.trim()) newErrors.bio = 'La biografía es obligatoria.';
+    if (!/^[0-9]{8}$/.test(form.phone)) newErrors.phone = 'Teléfono inválido (8 dígitos).';
+    if (!form.city.trim()) newErrors.city = 'La ciudad es obligatoria.';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -127,14 +127,14 @@ export const BasicProfile: React.FC = () => {
       // ✅ Una sola llamada que incluye la imagen si fue seleccionada.
       // El backend la sube a Cloudinary y devuelve la URL.
       const data = await syncUser({
-        clerk_id:   user.id,
-        full_name:  form.fullName,
+        clerk_id: user.id,
+        full_name: form.fullName,
         email,
         profession: form.profession,
-        bio:        form.bio,
-        phone:      form.phone,
-        city:       form.city,
-        image:      selectedImage ?? null,
+        bio: form.bio,
+        phone: form.phone,
+        city: form.city,
+        image: selectedImage ?? null,
       });
 
       if (data.user) {
@@ -225,19 +225,10 @@ export const BasicProfile: React.FC = () => {
             <Badge variant="success" pulsingDot>
               {profile.status === 'ACTIVO' ? 'PERFIL ACTIVO' : 'PERFIL INACTIVO'}
             </Badge>
-            <Button onClick={handleSave} disabled={loading} variant="primary" icon={Sparkles}>
-              {loading ? 'Guardando...' : 'Guardar Cambios'}
-            </Button>
           </div>
         </div>
 
         {/* Notificaciones */}
-        {success && (
-          <div className="mb-6 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 flex items-center gap-3 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-            <CheckCircle2 className="h-5 w-5" />
-            {success}
-          </div>
-        )}
         {errors.server && (
           <div className="mb-6 rounded-xl bg-red-500/10 border border-red-500/20 p-4 flex items-center gap-3 text-red-600 dark:text-red-400 text-sm font-medium">
             <AlertCircle className="h-5 w-5" />
@@ -341,11 +332,32 @@ export const BasicProfile: React.FC = () => {
                 className={`w-full rounded-xl border ${errors.city ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-transparent'} bg-white/50 dark:bg-white/5 backdrop-blur-md px-4 py-3 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:bg-white dark:focus:bg-[#10221C] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer`}
               >
                 <option value="">Selecciona una ciudad</option>
-                {['La Paz','Cochabamba','Santa Cruz','Oruro','Potosí','Chuquisaca','Tarija','Beni','Pando'].map(c => (
+                {['La Paz', 'Cochabamba', 'Santa Cruz', 'Oruro', 'Potosí', 'Chuquisaca', 'Tarija', 'Beni', 'Pando'].map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
               {errors.city && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.city}</p>}
+            </div>
+            <div className="md:col-span-2 flex flex-col gap-3">
+
+              {success && (
+                <div className="w-full rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 flex items-center gap-3 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+                  <CheckCircle2 className="h-5 w-5" />
+                  {success}
+                </div>
+              )}
+
+              <div className="flex justify-end w-full">
+                <Button
+                  onClick={handleSave}
+                  disabled={loading}
+                  variant="primary"
+                  icon={Sparkles}
+                >
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </Button>
+              </div>
+
             </div>
           </div>
         </div>
