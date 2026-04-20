@@ -32,6 +32,7 @@ class ProfileController extends Controller
                     'bio' => $user->bio,
                     'phone' => $user->phone,
                     'city' => $user->city,
+                    'imagen_profile' => $user->imagen_profile,
                 ]
             ]);
 

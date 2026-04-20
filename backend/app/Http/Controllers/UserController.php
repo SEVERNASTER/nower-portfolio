@@ -20,6 +20,8 @@ class UserController extends Controller
                 'email' => 'required|email|max:150',
                 'profession' => 'nullable|string|max:80',
                 'bio' => 'nullable|string|max:500',
+                'phone' => 'nullable|string|max:20',
+                'city' => 'nullable|string|max:100',
                 'imagen_profile' => 'nullable|url|max:255',
                 'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             ], [
@@ -27,6 +29,8 @@ class UserController extends Controller
                 'full_name.max' => 'El nombre no puede exceder 100 caracteres.',
                 'profession.max' => 'La profesión no puede exceder 80 caracteres.',
                 'bio.max' => 'La biografía no puede exceder 500 caracteres.',
+                'phone.max' => 'El teléfono no puede exceder 20 caracteres.',
+                'city.max' => 'La ciudad no puede exceder 100 caracteres.',
                 'image.image' => 'El archivo debe ser una imagen válida.',
                 'image.mimes' => 'Solo se permiten imágenes JPG, JPEG o PNG.',
                 'image.max' => 'La imagen no puede exceder 2MB.',
@@ -40,21 +44,27 @@ class UserController extends Controller
                 ], 422);
             }
 
-            // Buscar o crear usuario
-            $user = User::where('clerk_id', $request->clerk_id)
-                ->orWhere('email', $request->email)
-                ->first() ?? new User();
+            // Buscar o crear usuario SIN sobrescribir datos existentes
+            $user = User::firstOrCreate(
+                ['clerk_id' => $request->clerk_id],
+                [
+                    'email' => $request->email,
+                    'full_name' => $request->full_name,
+                    'profession' => $request->filled('profession') ? $request->profession : null,
+                    'bio' => $request->filled('bio') ? $request->bio : null,
+                    'phone' => $request->filled('phone') ? $request->phone : null,
+                    'city' => $request->filled('city') ? $request->city : null,
+                    'role' => 'user',
+                ]
+            );
 
-            $user->clerk_id = $request->clerk_id;
-            $user->full_name = $request->full_name;
-            $user->email = $request->email;
-
+            // Solo actualizar campos si se pasan y no están vacíos (para ediciones explícitas)
+            if ($request->filled('full_name')) $user->full_name = $request->full_name;
             if ($request->filled('profession')) $user->profession = $request->profession;
-            if ($request->filled('bio'))   $user->bio = $request->bio;
-            if ($request->filled('phone'))  $user->phone = $request->phone;
-            if ($request->filled('city'))   $user->city = $request->city;
+            if ($request->filled('bio')) $user->bio = $request->bio;
+            if ($request->filled('phone')) $user->phone = $request->phone;
+            if ($request->filled('city')) $user->city = $request->city;
 
-            $user->role = $request->role ?? $user->role ?? 'user';
             $user->save();
 
             // ─── Manejo de imagen ────────────────────────────────────────────

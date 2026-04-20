@@ -6,14 +6,13 @@ import { Badge }   from '../../components/ui/Badge';
 import { useUser } from '@clerk/clerk-react';
 import { mockProfile } from '../../data/mockData';
 import { useProfile }  from './useProfile';
-import { syncUser }    from './profileService';
+import { syncUser, getProfile }    from './profileService';
 
 // ─── BasicProfile ─────────────────────────────────────────────────────────────
 
 export const BasicProfile: React.FC = () => {
   const {
     loading, errors, success,
-    fetchProfile, saveProfile,
     setErrors, setSuccess, setLoading,
   } = useProfile();
 
@@ -34,16 +33,9 @@ export const BasicProfile: React.FC = () => {
     if (!user?.id) return;
 
     const load = async () => {
-      const email = user.primaryEmailAddress?.emailAddress;
-      if (!email) return;
-
       try {
-        // Hacemos sync sin imagen para obtener datos actuales del backend
-        const data = await syncUser({
-          clerk_id:  user.id,
-          full_name: user.fullName ?? '',
-          email,
-        });
+        // Cargar datos desde el backend (fuente de verdad)
+        const data = await getProfile(user.id);
 
         if (data.user) {
           const u = data.user as Record<string, string>;
@@ -181,13 +173,13 @@ export const BasicProfile: React.FC = () => {
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
-  const avatarUrl = previewImage || backendImageUrl || user?.imageUrl;
+  const avatarUrl = previewImage || backendImageUrl;
 
   const profile = {
     ...mockProfile,
-    fullName: user?.fullName ?? mockProfile.fullName,
+    fullName: form.fullName || mockProfile.fullName,
     avatarUrl: null,
-    id: user?.id ?? mockProfile.id,
+    id: user?.id || mockProfile.id,
   };
 
   return (
@@ -208,8 +200,8 @@ export const BasicProfile: React.FC = () => {
           {/* Avatar con botón de cámara */}
           <div className="relative">
             <Avatar
-              src={avatarUrl}
-              name={profile.fullName}
+              src={avatarUrl ?? undefined}
+              name={form.fullName || 'Usuario'}
               size="lg"
               className="border-4 border-white dark:border-[#17262C] shadow-xl"
             />

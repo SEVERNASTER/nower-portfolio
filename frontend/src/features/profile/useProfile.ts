@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getProfile, updateProfile, updateContact, syncUser, SyncPayload } from './profileService';
+import { getProfile, updateProfile, updateContact } from './profileService';
 
 export function useProfile() {
   const [loading, setLoading] = useState(false);
