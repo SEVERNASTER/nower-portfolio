@@ -12,6 +12,7 @@ export const ProjectsList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   // CARGAR SKILLS
   useEffect(() => {
@@ -25,7 +26,32 @@ export const ProjectsList: React.FC = () => {
           },
         });
         const data = await res.json();
-        const allSkills = [...(data.technical || []), ...(data.soft || [])];
+
+        // Mapear skills del backend al formato del frontend
+        const mapSkills = (skills: any[]) =>
+          skills.map((s: any) => ({
+            id: s.id.toString(),
+            name: s.name,
+            category: (s.type === "technical" ? "Técnica" : "Blanda") as
+              | "Técnica"
+              | "Blanda",
+            level: (s.proficiency_level <= 2
+              ? "Básico"
+              : s.proficiency_level <= 3
+                ? "Intermedio"
+                : s.proficiency_level <= 4
+                  ? "Avanzado"
+                  : "Experto") as
+              | "Básico"
+              | "Intermedio"
+              | "Avanzado"
+              | "Experto",
+          }));
+
+        const allSkills = [
+          ...mapSkills(data.technical || []),
+          ...mapSkills(data.soft || []),
+        ];
         setAvailableSkills(allSkills);
       } catch (err) {
         console.error("Error cargando skills:", err);
@@ -49,11 +75,79 @@ export const ProjectsList: React.FC = () => {
 
       if (response.ok) {
         const savedProject = await response.json();
-        setProjects([...projects, savedProject]);
+        const mappedProject: Project = {
+          id: savedProject.id.toString(),
+          title: savedProject.title,
+          description: savedProject.description || "",
+          status: "BORRADOR",
+          tags: savedProject.tags || [],
+          repositoryUrl: savedProject.evidence_url || undefined,
+          liveUrl: undefined,
+          imageUrl: undefined,
+          createdAt: savedProject.created_at || new Date().toISOString(),
+        };
+        setProjects([...projects, mappedProject]);
         setIsAdding(false);
+        setEditingProject(null);
       }
     } catch (e) {
       console.error("Error creando proyecto:", e);
+    }
+  };
+
+  // ACTUALIZAR PROYECTO
+  const handleUpdateProject = async (newData: any) => {
+    if (!editingProject) return;
+    
+    try {
+      const token = await getToken();
+      const response = await fetch(`http://localhost:8000/api/projects/${editingProject.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newData),
+      });
+
+      if (response.ok) {
+        const updatedProject = await response.json();
+        const mappedProject: Project = {
+          id: updatedProject.id.toString(),
+          title: updatedProject.title,
+          description: updatedProject.description || "",
+          status: "BORRADOR",
+          tags: updatedProject.tags || [],
+          repositoryUrl: updatedProject.evidence_url || undefined,
+          liveUrl: undefined,
+          imageUrl: undefined,
+          createdAt: updatedProject.created_at || new Date().toISOString(),
+        };
+        setProjects(projects.map(p => p.id === editingProject.id ? mappedProject : p));
+        setIsAdding(false);
+        setEditingProject(null);
+      }
+    } catch (e) {
+      console.error("Error actualizando proyecto:", e);
+    }
+  };
+
+  // ELIMINAR PROYECTO
+  const handleDeleteProject = async (id: string) => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`http://localhost:8000/api/projects/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setProjects(projects.filter(p => p.id !== id));
+      }
+    } catch (e) {
+      console.error("Error eliminando proyecto:", e);
     }
   };
 
@@ -75,7 +169,20 @@ export const ProjectsList: React.FC = () => {
 
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error ?? "Error cargando proyectos");
-        setProjects(data as Project[]);
+        
+        // Mapear proyectos del backend al formato del frontend
+        const mappedProjects: Project[] = data.map((p: any) => ({
+          id: p.id.toString(),
+          title: p.title,
+          description: p.description || "",
+          status: "BORRADOR", // Por defecto, el backend no tiene status
+          tags: p.tags || [],
+          repositoryUrl: p.evidence_url || undefined,
+          liveUrl: undefined,
+          imageUrl: undefined,
+          createdAt: p.created_at || new Date().toISOString(),
+        }));
+        setProjects(mappedProjects);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Error cargando proyectos");
         setProjects([]);
@@ -84,27 +191,37 @@ export const ProjectsList: React.FC = () => {
     loadProjects();
   }, [getToken]);
 
-  // SI ESTÁ AÑADIENDO: Muestra el formulario
+  // SI ESTÁ AÑADIENDO O EDITANDO: Muestra el formulario
   if (isAdding) {
     return (
       <div className="w-full space-y-6">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setIsAdding(false)}
+            onClick={() => {
+              setIsAdding(false);
+              setEditingProject(null);
+            }}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"
           >
             <ArrowLeft className="h-6 w-6 text-slate-600 dark:text-slate-400" />
           </button>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-            Nuevo Proyecto
+            {editingProject ? "Editar Proyecto" : "Nuevo Proyecto"}
           </h2>
         </div>
         <ProjectForm
           availableSkills={availableSkills.filter(
-            (s) => s.category === "Técnica",
+            (s) =>
+              s.category === "Técnica" ||
+              s.category?.toLowerCase() === "Tecnica" ||
+              s.category?.toLowerCase() === "Technical",
           )}
-          onSubmit={handleCreateProject}
-          onCancel={() => setIsAdding(false)}
+          onSubmit={editingProject ? handleUpdateProject : handleCreateProject}
+          onCancel={() => {
+            setIsAdding(false);
+            setEditingProject(null);
+          }}
+          initialData={editingProject || undefined}
         />
       </div>
     );
@@ -140,7 +257,15 @@ export const ProjectsList: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {projects.map((project: Project) => (
-          <ProjectCard key={project.id} project={project} />
+          <ProjectCard
+            key={project.id}
+            project={project}
+            onEdit={(p) => {
+              setEditingProject(p);
+              setIsAdding(true);
+            }}
+            onDelete={(id) => handleDeleteProject(id)}
+          />
         ))}
 
         <button

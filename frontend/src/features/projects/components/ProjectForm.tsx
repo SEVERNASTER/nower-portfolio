@@ -1,27 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Plus } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
-import { Skill } from '../../../data/mockData';
+import { Skill, Project } from "../../../data/mockData";
 
 interface ProjectFormProps {
   availableSkills: Skill[];
   onSubmit: (data: any) => void;
   onCancel: () => void;
+  initialData?: Project;
 }
 
 export const ProjectForm: React.FC<ProjectFormProps> = ({
   availableSkills,
   onSubmit,
   onCancel,
+  initialData,
 }) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState(initialData?.title || "");
+  const [description, setDescription] = useState(initialData?.description || "");
   const [techInput, setTechInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [errors, setErrors] = useState<{
     title?: string;
     description?: string;
   }>({});
+
+  // Actualizar estados cuando cambia initialData
+  useEffect(() => {
+    if (initialData) {
+      setTitle(initialData.title || "");
+      setDescription(initialData.description || "");
+      setTags(initialData.tags || []);
+    }
+  }, [initialData]);
   const toggleTag = (skillName: string) => {
     if (tags.includes(skillName)) {
       setTags(tags.filter((t) => t !== skillName));
@@ -56,11 +67,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       return;
     }
 
-    onSubmit({ 
-      title, 
-      description, 
-      tags, 
-      evidence_url: "" 
+    onSubmit({
+      title,
+      description,
+      tags,
+      evidence_url: "",
     });
   };
 
@@ -134,13 +145,47 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             type="text"
             value={techInput}
             onChange={(e) => setTechInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addTag();
+              }
+            }}
             placeholder="Otra tecnología (Ej: AWS, Docker...)"
-            className="flex-1 p-2.5 rounded-xl border ... "
+            className="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700"
           />
+
           <Button type="button" onClick={addTag} variant="secondary">
             <Plus className="h-5 w-5" />
           </Button>
         </div>
+
+        {/* 👇 AHORA SÍ: abajo */}
+        {tags.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
+              Tecnologías seleccionadas:
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <div
+                  key={tag}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full 
+          bg-gradient-to-r from-emerald-500/10 to-emerald-500/20 
+          text-emerald-700 dark:text-emerald-300 
+          border border-emerald-500/20 
+          text-xs font-semibold"
+                >
+                  {tag}
+                  <button onClick={() => removeTag(tag)}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
