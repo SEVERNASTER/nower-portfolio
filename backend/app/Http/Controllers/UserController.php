@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -20,6 +20,8 @@ class UserController extends Controller
                 'email' => 'required|email|max:150',
                 'profession' => 'nullable|string|max:80',
                 'bio' => 'nullable|string|max:500',
+                'phone' => 'nullable|string|max:20',
+                'city' => 'nullable|string|max:100',
                 'imagen_profile' => 'nullable|url|max:255',
                 'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             ], [
@@ -27,6 +29,8 @@ class UserController extends Controller
                 'full_name.max' => 'El nombre no puede exceder 100 caracteres.',
                 'profession.max' => 'La profesión no puede exceder 80 caracteres.',
                 'bio.max' => 'La biografía no puede exceder 500 caracteres.',
+                'phone.max' => 'El teléfono no puede exceder 20 caracteres.',
+                'city.max' => 'La ciudad no puede exceder 100 caracteres.',
                 'image.image' => 'El archivo debe ser una imagen válida.',
                 'image.mimes' => 'Solo se permiten imágenes JPG, JPEG o PNG.',
                 'image.max' => 'La imagen no puede exceder 2MB.',
@@ -36,118 +40,100 @@ class UserController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Error de validación de datos',
-                    'errors' => $validator->errors(),
-                    'debug_data' => [
-                        'clerk_id' => $request->clerk_id,
-                        'full_name' => $request->full_name,
-                        'email' => $request->email,
-                        'has_image' => $request->hasFile('image'),
-                        'image_size' => $request->hasFile('image') ? $request->file('image')->getSize() : null,
-                    ]
+                    'errors'  => $validator->errors(),
                 ], 422);
             }
 
-            // Buscar usuario existente por clerk_id o email para no violar la restricción unique de email
-            $user = User::where('clerk_id', $request->clerk_id)
-                ->orWhere('email', $request->email)
-                ->first();
+            // Buscar o crear usuario SIN sobrescribir datos existentes
+            $user = User::firstOrCreate(
+                ['clerk_id' => $request->clerk_id],
+                [
+                    'email' => $request->email,
+                    'full_name' => $request->full_name,
+                    'profession' => $request->filled('profession') ? $request->profession : null,
+                    'bio' => $request->filled('bio') ? $request->bio : null,
+                    'phone' => $request->filled('phone') ? $request->phone : null,
+                    'city' => $request->filled('city') ? $request->city : null,
+                    'role' => 'user',
+                ]
+            );
 
-            if (!$user) {
-                $user = new User();
-            }
-
-            $user->clerk_id = $request->clerk_id;
-            $user->full_name = $request->full_name;
-            $user->email = $request->email;
-
-            if ($request->filled('profession')) {
-                $user->profession = $request->profession;
-            }
-
-            if ($request->filled('bio')) {
-                $user->bio = $request->bio;
-            }
-
-            if ($request->filled('phone')) {
-                $user->phone = $request->phone;
-            }
-
-            if ($request->filled('city')) {
-                $user->city = $request->city;
-            }
+            // Solo actualizar campos si se pasan y no están vacíos (para ediciones explícitas)
+            if ($request->filled('full_name')) $user->full_name = $request->full_name;
+            if ($request->filled('profession')) $user->profession = $request->profession;
+            if ($request->filled('bio')) $user->bio = $request->bio;
+            if ($request->filled('phone')) $user->phone = $request->phone;
+            if ($request->filled('city')) $user->city = $request->city;
 
             if ($request->email === 'alizaabigailvicenteguzman@gmail.com') {
                 $user->role = 'admin';
             } else {
                 $user->role = $request->role ?? $user->role ?? 'user';
             }
-            
+
             $user->save();
 
-            // Guardar URL remota de imagen si se recibe
+            // ─── Manejo de imagen ────────────────────────────────────────────
+
+            // Opción A: la URL de imagen viene directa (desde Clerk u otro proveedor)
             if ($request->filled('imagen_profile')) {
                 $user->imagen_profile = $request->input('imagen_profile');
                 $user->save();
+
+            // Opción B: se sube un archivo — se manda a Cloudinary, NUNCA a disco local
             } elseif ($request->hasFile('image')) {
+                Log::info('ENTRA A CLOUDINARY', [
+                    'filename' => $request->file('image')->getClientOriginalName(),
+                    'size' => $request->file('image')->getSize(),
+                ]);
+
                 $file = $request->file('image');
 
+                // Generar public_id limpio para Cloudinary
+                $publicId = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '_', $user->full_name))
+                    . '_' . $user->id . '_' . time();
+
                 try {
-                    // Crear ID público único
-                    $publicId = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '_', $user->full_name)) . '_' . time();
+                    $cloudinary   = new CloudinaryService();
+                    $uploadResult = $cloudinary->upload($file, $publicId);
 
-                    // Subir a Cloudinary
-                    $cloudinaryService = new CloudinaryService();
-                    $uploadResult = $cloudinaryService->upload($file, $publicId);
+                    // Guardar solo la URL de Cloudinary (secure_url con HTTPS)
+                    $user->imagen_profile = $uploadResult['url'];
+                    $user->save();
 
-                    if (!isset($uploadResult['success']) || !$uploadResult['success']) {
-                        \Log::warning('Cloudinary falló, usando fallback local: ' . ($uploadResult['error'] ?? 'Fallo en la subida a Cloudinary'));
-
-                        $localUrl = $this->saveLocalImage($file, $publicId);
-                        $user->imagen_profile = $localUrl;
-                        $user->save();
-                    } else {
-                        $user->imagen_profile = $uploadResult['url'];
-                        $user->save();
-                    }
                 } catch (\Exception $e) {
-                    \Log::error('Upload Error: ' . $e->getMessage());
+                    Log::error('Cloudinary upload failed', [
+                        'user_id' => $user->id,
+                        'error'   => $e->getMessage(),
+                    ]);
 
+                    // NO hay fallback local — devolvemos error para que el equipo lo sepa
                     return response()->json([
                         'success' => false,
-                        'message' => 'Error al subir imagen',
-                        'error' => $e->getMessage(),
+                        'message' => 'Error al subir la imagen a Cloudinary. '
+                            . 'Verifica las variables CLOUDINARY_* en tu .env',
+                        'error'   => config('app.debug') ? $e->getMessage() : null,
                     ], 500);
                 }
             }
 
+            // ─────────────────────────────────────────────────────────────────
+
             return response()->json([
                 'success' => true,
                 'message' => 'Usuario sincronizado correctamente',
-                'user' => $user
+                'user'    => $user,
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Sync Error: ' . $e->getMessage());
+            Log::error('UserController@sync error', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno del servidor',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'error'   => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
-    }
-
-    private function saveLocalImage(UploadedFile $file, string $publicId): string
-    {
-        $folder = public_path('profile_images');
-        if (!is_dir($folder)) {
-            mkdir($folder, 0755, true);
-        }
-
-        $extension = $file->getClientOriginalExtension() ?: 'png';
-        $filename = $publicId . '.' . $extension;
-        $file->move($folder, $filename);
-
-        return asset('profile_images/' . $filename);
     }
 
 }

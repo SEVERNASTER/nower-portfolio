@@ -74,25 +74,27 @@ const AppContent: React.FC = () => {
     if (!isLoaded || !user) return;
     if (synced) return;
 
-    sendToBackend(user);
+    syncBackendUser(user);
     setSynced(true);
   }, [user, isLoaded, synced]);
 
-  async function sendToBackend(user: any) {
+  async function syncBackendUser(user: any) {
     try {
       const email = user.primaryEmailAddress?.emailAddress;
 
       if (!email) return;
 
+
       const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           clerk_id: user.id,
           full_name: user.fullName || user.firstName,
-          email: email,
+          email,
         }),
       });
 
@@ -104,7 +106,7 @@ const AppContent: React.FC = () => {
       }
       console.log(" Guardado en BD:", data);
     } catch (error) {
-      console.error(" Error enviando usuario:", error);
+      console.error("Error sincronizando usuario en backend:", error);
     }
   }
   return (

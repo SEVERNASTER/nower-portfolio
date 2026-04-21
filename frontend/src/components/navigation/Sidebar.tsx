@@ -3,6 +3,7 @@ import { X, Moon, Sun, LogOut, Globe, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Tab } from './Tab';
 import { useUser, useClerk } from '@clerk/clerk-react';
+import { getProfile } from '../../features/profile/profileService';
 import { mockProfile } from '../../data/mockData';
 
 // ==========================================
@@ -30,37 +31,41 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
     const { user } = useUser();
     const { signOut } = useClerk();
     const [userImage, setUserImage] = useState<string | null>(null);
+    const [backendName, setBackendName] = useState<string | null>(null);
 
     useEffect(() => {
-        // Cargar imagen del localStorage
-        const storedImage = localStorage.getItem('userProfileImage');
-        if (storedImage) {
-            setUserImage(storedImage);
-        }
-    }, []);
+        const loadProfileData = async () => {
+            if (!user?.id) return;
 
-    // Escuchar cambios en localStorage y eventos personalizados
-    useEffect(() => {
-        const handleStorageChange = () => {
-            const storedImage = localStorage.getItem('userProfileImage');
-            setUserImage(storedImage);
+            try {
+                const data = await getProfile(user.id);
+                if (data.user?.imagen_profile) {
+                    setUserImage(data.user.imagen_profile as string);
+                }
+                if (data.user?.full_name) {
+                    setBackendName(data.user.full_name as string);
+                }
+            } catch (err) {
+                console.error('Error cargando datos del perfil:', err);
+            }
         };
 
+        loadProfileData();
+    }, [user?.id]);
+
+    useEffect(() => {
         const handleUserImageChange = (event: CustomEvent) => {
             setUserImage(event.detail.imageUrl);
         };
 
-        window.addEventListener('storage', handleStorageChange);
         window.addEventListener('userImageChanged', handleUserImageChange as EventListener);
-        
         return () => {
-            window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('userImageChanged', handleUserImageChange as EventListener);
         };
     }, []);
 
-    const userName = user?.fullName || mockProfile.fullName;
-    const avatarUrl = userImage || user?.imageUrl;
+    const userName = backendName || user?.fullName || mockProfile.fullName;
+    const avatarUrl = userImage;
 
     return (
         <aside className={`fixed inset-y-0 left-0 z-50 w-72 transform flex-col bg-white dark:bg-[#17262C] border-r border-slate-200 dark:border-slate-800/60 transition-transform duration-300 lg:static lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex`}>

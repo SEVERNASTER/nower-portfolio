@@ -1,23 +1,34 @@
-import { useState } from "react";
-import { getProfile, updateProfile, updateContact } from "./profileService";
+import { useState } from 'react';
+import { getProfile, updateProfile, updateContact } from './profileService';
 
 export function useProfile() {
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [success, setSuccess] = useState("");
+  const [errors,  setErrors]  = useState<Record<string, string>>({});
+  const [success, setSuccess] = useState('');
 
   const fetchProfile = async (clerkId: string) => {
     try {
       return await getProfile(clerkId);
     } catch (err) {
-      console.error(err);
+      console.error('fetchProfile error:', err);
     }
   };
 
-  const saveProfile = async (data: any) => {
+  /**
+   * Guarda perfil + contacto en dos llamadas paralelas (sin imagen).
+   * Para incluir imagen usa syncWithImage.
+   */
+  const saveProfile = async (data: {
+    clerk_id:   string;
+    full_name:  string;
+    profession: string;
+    bio:        string;
+    phone:      string;
+    city:       string;
+  }) => {
     setLoading(true);
     setErrors({});
-    setSuccess("");
+    setSuccess('');
 
     try {
       await Promise.all([
@@ -25,7 +36,7 @@ export function useProfile() {
           clerk_id: data.clerk_id,
           full_name: data.full_name,
           profession: data.profession,
-          bio: data.bio,
+          bio:data.bio,
         }),
         updateContact({
           clerk_id: data.clerk_id,
@@ -34,19 +45,17 @@ export function useProfile() {
         }),
       ]);
 
-      setSuccess("Perfil y contacto actualizados correctamente");
-    } catch (err: any) {
-      if (err.errors) {
+      setSuccess('Perfil y contacto actualizados correctamente');
+    } catch (err: unknown) {
+      const e = err as { errors?: Record<string, string[]>; message?: string };
+      if (e.errors) {
         const formatted: Record<string, string> = {};
-
-        for (const key in err.errors) {
-          const formKey = key === "full_name" ? "fullName" : key;
-          formatted[formKey] = err.errors[key][0];
+        for (const key in e.errors) {
+          formatted[key === 'full_name' ? 'fullName' : key] = e.errors[key][0];
         }
-
         setErrors(formatted);
       } else {
-        setErrors({ server: err.message || "Error del servidor" });
+        setErrors({ server: e.message ?? 'Error del servidor' });
       }
     } finally {
       setLoading(false);
