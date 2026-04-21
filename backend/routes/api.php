@@ -7,6 +7,7 @@ use App\Http\Controllers\SkillController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ProjectController;
 
 // PUBLIC route. Anyone can see it.
 Route::get('/health', function () {
@@ -34,5 +35,10 @@ Route::middleware([ClerkAuth::class])->group(function () {
     // Skills CRUD
     Route::apiResource('skills', SkillController::class)->only([
         'index', 'store', 'update', 'destroy',
+    ]);
+
+    // Projects CRUD
+    Route::apiResource('projects', ProjectController::class)->only([
+        'index', 'store', 'show', 'update', 'destroy',
     ]);
 });
