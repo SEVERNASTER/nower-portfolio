@@ -15,6 +15,11 @@ class Project extends Model
         'title',
         'description',
         'evidence_url',
+        'tags',
+    ];
+
+    protected $casts = [
+        'tags' => 'array',
     ];
 
     public function user(): BelongsTo

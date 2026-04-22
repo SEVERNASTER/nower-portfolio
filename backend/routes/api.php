@@ -7,6 +7,7 @@ use App\Http\Controllers\SkillController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ProjectController;
 
 // PUBLIC route. Anyone can see it.
 Route::get('/health', function () {
@@ -39,6 +40,11 @@ Route::middleware([ClerkAuth::class])->group(function () {
 
 // ADMIN routes. MUST have Clerk token AND Admin role to enter.
 Route::middleware([\App\Http\Middleware\ClerkAuth::class, \App\Http\Middleware\AdminAuth::class])->group(function () {
+    
+    // Projects CRUD
+    Route::apiResource('projects', ProjectController::class)->only([
+        'index', 'store', 'show', 'update', 'destroy',
+    ]);
     
     // Endpoint para frontend de verificación si el AdminAuth es exitoso
     Route::get('/admin/validate', function (Request $request) {
