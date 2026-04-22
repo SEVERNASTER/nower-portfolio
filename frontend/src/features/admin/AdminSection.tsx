@@ -1,30 +1,36 @@
 import React, {
-  useEffect,
   useMemo,
   useState,
+  useEffect,
 } from 'react';
-
-import { useAuth } from '@clerk/clerk-react';
 
 import {
   Check,
   FileText,
   X,
+  Eye,
+  Briefcase,
+  MapPin,
+  Mail,
+  Code,
+  FolderOpen,
+  User,
+  Calendar,
+  ExternalLink,
+  Phone,
 } from 'lucide-react';
 import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
 
+import { useAuth } from '@clerk/clerk-react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 
 type AdminSectionKey =
     | 'metrics'
     | 'users'
-    | 'profiles'
-    | 'moderation'
-    | 'publish'
     | 'reports';
 
 interface AdminUser {
@@ -52,20 +58,41 @@ interface ModerationProject {
     submittedAt: string;
 }
 
-interface PublicationRequest {
+interface PortfolioDetail {
     id: string;
-    owner: string;
-    portfolioName: string;
-    status: 'Pendiente' | 'Aprobada' | 'Rechazada';
-    requestedAt: string;
-    preview: string;
+    userId: string;
+    nombre: string;
+    rol: string;
+    ciudad: string;
+    email: string;
+    telefono: string;
+    bio: string;
+    proyectos: Array<{
+        id: string;
+        titulo: string;
+        descripcion: string;
+        tecnologias: string[];
+        enlace: string;
+    }>;
+    experiencia: Array<{
+        id: string;
+        cargo: string;
+        empresa: string;
+        periodo: string;
+    }>;
+    skills: string[];
+    status: 'Pendiente' | 'Aprobado' | 'Rechazado';
 }
 
 const sectionItems: Array<{
     key: AdminSectionKey;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
-}> = [];
+}> = [
+    { key: 'metrics', label: 'Métricas', icon: FileText },
+    { key: 'users', label: 'Usuarios', icon: User },
+    { key: 'reports', label: 'Reportes', icon: FolderOpen },
+];
 
 const initialUsers: AdminUser[] = [
     { id: 'USR-001', name: 'Ana Rojas', email: 'ana.rojas@nower.com', status: 'Activo', registeredAt: '2026-01-12' },
@@ -101,24 +128,135 @@ const profiles: AdminProfile[] = [
     }
 ];
 
-// Mock data removed in favor of real API calls for moderation projects.
-
-const initialPublicationRequests: PublicationRequest[] = [
+const mockPortfolios: PortfolioDetail[] = [
     {
-        id: 'PUB-401',
-        owner: 'Ana Rojas',
-        portfolioName: 'Portfolio Frontend 2026',
-        status: 'Pendiente',
-        requestedAt: '2026-03-19',
-        preview: 'Landing personal con proyectos React, stack y experiencia.'
+        id: 'PRT-001',
+        userId: 'USR-001',
+        nombre: 'Ana Rojas',
+        rol: 'Frontend Developer',
+        ciudad: 'Cochabamba',
+        email: 'ana.rojas@nower.com',
+        telefono: '+591 71234567',
+        bio: 'Desarrolladora frontend con 3 años de experiencia en React, TypeScript y aplicaciones web modernas. Apasionada por crear interfaces de usuario intuitivas y performant.',
+        proyectos: [
+            {
+                id: 'PRJ-001',
+                titulo: 'E-commerce Platform',
+                descripcion: 'Plataforma de comercio electrónico con carrito de compras, pasarela de pago y panel de administración.',
+                tecnologias: ['React', 'Node.js', 'MongoDB', 'Stripe'],
+                enlace: 'https://github.com/ana-rojas/ecommerce'
+            },
+            {
+                id: 'PRJ-002',
+                titulo: 'Task Manager App',
+                descripcion: 'Aplicación de gestión de tareas con drag & drop, notificaciones y sincronización en tiempo real.',
+                tecnologias: ['React', 'Firebase', 'Tailwind CSS'],
+                enlace: 'https://github.com/ana-rojas/taskmanager'
+            }
+        ],
+        experiencia: [
+            {
+                id: 'EXP-001',
+                cargo: 'Frontend Developer',
+                empresa: 'Tech Solutions Bolivia',
+                periodo: '2023 - Presente'
+            },
+            {
+                id: 'EXP-002',
+                cargo: 'Junior Developer',
+                empresa: 'Startup Digital',
+                periodo: '2021 - 2023'
+            }
+        ],
+        skills: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js', 'Git', 'Figma'],
+        status: 'Pendiente'
     },
     {
-        id: 'PUB-402',
-        owner: 'Mateo Perez',
-        portfolioName: 'Backend & Cloud Portfolio',
-        status: 'Pendiente',
-        requestedAt: '2026-03-21',
-        preview: 'Portafolio tecnico con APIs, CI/CD y arquitectura de microservicios.'
+        id: 'PRT-002',
+        userId: 'USR-002',
+        nombre: 'Carlos Vega',
+        rol: 'Backend Engineer',
+        ciudad: 'La Paz',
+        email: 'carlos.vega@nower.com',
+        telefono: '+591 79876543',
+        bio: 'Ingeniero backend especializado en APIs RESTful, microservicios y arquitectura cloud. Experiencia con AWS y Docker.',
+        proyectos: [
+            {
+                id: 'PRJ-003',
+                titulo: 'API Gateway Service',
+                descripcion: 'Gateway centralizado para gestión de microservicios con autenticación y rate limiting.',
+                tecnologias: ['Node.js', 'Express', 'Redis', 'Docker'],
+                enlace: 'https://github.com/carlosvega/api-gateway'
+            }
+        ],
+        experiencia: [
+            {
+                id: 'EXP-003',
+                cargo: 'Backend Engineer',
+                empresa: 'CloudTech Bolivia',
+                periodo: '2022 - Presente'
+            }
+        ],
+        skills: ['Node.js', 'Python', 'PostgreSQL', 'AWS', 'Docker', 'Kubernetes'],
+        status: 'Aprobado'
+    },
+    {
+        id: 'PRT-003',
+        userId: 'USR-003',
+        nombre: 'Daniela Lima',
+        rol: 'UI/UX Designer',
+        ciudad: 'Santa Cruz',
+        email: 'daniela.lima@nower.com',
+        telefono: '+591 60123456',
+        bio: 'Diseñadora UI/UX con enfoque en accesibilidad y experiencia de usuario. Dominio de Figma y herramientas de prototipado.',
+        proyectos: [
+            {
+                id: 'PRJ-004',
+                titulo: 'Finance App Design',
+                descripcion: 'Diseño completo de aplicación móvil para gestión financiera personal.',
+                tecnologias: ['Figma', 'Adobe XD', 'Protopie'],
+                enlace: 'https://dribbble.com/daniela-lima'
+            }
+        ],
+        experiencia: [
+            {
+                id: 'EXP-004',
+                cargo: 'UI/UX Designer',
+                empresa: 'Creative Agency',
+                periodo: '2021 - Presente'
+            }
+        ],
+        skills: ['Figma', 'Adobe XD', 'Sketch', 'User Research', 'Prototyping', 'HTML/CSS'],
+        status: 'Rechazado'
+    },
+    {
+        id: 'PRT-004',
+        userId: 'USR-004',
+        nombre: 'Mateo Perez',
+        rol: 'Full Stack Developer',
+        ciudad: 'Cochabamba',
+        email: 'mateo.perez@nower.com',
+        telefono: '+591 73334444',
+        bio: 'Desarrollador full stack con experiencia en el stack MERN y arquitecturas serverless.',
+        proyectos: [
+            {
+                id: 'PRJ-005',
+                titulo: 'Social Media Dashboard',
+                descripcion: 'Dashboard para gestión de redes sociales con analytics y programación de posts.',
+                tecnologias: ['React', 'Next.js', 'Prisma', 'PostgreSQL'],
+                enlace: 'https://github.com/mateoperez/social-dashboard'
+            }
+        ],
+        experiencia: [
+            {
+                id: 'EXP-005',
+                cargo: 'Full Stack Developer',
+                empresa: 'Digital Innovations',
+                periodo: '2023 - Presente'
+            }
+        ],
+        skills: ['React', 'Next.js', 'TypeScript', 'Prisma', 'PostgreSQL', 'AWS'],
+        status: 'Pendiente'
     }
 ];
 
@@ -138,69 +276,82 @@ const getStatusBadge = (status: string) => {
 export const AdminSection: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [users, setUsers] = useState<AdminUser[]>(initialUsers);
-    const [moderationProjects, setModerationProjects] = useState<ModerationProject[]>([]);
-    const [publicationRequests, setPublicationRequests] = useState<PublicationRequest[]>(initialPublicationRequests);
+    const [users, setUsers] = useState<AdminUser[]>([]);
+    const [portfolios, setPortfolios] = useState<PortfolioDetail[]>([]);
+    const [selectedPortfolio, setSelectedPortfolio] = useState<PortfolioDetail | null>(null);
     const { getToken } = useAuth();
+
+    useEffect(() => {
+        const fetchAdminData = async () => {
+            try {
+                const token = await getToken();
+                if (!token) return;
+
+                const response = await fetch('http://localhost:8000/api/admin/users-with-projects', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Error al obtener datos');
+
+                const data = await response.json();
+
+                const adminUsers: AdminUser[] = data.map((u: any) => ({
+                    id: u.id.toString(),
+                    name: u.full_name || 'Sin nombre',
+                    email: u.email,
+                    status: 'Activo',
+                    registeredAt: new Date(u.created_at).toISOString().split('T')[0]
+                }));
+
+                const adminPortfolios: PortfolioDetail[] = data.map((u: any) => ({
+                    id: `PRT-${u.id}`,
+                    userId: u.id.toString(),
+                    nombre: u.full_name || 'Sin nombre',
+                    rol: u.profession || 'Desconocido',
+                    ciudad: u.city || 'Desconocida',
+                    email: u.email,
+                    telefono: u.phone || 'N/A',
+                    bio: u.bio || '',
+                    proyectos: (u.projects || []).map((p: any) => ({
+                        id: p.id.toString(),
+                        titulo: p.title || 'Sin título',
+                        descripcion: p.description || '',
+                        tecnologias: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? JSON.parse(p.tags) : []),
+                        enlace: p.evidence_url || '#'
+                    })),
+                    experiencia: [],
+                    skills: (u.skills || []).map((s: any) => s.name),
+                    status: 'Pendiente'
+                }));
+
+                setUsers(adminUsers);
+                setPortfolios(adminPortfolios);
+            } catch (error) {
+                console.error("Failed to load admin dashboard data:", error);
+            }
+        };
+
+        fetchAdminData();
+    }, [getToken]);
 
     const sectionByPath: Record<string, AdminSectionKey> = {
         '/admin/metrics': 'metrics',
         '/admin/users': 'users',
-        '/admin/profiles': 'profiles',
-        '/admin/moderation': 'moderation',
-        '/admin/publicaciones': 'publish',
         '/admin/reportes': 'reports'
     };
 
     const activeSection = sectionByPath[location.pathname] ?? 'metrics';
 
-    useEffect(() => {
-        const fetchAllProjects = async () => {
-            try {
-                const token = await getToken();
-                if (!token) return;
-                
-                const res = await fetch("http://localhost:8000/api/projects", {
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Accept": "application/json"
-                    }
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    
-                    const mappedProjects: ModerationProject[] = data.map((p: any) => ({
-                        id: String(p.id),
-                        title: p.title,
-                        owner: p.user?.full_name || 'Desconocido',
-                        status: 'En revision', // Campo temporal para simular la columna faltante en BD
-                        submittedAt: new Date(p.created_at).toISOString().split('T')[0]
-                    }));
-                    
-                    setModerationProjects(mappedProjects);
-                } else {
-                    console.error("Failed to fetch admin projects", await res.text());
-                }
-            } catch (error) {
-                console.error("Error fetching admin projects:", error);
-            }
-        };
-
-        if (activeSection === 'moderation' || activeSection === 'metrics') {
-            fetchAllProjects();
-        }
-    }, [getToken, activeSection]);
-
     const metrics = useMemo(() => {
         const registeredUsers = users.length;
-        // Demo: portafolios = solicitudes aprobadas + un baseline.
-        const publishedPortfolios = publicationRequests.filter((request) => request.status === 'Aprobada').length + 12;
-        const projectsInReview = moderationProjects.filter((project) => project.status === 'En revision').length;
+        const approvedPortfolios = portfolios.filter((p) => p.status === 'Aprobado').length;
+        const pendingPortfolios = portfolios.filter((p) => p.status === 'Pendiente').length;
         const disabledAccounts = users.filter((user) => user.status === 'Inactivo').length;
 
-        return { registeredUsers, publishedPortfolios, projectsInReview, disabledAccounts };
-    }, [users, moderationProjects, publicationRequests]);
+        return { registeredUsers, approvedPortfolios, pendingPortfolios, disabledAccounts };
+    }, [users, portfolios]);
 
     const toggleUserStatus = (userId: string) => {
         setUsers((prev) =>
@@ -210,20 +361,31 @@ export const AdminSection: React.FC = () => {
         );
     };
 
-    const updateProjectStatus = (projectId: string, status: 'Aprobado' | 'Rechazado') => {
-        setModerationProjects((prev) => prev.map((project) => (project.id === projectId ? { ...project, status } : project)));
+    const openPortfolioModal = (userId: string) => {
+        const portfolio = portfolios.find((p) => p.userId === userId);
+        setSelectedPortfolio(portfolio || null);
     };
 
-    const updatePublicationStatus = (requestId: string, status: 'Aprobada' | 'Rechazada') => {
-        setPublicationRequests((prev) => prev.map((request) => (request.id === requestId ? { ...request, status } : request)));
+    const closePortfolioModal = () => {
+        setSelectedPortfolio(null);
+    };
+
+    const updatePortfolioStatus = (portfolioId: string, status: 'Aprobado' | 'Rechazado') => {
+        setPortfolios((prev) =>
+            prev.map((p) => (p.id === portfolioId ? { ...p, status } : p))
+        );
+    };
+
+    const getPortfolioByUserId = (userId: string): PortfolioDetail | undefined => {
+        return portfolios.find((p) => p.userId === userId);
     };
 
     const exportReports = () => {
         const rows = [
             ['metric', 'value'],
             ['usuarios_registrados', String(metrics.registeredUsers)],
-            ['portafolios_publicados', String(metrics.publishedPortfolios)],
-            ['proyectos_en_revision', String(metrics.projectsInReview)],
+            ['portafolios_aprobados', String(metrics.approvedPortfolios)],
+            ['portafolios_pendientes', String(metrics.pendingPortfolios)],
             ['cuentas_deshabilitadas', String(metrics.disabledAccounts)]
         ];
         const csv = rows.map((row) => row.join(',')).join('\n');
@@ -244,32 +406,7 @@ export const AdminSection: React.FC = () => {
                 <p className="text-sm text-slate-500 dark:text-slate-400">Módulo exclusivo para gestión de usuarios, perfiles, publicaciones y reportes.</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {sectionItems.map(({ key, label, icon: Icon }) => (
-                    <button
-                        key={key}
-                        onClick={() => {
-                            const pathBySection: Record<AdminSectionKey, string> = {
-                                metrics: '/admin/metrics',
-                                users: '/admin/users',
-                                profiles: '/admin/profiles',
-                                moderation: '/admin/moderation',
-                                publish: '/admin/publicaciones',
-                                reports: '/admin/reportes'
-                            };
-                            navigate(pathBySection[key]);
-                        }}
-                        className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition-all ${
-                            activeSection === key
-                                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
-                                : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 dark:border-slate-700 dark:bg-[#17262C] dark:text-slate-300'
-                        }`}
-                    >
-                        <Icon className="h-4 w-4" />
-                        {label}
-                    </button>
-                ))}
-            </div>
+
 
             {activeSection === 'metrics' && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -278,12 +415,12 @@ export const AdminSection: React.FC = () => {
                         <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{metrics.registeredUsers}</p>
                     </div>
                     <div className={cardBaseClass}>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Portafolios publicados</p>
-                        <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{metrics.publishedPortfolios}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Portafolios aprobados</p>
+                        <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{metrics.approvedPortfolios}</p>
                     </div>
                     <div className={cardBaseClass}>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Proyectos en revisión</p>
-                        <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{metrics.projectsInReview}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Portafolios pendientes</p>
+                        <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{metrics.pendingPortfolios}</p>
                     </div>
                     <div className={cardBaseClass}>
                         <p className="text-sm text-slate-500 dark:text-slate-400">Cuentas deshabilitadas</p>
@@ -301,130 +438,45 @@ export const AdminSection: React.FC = () => {
                                 <th className="px-2 py-3 text-left">Usuario</th>
                                 <th className="px-2 py-3 text-left">Correo</th>
                                 <th className="px-2 py-3 text-left">Estado</th>
-                                <th className="px-2 py-3 text-left">Registro</th>
-                                <th className="px-2 py-3 text-left">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map((user) => (
-                                <tr key={user.id} className="border-b border-slate-100 dark:border-slate-800">
-                                    <td className="px-2 py-3 font-semibold text-slate-900 dark:text-white">{user.name}</td>
-                                    <td className="px-2 py-3">{user.email}</td>
-                                    <td className="px-2 py-3">{getStatusBadge(user.status)}</td>
-                                    <td className="px-2 py-3">{user.registeredAt}</td>
-                                    <td className="px-2 py-3">
-                                        <Button
-                                            variant={user.status === 'Activo' ? 'outline' : 'secondary'}
-                                            onClick={() => toggleUserStatus(user.id)}
-                                        >
-                                            {user.status === 'Activo' ? 'Deshabilitar' : 'Habilitar'}
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {activeSection === 'profiles' && (
-                <div className={`${cardBaseClass} overflow-x-auto`}>
-                    <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Gestionar Perfiles</h3>
-                    <table className="min-w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-slate-200 dark:border-slate-700">
-                                <th className="px-2 py-3 text-left">Propietario</th>
-                                <th className="px-2 py-3 text-left">Rol</th>
-                                <th className="px-2 py-3 text-left">Ciudad</th>
                                 <th className="px-2 py-3 text-left">Portafolio</th>
-                                <th className="px-2 py-3 text-left">Actualizado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {profiles.map((profile) => (
-                                <tr key={profile.id} className="border-b border-slate-100 dark:border-slate-800">
-                                    <td className="px-2 py-3 font-semibold text-slate-900 dark:text-white">{profile.owner}</td>
-                                    <td className="px-2 py-3">{profile.role}</td>
-                                    <td className="px-2 py-3">{profile.city}</td>
-                                    <td className="px-2 py-3">
-                                        <a
-                                            className="text-emerald-600 hover:underline dark:text-emerald-400"
-                                            href={profile.portfolioUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            Ver portafolio
-                                        </a>
-                                    </td>
-                                    <td className="px-2 py-3">{profile.updatedAt}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {activeSection === 'moderation' && (
-                <div className={`${cardBaseClass} overflow-x-auto`}>
-                    <h3 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">Moderar Proyectos</h3>
-                    <table className="min-w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-slate-200 dark:border-slate-700">
-                                <th className="px-2 py-3 text-left">Proyecto</th>
-                                <th className="px-2 py-3 text-left">Usuario</th>
-                                <th className="px-2 py-3 text-left">Estado</th>
-                                <th className="px-2 py-3 text-left">Fecha</th>
+                                <th className="px-2 py-3 text-left">Registro</th>
                                 <th className="px-2 py-3 text-left">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {moderationProjects.map((project) => (
-                                <tr key={project.id} className="border-b border-slate-100 dark:border-slate-800">
-                                    <td className="px-2 py-3 font-semibold text-slate-900 dark:text-white">{project.title}</td>
-                                    <td className="px-2 py-3">{project.owner}</td>
-                                    <td className="px-2 py-3">{getStatusBadge(project.status)}</td>
-                                    <td className="px-2 py-3">{project.submittedAt}</td>
-                                    <td className="px-2 py-3">
-                                        <div className="flex flex-wrap gap-2">
-                                            <Button variant="secondary" icon={Check} onClick={() => updateProjectStatus(project.id, 'Aprobado')}>
-                                                Aprobar
+                            {users.map((user) => {
+                                const portfolio = getPortfolioByUserId(user.id);
+                                return (
+                                    <tr key={user.id} className="border-b border-slate-100 dark:border-slate-800">
+                                        <td className="px-2 py-3 font-semibold text-slate-900 dark:text-white">{user.name}</td>
+                                        <td className="px-2 py-3">{user.email}</td>
+                                        <td className="px-2 py-3">{getStatusBadge(user.status)}</td>
+                                        <td className="px-2 py-3">
+                                            {portfolio ? (
+                                                <div className="flex items-center gap-2">
+                                                    {getStatusBadge(portfolio.status)}
+                                                    <Button variant="ghost" icon={Eye} onClick={() => openPortfolioModal(user.id)}>
+                                                        Ver
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-400">Sin portafolio</span>
+                                            )}
+                                        </td>
+                                        <td className="px-2 py-3">{user.registeredAt}</td>
+                                        <td className="px-2 py-3">
+                                            <Button
+                                                variant={user.status === 'Activo' ? 'outline' : 'secondary'}
+                                                onClick={() => toggleUserStatus(user.id)}
+                                            >
+                                                {user.status === 'Activo' ? 'Deshabilitar' : 'Habilitar'}
                                             </Button>
-                                            <Button variant="outline" icon={X} onClick={() => updateProjectStatus(project.id, 'Rechazado')}>
-                                                Rechazar
-                                            </Button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
-                </div>
-            )}
-
-            {activeSection === 'publish' && (
-                <div className="space-y-4">
-                    {publicationRequests.map((request) => (
-                        <article key={request.id} className={cardBaseClass}>
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div>
-                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{request.portfolioName}</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Solicitante: {request.owner} - {request.requestedAt}
-                                    </p>
-                                    <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">Vista previa: {request.preview}</p>
-                                </div>
-                                <div>{getStatusBadge(request.status)}</div>
-                            </div>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                <Button variant="secondary" icon={Check} onClick={() => updatePublicationStatus(request.id, 'Aprobada')}>
-                                    Aprobar Publicación
-                                </Button>
-                                <Button variant="outline" icon={X} onClick={() => updatePublicationStatus(request.id, 'Rechazada')}>
-                                    Rechazar
-                                </Button>
-                            </div>
-                        </article>
-                    ))}
                 </div>
             )}
 
@@ -440,10 +492,8 @@ export const AdminSection: React.FC = () => {
                         </div>
                         <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#10221C]">
                             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Portafolios</p>
-                            <p className="mt-1 text-sm">Publicados: {metrics.publishedPortfolios}</p>
-                            <p className="text-sm">
-                                Pendientes: {publicationRequests.filter((request) => request.status === 'Pendiente').length}
-                            </p>
+                            <p className="mt-1 text-sm">Aprobados: {metrics.approvedPortfolios}</p>
+                            <p className="text-sm">Pendientes: {metrics.pendingPortfolios}</p>
                         </div>
                     </div>
                     <Button icon={FileText} onClick={exportReports}>
@@ -451,7 +501,189 @@ export const AdminSection: React.FC = () => {
                     </Button>
                 </div>
             )}
+
+            {selectedPortfolio && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closePortfolioModal}></div>
+                    
+                    <div className="relative max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-slate-50 dark:bg-[#121c22] shadow-2xl flex flex-col ring-1 ring-slate-200/50 dark:ring-slate-700 animate-in fade-in zoom-in-95 duration-200">
+                        {/* SCROLLABLE AREA */}
+                        <div className="flex-1 overflow-y-auto relative z-0">
+                            {/* HEADER COVER */}
+                            <div className="relative h-44 sm:h-64 w-full shrink-0">
+                                <div className="absolute inset-0 bg-gradient-to-br from-teal-500 via-emerald-600 to-emerald-800 opacity-90"></div>
+                                
+                                <button
+                                    onClick={closePortfolioModal}
+                                    className="absolute top-4 right-4 rounded-full bg-black/20 p-2 text-white backdrop-blur-md transition-all hover:bg-black/40 hover:scale-105 z-10 shadow-sm"
+                                    title="Cerrar"
+                                >
+                                    <X className="h-5 w-5" />
+                                </button>
+
+                                {/* Avatar Overlay */}
+                                <div className="absolute -bottom-14 sm:-bottom-20 left-6 sm:left-10 h-28 w-28 sm:h-40 sm:w-40 rounded-full border-4 border-slate-50 dark:border-[#121c22] bg-white dark:bg-slate-800 flex items-center justify-center shadow-lg z-10 transition-transform hover:scale-105 duration-300">
+                                    <span className="text-5xl sm:text-7xl font-black bg-gradient-to-br from-emerald-500 to-teal-700 bg-clip-text text-transparent">
+                                        {selectedPortfolio.nombre.charAt(0)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* CONTENT BODY */}
+                            <div className="px-6 sm:px-10 pt-20 sm:pt-28 pb-8">
+                            <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                                <div>
+                                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                                        {selectedPortfolio.nombre}
+                                    </h2>
+                                    <p className="mt-1 text-sm sm:text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                                        {selectedPortfolio.rol}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-3 bg-white dark:bg-slate-800/80 py-2 px-4 rounded-full shadow-sm border border-slate-200/60 dark:border-slate-700/60">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estado</span>
+                                    {getStatusBadge(selectedPortfolio.status)}
+                                </div>
+                            </div>
+                            
+                            <div className="grid gap-6 lg:gap-8 md:grid-cols-12 mt-8">
+                                {/* LEFT COLUMN: Info */}
+                                <div className="md:col-span-5 lg:col-span-4 space-y-6">
+                                    {/* Contact Card */}
+                                    <div className="rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-md">
+                                        <h3 className="mb-5 text-[11px] font-bold uppercase tracking-widest text-slate-400">Contacto</h3>
+                                        <div className="space-y-5">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-transform hover:-translate-y-1 duration-300">
+                                                    <MapPin className="h-5 w-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Ubicación</p>
+                                                    <p className="font-semibold text-slate-900 dark:text-white">{selectedPortfolio.ciudad}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-transform hover:-translate-y-1 duration-300">
+                                                    <Mail className="h-5 w-5" />
+                                                </div>
+                                                <div className="overflow-hidden">
+                                                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Correo</p>
+                                                    <p className="font-semibold text-slate-900 dark:text-white truncate max-w-[150px] sm:max-w-full hover:text-emerald-600 transition-colors cursor-pointer">{selectedPortfolio.email}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-transform hover:-translate-y-1 duration-300">
+                                                    <Phone className="h-5 w-5" />
+                                                </div>
+                                                <div className="overflow-hidden">
+                                                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Teléfono</p>
+                                                    <p className="font-semibold text-slate-900 dark:text-white truncate hover:text-emerald-600 transition-colors cursor-pointer">{selectedPortfolio.telefono}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Bio Card */}
+                                    <div className="rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-md">
+                                        <h3 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">Sobre mí</h3>
+                                        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 font-medium">
+                                            {selectedPortfolio.bio}
+                                        </p>
+                                    </div>
+                                    
+                                    {/* Skills Card */}
+                                    <div className="rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-md">
+                                        <h3 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">Habilidades ({selectedPortfolio.skills.length})</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedPortfolio.skills.map((skill) => (
+                                                <span
+                                                    key={skill}
+                                                    className="rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:bg-slate-800/50 dark:text-slate-300 shadow-sm transition-colors hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300 cursor-default"
+                                                >
+                                                    {skill}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {/* RIGHT COLUMN: Projects & Experience */}
+                                <div className="md:col-span-7 lg:col-span-8 space-y-6">
+                                    {/* Projects Card */}
+                                    <div className="rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-6 sm:p-8 shadow-sm">
+                                        <h3 className="mb-6 flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
+                                            <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                                                <FolderOpen className="h-4 w-4" />
+                                            </div>
+                                            Proyectos Destacados
+                                        </h3>
+                                        <div className="grid gap-4">
+                                            {selectedPortfolio.proyectos.map((proyecto) => (
+                                                <div key={proyecto.id} className="group relative overflow-hidden rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/30 p-5 transition-all hover:border-emerald-300/50 dark:hover:border-emerald-500/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 hover:shadow-md">
+                                                    <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
+                                                        <div>
+                                                            <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors text-base">{proyecto.titulo}</h4>
+                                                            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{proyecto.descripcion}</p>
+                                                        </div>
+                                                        <a
+                                                            href={proyecto.enlace}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-white hover:bg-emerald-600 hover:border-emerald-600 dark:hover:text-white dark:hover:bg-emerald-500 dark:hover:border-emerald-500 transition-all shadow-sm"
+                                                        >
+                                                            <ExternalLink className="h-3.5 w-3.5" />
+                                                            Visitar
+                                                        </a>
+                                                    </div>
+                                                    <div className="mt-5 flex flex-wrap gap-2">
+                                                        {proyecto.tecnologias.map((tech) => (
+                                                            <span
+                                                                key={tech}
+                                                                className="rounded-md bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 px-2.5 py-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 shadow-sm"
+                                                            >
+                                                                {tech}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Experience timeline (Deshabilitada temporalmente) */}
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        
+                        {/* BOTTOM ACTIONS */}
+                        <div className="shrink-0 border-t border-slate-200/80 dark:border-slate-800 bg-white/60 backdrop-blur-md dark:bg-[#121c22]/80 p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-10 w-full">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 hidden sm:flex">
+                                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Revisa la información detalladamente.
+                            </div>
+                            <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-3">
+                                <Button
+                                    variant="outline"
+                                    icon={X}
+                                    onClick={() => alert('Modo lectura: No puedes rechazar portafolios por el momento.')}
+                                    className="flex-1 sm:flex-none justify-center border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20 transition-all font-bold"
+                                >
+                                    Rechazar
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    icon={Check}
+                                    onClick={() => alert('Modo lectura: No puedes aprobar portafolios por el momento.')}
+                                    className="flex-1 sm:flex-none justify-center bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all sm:hover:-translate-y-0.5 border-none font-bold"
+                                >
+                                    Aprobar Portafolio
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 };
-

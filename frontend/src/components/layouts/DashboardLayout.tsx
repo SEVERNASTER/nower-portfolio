@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Menu, Eye } from 'lucide-react';
 import { ErrorBoundary } from '../core/ErrorBoundary';
 import { Sidebar } from '../navigation/Sidebar';
@@ -19,6 +20,7 @@ export interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab, setActiveTab, navItems }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
     const [isDark, setIsDark] = useState<boolean>(true);
+    const location = useLocation();
 
     useEffect(() => {
         if (isDark) {
@@ -61,9 +63,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab, 
                             </div>
                         </div>
 
-                        <Button variant="secondary" icon={Eye} className="hidden sm:flex">
-                            Preview Público
-                        </Button>
+                        {!location.pathname.startsWith('/admin') && (
+                            <Button variant="secondary" icon={Eye} className="hidden sm:flex">
+                                Preview Público
+                            </Button>
+                        )}
                     </header>
 
                     <div className="flex-1 overflow-y-auto p-4 sm:p-8">

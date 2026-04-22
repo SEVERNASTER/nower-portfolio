@@ -13,10 +13,21 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        // Al ser función de administrador, listamos todos los proyectos (READ)
-        $projects = Project::with('user')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $clerkId = $request->attributes->get('clerk_user_id');
+        $user = \App\Models\User::where('clerk_id', $clerkId)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
+
+        if ($user->role === 'admin') {
+            $projects = Project::with('user')->orderBy('created_at', 'desc')->get();
+        } else {
+            $projects = Project::with('user')
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
 
         return response()->json($projects);
     }
@@ -35,8 +46,8 @@ class ProjectController extends Controller
             'tags.*' => 'string|max:50',
         ]);
 
-        // Ya validado por AdminAuth, el usuario se inyectó en attributes
-        $user = $request->attributes->get('auth_user');
+        $clerkId = $request->attributes->get('clerk_user_id');
+        $user = \App\Models\User::where('clerk_id', $clerkId)->first();
         
         if (!$user) {
             return response()->json(['error' => 'Usuario no encontrado'], 404);
@@ -58,7 +69,14 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
-        // READ DETAIL: Muestra el detalle del proyecto, incluyendo información de quién lo creó
+        $clerkId = request()->attributes->get('clerk_user_id');
+        $user = \App\Models\User::where('clerk_id', $clerkId)->first();
+
+        if (!$user || ($user->role !== 'admin' && $project->user_id !== $user->id)) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
+
+        // READ DETAIL: Muestra el detalle del proyecto
         return response()->json($project->load('user'));
     }
 
@@ -67,6 +85,13 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
+        $clerkId = $request->attributes->get('clerk_user_id');
+        $user = \App\Models\User::where('clerk_id', $clerkId)->first();
+
+        if (!$user || ($user->role !== 'admin' && $project->user_id !== $user->id)) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
+
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:200',
             'description' => 'sometimes|required|string',
@@ -85,6 +110,13 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
+        $clerkId = request()->attributes->get('clerk_user_id');
+        $user = \App\Models\User::where('clerk_id', $clerkId)->first();
+
+        if (!$user || ($user->role !== 'admin' && $project->user_id !== $user->id)) {
+            return response()->json(['error' => 'No autorizado'], 403);
+        }
+
         $project->delete();
 
         return response()->json(['message' => 'Project deleted successfully']);

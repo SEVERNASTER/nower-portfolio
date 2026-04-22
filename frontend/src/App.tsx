@@ -13,7 +13,7 @@ import { BasicProfile } from "./features/profile/BasicProfile";
 import { ProjectsList } from "./features/projects/ProjectsList";
 import { SkillsList } from "./features/skills/SkillsList";
 import { AdminSection } from "./features/admin/AdminSection";
-import { User, FolderGit2, Code, Briefcase, BarChart, Users, FileText, ShieldAlert, Send, PieChart } from "lucide-react";
+import { User, FolderGit2, Code, Briefcase, BarChart, Users, PieChart } from "lucide-react";
 import type { NavItem } from "./components/navigation/Sidebar";
 import { LoginPage } from "./components/pages/LoginPage";
 import { ExperienceList } from "./features/experience/ExperienceList";
@@ -52,9 +52,6 @@ const AppContent: React.FC = () => {
   const adminNavItems: NavItem[] = userRole === 'admin' ? [
     { name: "Métricas", icon: BarChart, path: "/admin/metrics" },
     { name: "Usuarios", icon: Users, path: "/admin/users" },
-    { name: "Perfiles", icon: FileText, path: "/admin/profiles" },
-    { name: "Moderación", icon: ShieldAlert, path: "/admin/moderation" },
-    { name: "Publicaciones", icon: Send, path: "/admin/publicaciones" },
     { name: "Reportes", icon: PieChart, path: "/admin/reportes" },
   ] : [];
 
