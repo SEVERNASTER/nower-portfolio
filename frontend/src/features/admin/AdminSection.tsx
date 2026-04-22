@@ -1,7 +1,10 @@
 import React, {
+  useEffect,
   useMemo,
   useState,
 } from 'react';
+
+import { useAuth } from '@clerk/clerk-react';
 
 import {
   Check,
@@ -98,11 +101,7 @@ const profiles: AdminProfile[] = [
     }
 ];
 
-const initialModerationProjects: ModerationProject[] = [
-    { id: 'PROJ-101', title: 'Marketplace API', owner: 'Ana Rojas', status: 'En revision', submittedAt: '2026-03-18' },
-    { id: 'PROJ-102', title: 'DataViz Dashboard', owner: 'Carlos Vega', status: 'En revision', submittedAt: '2026-03-20' },
-    { id: 'PROJ-103', title: 'UX Redesign Kit', owner: 'Daniela Lima', status: 'Aprobado', submittedAt: '2026-03-10' }
-];
+// Mock data removed in favor of real API calls for moderation projects.
 
 const initialPublicationRequests: PublicationRequest[] = [
     {
@@ -140,8 +139,9 @@ export const AdminSection: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [users, setUsers] = useState<AdminUser[]>(initialUsers);
-    const [moderationProjects, setModerationProjects] = useState<ModerationProject[]>(initialModerationProjects);
+    const [moderationProjects, setModerationProjects] = useState<ModerationProject[]>([]);
     const [publicationRequests, setPublicationRequests] = useState<PublicationRequest[]>(initialPublicationRequests);
+    const { getToken } = useAuth();
 
     const sectionByPath: Record<string, AdminSectionKey> = {
         '/admin/metrics': 'metrics',
@@ -153,6 +153,44 @@ export const AdminSection: React.FC = () => {
     };
 
     const activeSection = sectionByPath[location.pathname] ?? 'metrics';
+
+    useEffect(() => {
+        const fetchAllProjects = async () => {
+            try {
+                const token = await getToken();
+                if (!token) return;
+                
+                const res = await fetch("http://localhost:8000/api/projects", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Accept": "application/json"
+                    }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    const mappedProjects: ModerationProject[] = data.map((p: any) => ({
+                        id: String(p.id),
+                        title: p.title,
+                        owner: p.user?.full_name || 'Desconocido',
+                        status: 'En revision', // Campo temporal para simular la columna faltante en BD
+                        submittedAt: new Date(p.created_at).toISOString().split('T')[0]
+                    }));
+                    
+                    setModerationProjects(mappedProjects);
+                } else {
+                    console.error("Failed to fetch admin projects", await res.text());
+                }
+            } catch (error) {
+                console.error("Error fetching admin projects:", error);
+            }
+        };
+
+        if (activeSection === 'moderation' || activeSection === 'metrics') {
+            fetchAllProjects();
+        }
+    }, [getToken, activeSection]);
 
     const metrics = useMemo(() => {
         const registeredUsers = users.length;
