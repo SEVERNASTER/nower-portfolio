@@ -761,22 +761,24 @@ export const AdminSection: React.FC = () => {
                         <div className="shrink-0 border-t border-slate-200/80 dark:border-slate-800 bg-white/60 backdrop-blur-md dark:bg-[#121c22]/80 p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-10 w-full">
                             <div className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 hidden sm:flex">
                                 <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                Revisa la información detalladamente.
+                                Revisa la información detalladamente antes de aprobar o rechazar el portafolio
                             </div>
                             <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-3">
                                 <Button
                                     variant="outline"
                                     icon={X}
                                     onClick={() => alert('Modo lectura: No puedes rechazar portafolios por el momento.')}
-                                    className="flex-1 sm:flex-none justify-center border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20 transition-all font-bold"
+                                    
+                                    className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl !border !border-rose-400/10 !bg-[#13243a] px-5 py-2.5 text-sm font-bold !text-rose-300 shadow-[inset_0_0_35px_rgba(186,4,4,0.22),0_0_0_1px_rgba(186,4,4,0.30),0_0_10px_rgba(186,4,4,0.15)] transition-all duration-200 hover:!border-[#9C0000] hover:!bg-[#13243a] hover:!text-rose-300 hover:shadow-[inset_0_0_30px_rgba(244,63,94,0.25),0_0_12px_rgba(244,63,94,0.15),0_0_20px_rgba(244,63,94,0.20)] active:!border-[#e11d48] active:!bg-[#13243a] active:!text-rose-300 active:shadow-[inset_0_0_30px_rgba(244,63,94,0.35),0_0_16px_rgba(244,63,94,0.20),0_0_26px_rgba(244,63,94,0.25)] focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                                 >
                                     Rechazar
                                 </Button>
+                                
                                 <Button
                                     variant="secondary"
                                     icon={Check}
                                     onClick={() => alert('Modo lectura: No puedes aprobar portafolios por el momento.')}
-                                    className="flex-1 sm:flex-none justify-center bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all sm:hover:-translate-y-0.5 border-none font-bold"
+                                    className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-emerald-400/25 bg-[#13243a] px-5 py-2.5 text-sm font-bold text-emerald-300 shadow-[inset_0_0_12px_rgba(20,215,163,0.05),0_0_0_1px_rgba(20,215,163,0.06)] transition-all duration-200 hover:border-emerald-500 hover:bg-emerald-500 hover:text-white hover:shadow-[0_0_18px_rgba(20,215,163,0.20)] active:border-emerald-600 active:bg-emerald-600 active:text-white active:shadow-[0_0_20px_rgba(20,215,163,0.24)] focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                                 >
                                     Aprobar Portafolio
                                 </Button>
