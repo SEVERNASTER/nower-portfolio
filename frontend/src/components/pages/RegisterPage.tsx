@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import { useSignUp } from "@clerk/clerk-react"; // <-- Clerk Hook
 
-const ALLOWED_DOMAINS = ["@est.umss.edu", "@ms.umss.edu"];
+
 
 // We removed the onLogin prop since Clerk handles global state
 export const RegisterPage: React.FC = () => {
@@ -50,15 +50,6 @@ export const RegisterPage: React.FC = () => {
     setError("");
 
     try {
-      const isDomainValid = ALLOWED_DOMAINS.some((domain) =>
-        form.emailAddress.toLowerCase().endsWith(domain),
-      );
-      if (!isDomainValid) {
-        setError(
-          `Debes registrarte con tu correo institucional (${ALLOWED_DOMAINS.join(" o ")})`,
-        );
-        return;
-      }
       // 1. Create the user in Clerk
       await signUp.create({
         firstName: form.firstName,
@@ -178,10 +169,6 @@ export const RegisterPage: React.FC = () => {
                   className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                   required
                 />
-                <p className="text-[10px] font-medium text-slate-500 px-1 italic -mt-2">
-                  * Solo se permite el registro con correos institucionales
-                  (@est.umss.edu o @ms.umss.edu)
-                </p>
 
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">

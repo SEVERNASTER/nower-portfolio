@@ -262,13 +262,24 @@ export const BasicProfile: React.FC = () => {
             {/* Profesión */}
             <div className="space-y-2">
               <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <span>Profesión / Cargo</span>
-                <span className={form.profession.length >= 80 ? 'text-red-500' : ''}>{form.profession.length}/80</span>
+                <span>
+                  Profesión / Cargo <span className="text-red-400">*</span>
+                </span>
+                <span
+                  className={form.profession.length >= 80 ? "text-red-500" : ""}
+                >
+                  {form.profession.length}/80
+                </span>
               </label>
               <input
-                type="text" name="profession" value={form.profession}
-                onChange={handleChange} maxLength={80}
-                className={`w-full rounded-xl border ${errors.profession ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-emerald-500'} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
+                type="text"
+                name="profession"
+                value={form.profession}
+                onChange={handleChange}
+                placeholder={profile.role}
+                maxLength={80}
+                required
+                className={`w-full rounded-xl border ${errors.profession ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
               />
               {errors.profession && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.profession}</p>}
             </div>
@@ -277,13 +288,28 @@ export const BasicProfile: React.FC = () => {
           {/* Biografía */}
           <div className="space-y-2">
             <label className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              <span>Biografía Profesional</span>
-              <span className={form.bio.length >= 500 ? 'text-red-500 font-bold' : 'text-slate-500'}>{form.bio.length} / 500 caracteres</span>
+              <span>
+                Biografía Profesional <span className="text-red-400">*</span>
+              </span>
+              <span
+                className={
+                  form.bio.length >= 500
+                    ? "text-red-500 font-bold"
+                    : "text-slate-500"
+                }
+              >
+                {form.bio.length} / 500 caracteres
+              </span>
             </label>
             <textarea
-              rows={4} name="bio" value={form.bio}
-              onChange={handleChange} maxLength={500}
-              className={`w-full resize-none rounded-xl border ${errors.bio ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-700 focus:ring-emerald-500'} bg-white dark:bg-[#10221C] px-4 py-3 text-sm leading-relaxed text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
+              rows={4}
+              name="bio"
+              value={form.bio}
+              onChange={handleChange}
+              placeholder={profile.bio}
+              maxLength={500}
+              required
+              className={`w-full resize-none rounded-xl border ${errors.bio ? "border-red-500 focus:ring-red-500" : "border-slate-300 dark:border-slate-700 focus:ring-emerald-500"} bg-white dark:bg-[#10221C] px-4 py-3 text-sm leading-relaxed text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 transition-colors`}
             />
             {errors.bio && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.bio}</p>}
           </div>
@@ -347,19 +373,23 @@ export const BasicProfile: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex justify-end w-full">
-                <Button
-                  onClick={handleSave}
-                  disabled={loading}
-                  variant="primary"
-                  icon={Sparkles}
-                >
-                  {loading ? 'Guardando...' : 'Guardar Cambios'}
-                </Button>
-              </div>
 
             </div>
           </div>
+
+          {/* Botón Guardar - Movido al final */}
+          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800/60 flex items-center justify-end">
+            <Button
+              onClick={handleSave}
+              disabled={loading}
+              variant="primary"
+              icon={Sparkles}
+              className="w-full sm:w-auto px-8"
+            >
+              {loading ? "Guardando..." : "Guardar Cambios"}
+            </Button>
+          </div>
+
         </div>
       </div>
     </div>

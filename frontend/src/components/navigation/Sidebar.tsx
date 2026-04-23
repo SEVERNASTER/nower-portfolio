@@ -128,8 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
                     </div>
                     <div className="flex flex-1 flex-col text-left">
                         <span className="text-sm font-bold text-slate-900 dark:text-white leading-none">{userName}</span>
-                        <div className="mt-1 flex items-center gap-2 text-slate-500 dark:text-slate-400 uppercase">
-                        </div>
+
                     </div>
                     <button 
                         onClick={() => signOut()}
