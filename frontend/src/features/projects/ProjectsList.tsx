@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import type { Project, Skill } from "../../data/mockData";
 import { ProjectCard } from "./components/ProjectCard";
 import { ProjectForm } from "./components/ProjectForm";
+import { ConfirmModal } from "./components/ConfirmModal";
 
 export const ProjectsList: React.FC = () => {
   const { getToken } = useAuth(); // 2. Obtener la función para el token
@@ -13,6 +14,8 @@ export const ProjectsList: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null);
 
   // CARGAR SKILLS
   useEffect(() => {
@@ -133,10 +136,18 @@ export const ProjectsList: React.FC = () => {
   };
 
   // ELIMINAR PROYECTO
-  const handleDeleteProject = async (id: string) => {
+  const handleDeleteProject = (id: string) => {
+    const project = projects.find(p => p.id === id);
+    setProjectToDelete({ id, title: project?.title || "este proyecto" });
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!projectToDelete) return;
+    
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:8000/api/projects/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/projects/${projectToDelete.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -144,10 +155,13 @@ export const ProjectsList: React.FC = () => {
       });
 
       if (response.ok) {
-        setProjects(projects.filter(p => p.id !== id));
+        setProjects(projects.filter(p => p.id !== projectToDelete.id));
       }
     } catch (e) {
       console.error("Error eliminando proyecto:", e);
+    } finally {
+      setDeleteModalOpen(false);
+      setProjectToDelete(null);
     }
   };
 
@@ -280,6 +294,18 @@ export const ProjectsList: React.FC = () => {
           </span>
         </button>
       </div>
+
+      {/* Modal de confirmación para eliminar */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        title="Eliminar proyecto"
+        message={`¿Estás seguro de que deseas eliminar "${projectToDelete?.title}"? Esta acción no se puede deshacer.`}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setProjectToDelete(null);
+        }}
+      />
     </div>
   );
 };
