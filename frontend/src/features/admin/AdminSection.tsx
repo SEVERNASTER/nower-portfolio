@@ -1,30 +1,44 @@
 import React, {
+  useEffect,
   useMemo,
   useState,
-  useEffect,
 } from 'react';
 
 import {
   Check,
-  FileText,
-  X,
-  Eye,
-  Briefcase,
-  MapPin,
-  Mail,
-  Code,
-  FolderOpen,
-  User,
-  Calendar,
+  ContactRound,
   ExternalLink,
+  Eye,
+  FileText,
+  FolderOpen,
+  Mail,
+  MapPin,
   Phone,
+  Sparkles,
+  User,
+  X,
 } from 'lucide-react';
+import {
+  FaCss3Alt,
+  FaFigma,
+  FaHtml5,
+  FaJava,
+  FaReact,
+} from 'react-icons/fa';
+import {
+  SiJavascript,
+  SiNextdotjs,
+  SiPostgresql,
+  SiTailwindcss,
+  SiTypescript,
+} from 'react-icons/si';
 import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
 
 import { useAuth } from '@clerk/clerk-react';
+
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 
@@ -273,6 +287,69 @@ const getStatusBadge = (status: string) => {
     return <Badge variant="warning">{status}</Badge>;
 };
 
+const skillMetaMap: Record<
+    string,
+    {
+        icon: React.ComponentType<{ className?: string }>;
+        iconClassName: string;
+    }
+> = {
+    figma: {
+        icon: FaFigma,
+        iconClassName: 'text-pink-400',
+    },
+    html: {
+        icon: FaHtml5,
+        iconClassName: 'text-orange-500',
+    },
+    css: {
+        icon: FaCss3Alt,
+        iconClassName: 'text-blue-400',
+    },
+    javascript: {
+        icon: SiJavascript,
+        iconClassName: 'text-yellow-300',
+    },
+    typescript: {
+        icon: SiTypescript,
+        iconClassName: 'text-sky-400',
+    },
+    react: {
+        icon: FaReact,
+        iconClassName: 'text-cyan-400',
+    },
+    'react.js': {
+        icon: FaReact,
+        iconClassName: 'text-cyan-400',
+    },
+    next: {
+        icon: SiNextdotjs,
+        iconClassName: 'text-slate-200',
+    },
+    'next.js': {
+        icon: SiNextdotjs,
+        iconClassName: 'text-slate-200',
+    },
+    java: {
+        icon: FaJava,
+        iconClassName: 'text-orange-400',
+    },
+    postgresql: {
+        icon: SiPostgresql,
+        iconClassName: 'text-blue-300',
+    },
+    tailwind: {
+        icon: SiTailwindcss,
+        iconClassName: 'text-cyan-300',
+    },
+    'tailwind css': {
+        icon: SiTailwindcss,
+        iconClassName: 'text-cyan-300',
+    },
+};
+
+const normalizeSkillName = (skill: string) => skill.trim().toLowerCase();
+
 export const AdminSection: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -510,7 +587,7 @@ export const AdminSection: React.FC = () => {
                         {/* SCROLLABLE AREA */}
                         <div className="flex-1 overflow-y-auto relative z-0">
                             {/* HEADER COVER */}
-                            <div className="relative h-44 sm:h-64 w-full shrink-0">
+                            <div className="relative h-40 sm:h-36 w-full shrink-0">
                                 <div className="absolute inset-0 bg-gradient-to-br from-teal-500 via-emerald-600 to-emerald-800 opacity-90"></div>
                                 
                                 <button
@@ -530,18 +607,21 @@ export const AdminSection: React.FC = () => {
                             </div>
 
                             {/* CONTENT BODY */}
-                            <div className="px-6 sm:px-10 pt-20 sm:pt-28 pb-8">
-                            <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                                <div>
-                                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                            <div className="px-6 sm:px-16 pt-10 sm:pt-5 pb-8">
+                            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:pl-36">
+                                <div className="min-w-0">
+                                    <h2 className="text-2xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
                                         {selectedPortfolio.nombre}
                                     </h2>
                                     <p className="mt-1 text-sm sm:text-base font-semibold text-emerald-600 dark:text-emerald-400">
                                         {selectedPortfolio.rol}
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-3 bg-white dark:bg-slate-800/80 py-2 px-4 rounded-full shadow-sm border border-slate-200/60 dark:border-slate-700/60">
-                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estado</span>
+
+                                <div className="flex items-center gap-3 bg-white dark:bg-slate-800/80 py-2 px-4 rounded-full shadow-sm border border-slate-200/60 dark:border-slate-700/60 self-start sm:self-auto">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        Estado
+                                    </span>
                                     {getStatusBadge(selectedPortfolio.status)}
                                 </div>
                             </div>
@@ -550,11 +630,14 @@ export const AdminSection: React.FC = () => {
                                 {/* LEFT COLUMN: Info */}
                                 <div className="md:col-span-5 lg:col-span-4 space-y-6">
                                     {/* Contact Card */}
-                                    <div className="rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-md">
-                                        <h3 className="mb-5 text-[11px] font-bold uppercase tracking-widest text-slate-400">Contacto</h3>
+                                    <div className="rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_0_0_28px_rgba(20,215,163,0.05),0_10px_30px_rgba(0,0,0,0.18)] transition-all hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_0_34px_rgba(20,215,163,0.07),0_14px_34px_rgba(0,0,0,0.22)]">                                        
+                                        <h3 className="mb-5 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-emerald-400">
+                                            <ContactRound className="h-4 w-4" />
+                                            Contacto
+                                        </h3>
                                         <div className="space-y-5">
                                             <div className="flex items-center gap-4">
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-transform hover:-translate-y-1 duration-300">
+                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/10 bg-emerald-500/10 text-emerald-400 shadow-[inset_0_0_12px_rgba(20,215,163,0.06)] transition-transform hover:-translate-y-1 duration-300">
                                                     <MapPin className="h-5 w-5" />
                                                 </div>
                                                 <div>
@@ -563,7 +646,7 @@ export const AdminSection: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-transform hover:-translate-y-1 duration-300">
+                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/10 bg-emerald-500/10 text-emerald-400 shadow-[inset_0_0_12px_rgba(20,215,163,0.06)] transition-transform hover:-translate-y-1 duration-300">
                                                     <Mail className="h-5 w-5" />
                                                 </div>
                                                 <div className="overflow-hidden">
@@ -572,7 +655,7 @@ export const AdminSection: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-transform hover:-translate-y-1 duration-300">
+                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/10 bg-emerald-500/10 text-emerald-400 shadow-[inset_0_0_12px_rgba(20,215,163,0.06)] transition-transform hover:-translate-y-1 duration-300">
                                                     <Phone className="h-5 w-5" />
                                                 </div>
                                                 <div className="overflow-hidden">
@@ -584,25 +667,38 @@ export const AdminSection: React.FC = () => {
                                     </div>
                                     
                                     {/* Bio Card */}
-                                    <div className="rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-md">
-                                        <h3 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">Sobre mí</h3>
+                                    <div className="rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_0_0_28px_rgba(20,215,163,0.05),0_10px_30px_rgba(0,0,0,0.18)] transition-all hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_0_34px_rgba(20,215,163,0.07),0_14px_34px_rgba(0,0,0,0.22)]">
+                                        <h3 className="mb-5 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-emerald-400">
+                                            <User className="h-4 w-4" />
+                                            Sobre mi
+                                        </h3>
                                         <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 font-medium">
                                             {selectedPortfolio.bio}
                                         </p>
                                     </div>
                                     
                                     {/* Skills Card */}
-                                    <div className="rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-5 sm:p-6 shadow-sm transition-shadow hover:shadow-md">
-                                        <h3 className="mb-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">Habilidades ({selectedPortfolio.skills.length})</h3>
+                                    <div className="rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_0_0_28px_rgba(20,215,163,0.05),0_10px_30px_rgba(0,0,0,0.18)] transition-all hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_0_34px_rgba(20,215,163,0.07),0_14px_34px_rgba(0,0,0,0.22)]">
+                                        <h3 className="mb-4 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-emerald-400">
+                                            <Sparkles className="h-4 w-4" />
+                                            Habilidades ({selectedPortfolio.skills.length})
+                                        </h3>
                                         <div className="flex flex-wrap gap-2">
-                                            {selectedPortfolio.skills.map((skill) => (
-                                                <span
-                                                    key={skill}
-                                                    className="rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:bg-slate-800/50 dark:text-slate-300 shadow-sm transition-colors hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300 cursor-default"
-                                                >
-                                                    {skill}
-                                                </span>
-                                            ))}
+                                            {selectedPortfolio.skills.map((skill) => {
+                                                const skillMeta = skillMetaMap[normalizeSkillName(skill)];
+                                                const Icon = skillMeta?.icon;
+                                                const iconClassName = skillMeta?.iconClassName ?? 'text-emerald-300';
+
+                                                return (
+                                                    <span
+                                                        key={skill}
+                                                        className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/15 bg-[#102637] px-3 py-1.5 text-xs font-semibold text-slate-200 shadow-[inset_0_0_12px_rgba(20,215,163,0.05)] transition-all hover:border-emerald-400/30 hover:bg-[#133042] cursor-default"
+                                                    >
+                                                        {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
+                                                        <span>{skill}</span>
+                                                    </span>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
@@ -610,16 +706,14 @@ export const AdminSection: React.FC = () => {
                                 {/* RIGHT COLUMN: Projects & Experience */}
                                 <div className="md:col-span-7 lg:col-span-8 space-y-6">
                                     {/* Projects Card */}
-                                    <div className="rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-6 sm:p-8 shadow-sm">
-                                        <h3 className="mb-6 flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-                                            <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
-                                                <FolderOpen className="h-4 w-4" />
-                                            </div>
+                                    <div className="rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-6 sm:p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_0_0_28px_rgba(20,215,163,0.05),0_10px_30px_rgba(0,0,0,0.18)] transition-all hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_0_34px_rgba(20,215,163,0.07),0_14px_34px_rgba(0,0,0,0.22)]">
+                                        <h3 className="mb-6 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-emerald-400">
+                                            <FolderOpen className="h-4 w-4" />
                                             Proyectos Destacados
                                         </h3>
                                         <div className="grid gap-4">
                                             {selectedPortfolio.proyectos.map((proyecto) => (
-                                                <div key={proyecto.id} className="group relative overflow-hidden rounded-2xl border border-slate-200/60 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/30 p-5 transition-all hover:border-emerald-300/50 dark:hover:border-emerald-500/30 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 hover:shadow-md">
+                                                <div key={proyecto.id} className="group relative overflow-hidden rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 transition-all hover:border-emerald-300/30 hover:bg-emerald-500/5 hover:shadow-md">
                                                     <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
                                                         <div>
                                                             <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors text-base">{proyecto.titulo}</h4>
@@ -629,21 +723,28 @@ export const AdminSection: React.FC = () => {
                                                             href={proyecto.enlace}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-white hover:bg-emerald-600 hover:border-emerald-600 dark:hover:text-white dark:hover:bg-emerald-500 dark:hover:border-emerald-500 transition-all shadow-sm"
+                                                            className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-emerald-400/25 bg-[#13243a] px-5 py-2.5 text-sm font-bold text-emerald-300 shadow-[inset_0_0_12px_rgba(20,215,163,0.05),0_0_0_1px_rgba(20,215,163,0.06)] transition-all duration-200 hover:border-emerald-500 hover:bg-emerald-500 hover:text-white hover:shadow-[0_0_18px_rgba(20,215,163,0.20)] active:border-emerald-600 active:bg-emerald-600 active:text-white active:shadow-[0_0_20px_rgba(20,215,163,0.24)]"
                                                         >
-                                                            <ExternalLink className="h-3.5 w-3.5" />
+                                                            <ExternalLink className="h-4 w-4" />
                                                             Visitar
                                                         </a>
                                                     </div>
                                                     <div className="mt-5 flex flex-wrap gap-2">
-                                                        {proyecto.tecnologias.map((tech) => (
-                                                            <span
-                                                                key={tech}
-                                                                className="rounded-md bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 px-2.5 py-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 shadow-sm"
-                                                            >
-                                                                {tech}
-                                                            </span>
-                                                        ))}
+                                                        {proyecto.tecnologias.map((tech) => {
+                                                            const techMeta = skillMetaMap[normalizeSkillName(tech)];
+                                                            const Icon = techMeta?.icon;
+                                                            const iconClassName = techMeta?.iconClassName ?? 'text-emerald-300';
+
+                                                            return (
+                                                                <span
+                                                                    key={tech}
+                                                                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/15 bg-[#102637] px-3 py-1.5 text-xs font-semibold text-slate-200 shadow-[inset_0_0_12px_rgba(20,215,163,0.05)] transition-all hover:border-emerald-400/30 hover:bg-[#133042] cursor-default"
+                                                                >
+                                                                    {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
+                                                                    <span>{tech}</span>
+                                                                </span>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
                                             ))}
