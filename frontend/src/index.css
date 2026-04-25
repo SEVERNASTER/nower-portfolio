@@ -5,7 +5,7 @@
 :root {
   --text: #6b6375;
   --text-h: #08060d;
-  --bg: #fff;
+  --bg: #f8fafc; /* slate-50 */
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
   --accent: #aa3bff;
@@ -13,7 +13,9 @@
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -75,6 +77,14 @@
 
   .dark ::-webkit-scrollbar-thumb:hover {
     background: #10b981;
+  }
+
+  /* Thin scrollbars for cards */
+  .custom-scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar-horizontal::-webkit-scrollbar {
+    height: 4px;
   }
 }
 

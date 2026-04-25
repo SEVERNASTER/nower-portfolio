@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, FolderOpen, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft } from "lucide-react";
 import { useAuth } from "@clerk/clerk-react"; // 1. Importar el hook de Clerk
 import { Button } from "../../components/ui/Button";
 import type { Project, Skill } from "../../data/mockData";
@@ -10,8 +10,8 @@ import { ConfirmModal } from "./components/ConfirmModal";
 export const ProjectsList: React.FC = () => {
   const { getToken } = useAuth(); // 2. Obtener la función para el token
   const [projects, setProjects] = useState<Project[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -26,6 +26,7 @@ export const ProjectsList: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`, // Enviamos el token
             "Content-Type": "application/json",
+            "Accept": "application/json",
           },
         });
         const data = await res.json();
@@ -72,6 +73,7 @@ export const ProjectsList: React.FC = () => {
         headers: {
           Authorization: `Bearer ${token}`, // Enviamos el token
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify(newData),
       });
@@ -87,11 +89,16 @@ export const ProjectsList: React.FC = () => {
           repositoryUrl: savedProject.evidence_url || undefined,
           liveUrl: undefined,
           imageUrl: undefined,
+          links: savedProject.links || [],
           createdAt: savedProject.created_at || new Date().toISOString(),
         };
         setProjects([...projects, mappedProject]);
         setIsAdding(false);
         setEditingProject(null);
+      } else {
+        const errorData = await response.json();
+        console.error("Error del backend al crear:", errorData);
+        alert(`Error al guardar: ${errorData.message || JSON.stringify(errorData.errors)}`);
       }
     } catch (e) {
       console.error("Error creando proyecto:", e);
@@ -109,6 +116,7 @@ export const ProjectsList: React.FC = () => {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify(newData),
       });
@@ -124,23 +132,22 @@ export const ProjectsList: React.FC = () => {
           repositoryUrl: updatedProject.evidence_url || undefined,
           liveUrl: undefined,
           imageUrl: undefined,
+          links: updatedProject.links || [],
           createdAt: updatedProject.created_at || new Date().toISOString(),
         };
         setProjects(projects.map(p => p.id === editingProject.id ? mappedProject : p));
         setIsAdding(false);
         setEditingProject(null);
+      } else {
+        const errorData = await response.json();
+        console.error("Error del backend al actualizar:", errorData);
+        alert(`Error al actualizar: ${errorData.message || JSON.stringify(errorData.errors)}`);
       }
     } catch (e) {
       console.error("Error actualizando proyecto:", e);
     }
   };
 
-  // ELIMINAR PROYECTO
-  const handleDeleteProject = (id: string) => {
-    const project = projects.find(p => p.id === id);
-    setProjectToDelete({ id, title: project?.title || "este proyecto" });
-    setDeleteModalOpen(true);
-  };
 
   const confirmDelete = async () => {
     if (!projectToDelete) return;
@@ -151,6 +158,7 @@ export const ProjectsList: React.FC = () => {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Accept": "application/json",
         },
       });
 
@@ -168,11 +176,13 @@ export const ProjectsList: React.FC = () => {
   // CARGAR PROYECTOS
   useEffect(() => {
     const loadProjects = async () => {
+      setIsLoading(true);
       try {
         const token = await getToken();
         const res = await fetch("http://localhost:8000/api/projects", {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Accept": "application/json",
           },
         });
 
@@ -194,12 +204,12 @@ export const ProjectsList: React.FC = () => {
           repositoryUrl: p.evidence_url || undefined,
           liveUrl: undefined,
           imageUrl: undefined,
+          links: p.links || [],
           createdAt: p.created_at || new Date().toISOString(),
         }));
         setProjects(mappedProjects);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Error cargando proyectos");
-        setProjects([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadProjects();
@@ -244,56 +254,53 @@ export const ProjectsList: React.FC = () => {
   // SI NO ESTÁ AÑADIENDO: Muestra la lista
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#17262C] p-6 rounded-2xl border border-slate-200 dark:border-slate-800/60 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-[#10221C] text-emerald-600 dark:text-emerald-400">
-            <FolderOpen className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              Proyectos
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Evidencia tu experiencia práctica.
-            </p>
-          </div>
-        </div>
-        <Button variant="primary" icon={Plus} onClick={() => setIsAdding(true)}>
-          Nuevo Proyecto
+      <div className="mb-8 flex justify-between items-end">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Proyectos</h1>
+        <Button onClick={() => setIsAdding(true)} className="flex items-center gap-2">
+          <Plus className="h-5 w-5" />
+          Añadir Proyecto
         </Button>
       </div>
 
-      {error && (
-        <div className="text-sm text-red-500 bg-red-50 p-3 rounded-lg">
-          {error}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="relative">
+            {/* Outer Ring */}
+            <div className="h-16 w-16 rounded-full border-4 border-slate-100 dark:border-slate-800"></div>
+            {/* Animated Spinner */}
+            <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
+            {/* Inner pulsing circle */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 animate-pulse"></div>
+          </div>
+          <p className="mt-6 text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
+            Sincronizando tus proyectos...
+          </p>
+        </div>
+      ) : projects.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 px-4 bg-slate-50 dark:bg-[#10221C] rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+          <p className="text-slate-600 dark:text-slate-400 mb-4">No hay proyectos creados todavía.</p>
+          <Button variant="outline" onClick={() => setIsAdding(true)}>
+            Crear mi primer proyecto
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects.map((project: Project) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onEdit={() => {
+                setEditingProject(project);
+                setIsAdding(true);
+              }}
+              onDelete={() => {
+                setProjectToDelete({ id: project.id, title: project.title });
+                setDeleteModalOpen(true);
+              }}
+            />
+          ))}
         </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {projects.map((project: Project) => (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            onEdit={(p) => {
-              setEditingProject(p);
-              setIsAdding(true);
-            }}
-            onDelete={(id) => handleDeleteProject(id)}
-          />
-        ))}
-
-        <button
-          onClick={() => setIsAdding(true)}
-          className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 p-6 min-h-[250px] hover:border-emerald-500 transition-all group"
-        >
-          <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-[#10221C] flex items-center justify-center mb-4 text-slate-500 group-hover:text-emerald-500 transition-all">
-            <Plus className="h-6 w-6" />
-          </div>
-          <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-emerald-600">
-            Añadir Proyecto
-          </span>
-        </button>
-      </div>
 
       {/* Modal de confirmación para eliminar */}
       <ConfirmModal

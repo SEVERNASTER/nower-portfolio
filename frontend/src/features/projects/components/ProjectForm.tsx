@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { X, Plus } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { X, Plus, ChevronDown } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Skill, Project } from "../../../data/mockData";
+import { PlatformIcon, PREDEFINED_PLATFORMS } from "./PlatformIcon";
 
 interface ProjectFormProps {
   availableSkills: Skill[];
@@ -20,6 +21,13 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   const [description, setDescription] = useState(initialData?.description || "");
   const [techInput, setTechInput] = useState("");
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
+  const [links, setLinks] = useState<{ platform_name: string; url: string }[]>(initialData?.links || []);
+  const [currentPlatform, setCurrentPlatform] = useState(PREDEFINED_PLATFORMS[0]);
+  const [customPlatform, setCustomPlatform] = useState("");
+  const [currentUrl, setCurrentUrl] = useState("");
+  const [urlError, setUrlError] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<{
     title?: string;
     description?: string;
@@ -31,8 +39,20 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       setTitle(initialData.title || "");
       setDescription(initialData.description || "");
       setTags(initialData.tags || []);
+      setLinks(initialData.links || []);
     }
   }, [initialData]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const toggleTag = (skillName: string) => {
     if (tags.includes(skillName)) {
       setTags(tags.filter((t) => t !== skillName));
@@ -40,7 +60,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       setTags([...tags, skillName]);
     }
   };
-
+  
   const addTag = () => {
     const trimmed = techInput.trim();
     if (trimmed && !tags.includes(trimmed)) {
@@ -49,8 +69,52 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     }
   };
 
+
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter((t) => t !== tagToRemove));
+  };
+
+  const validateUrl = (url: string) => {
+    if (!url) {
+      setUrlError("");
+      return true;
+    }
+    const pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+      '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+      '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
+      '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
+      '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
+      '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
+    
+    if (pattern.test(url)) {
+      setUrlError("");
+      return true;
+    } else {
+      setUrlError("Enlace no válido");
+      return false;
+    }
+  };
+
+  const handleUrlChange = (val: string) => {
+    setCurrentUrl(val);
+    validateUrl(val);
+  };
+
+  const addLink = () => {
+    if (urlError || !currentUrl.trim()) return;
+
+    const finalPlatform = currentPlatform === "Otros" ? customPlatform.trim() : currentPlatform;
+    if (finalPlatform && currentUrl.trim()) {
+      setLinks([...links, { platform_name: finalPlatform, url: currentUrl.trim() }]);
+      setCurrentPlatform(PREDEFINED_PLATFORMS[0]);
+      setCustomPlatform("");
+      setCurrentUrl("");
+      setUrlError("");
+    }
+  };
+
+  const removeLink = (index: number) => {
+    setLinks(links.filter((_, i) => i !== index));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -71,6 +135,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       title,
       description,
       tags,
+      links,
       evidence_url: "",
     });
   };
@@ -127,11 +192,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               type="button"
               key={skill.id}
               onClick={() => toggleTag(skill.name)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                tags.includes(skill.name)
-                  ? "bg-emerald-500 border-emerald-600 text-white shadow-md scale-105"
-                  : "bg-white dark:bg-[#17262C] border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-emerald-400"
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${tags.includes(skill.name)
+                ? "bg-emerald-500 border-emerald-600 text-white shadow-md scale-105"
+                : "bg-white dark:bg-[#17262C] border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-emerald-400"
+                }`}
             >
               {tags.includes(skill.name) ? "✓ " : "+ "}
               {skill.name}
@@ -183,6 +247,130 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          Enlaces de Referencia
+        </label>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          {/* Custom Dropdown */}
+          <div className="relative sm:w-1/4" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-all hover:border-emerald-400"
+            >
+              <span className="flex items-center gap-2 truncate">
+                <PlatformIcon platform={currentPlatform} className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                <span className="truncate">{currentPlatform}</span>
+              </span>
+              <ChevronDown 
+                className={`h-4 w-4 text-slate-400 transition-transform duration-300 ease-in-out ${
+                  isDropdownOpen ? 'rotate-180' : ''
+                }`} 
+              />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute z-50 w-full bottom-full mb-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#17262C] shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                  {PREDEFINED_PLATFORMS.map((plat) => (
+                    <button
+                      key={plat}
+                      type="button"
+                      onClick={() => {
+                        setCurrentPlatform(plat);
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-2 p-2.5 text-left text-sm transition-colors ${
+                        currentPlatform === plat 
+                          ? "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold" 
+                          : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                      }`}
+                    >
+                      <PlatformIcon platform={plat} className={`h-4 w-4 ${currentPlatform === plat ? "text-emerald-500" : "text-slate-400"}`} />
+                      {plat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {currentPlatform === "Otros" && (
+            <input
+              type="text"
+              value={customPlatform}
+              onChange={(e) => setCustomPlatform(e.target.value)}
+              placeholder="Nombre de plataforma"
+              className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors sm:w-1/4"
+            />
+          )}
+
+          <div className="flex-1 flex flex-col gap-1">
+            <input
+              type="text"
+              value={currentUrl}
+              onChange={(e) => handleUrlChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addLink();
+                }
+              }}
+              placeholder="https://..."
+              className={`w-full p-2.5 rounded-xl border bg-transparent dark:text-white outline-none transition-colors ${
+                urlError 
+                  ? "border-red-500 focus:border-red-600" 
+                  : "border-slate-200 dark:border-slate-700 focus:border-emerald-500"
+              }`}
+            />
+            {urlError && (
+              <span className="text-[10px] font-medium text-red-500 ml-1">
+                {urlError}
+              </span>
+            )}
+          </div>
+
+          <Button type="button" onClick={addLink} variant="secondary" className="px-4">
+            Añadir
+          </Button>
+        </div>
+
+        {links.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
+              Enlaces añadidos:
+            </p>
+            <div className="flex flex-row flex-wrap gap-3">
+              {links.map((link, index) => {
+                const isCustom = !PREDEFINED_PLATFORMS.includes(link.platform_name);
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#10221C] border border-slate-200 dark:border-slate-700/50 shadow-sm group"
+                  >
+                    <PlatformIcon platform={link.platform_name} className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                    {isCustom && (
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {link.platform_name}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeLink(index)}
+                      className="text-slate-400 hover:text-red-500 transition-colors ml-1 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
