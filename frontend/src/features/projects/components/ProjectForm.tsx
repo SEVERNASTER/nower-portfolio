@@ -358,19 +358,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           </Button>
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 text-white text-xl hover:bg-emerald-700 transition"
-          >
-            +
-          </button>
-
-          <span className="text-sm text-slate-400">
-            Agregar imágenes del proyecto
-          </span>
-
+        <div className="mt-4">
           <input
             type="file"
             multiple
@@ -379,20 +367,36 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             onChange={handleImageChange}
             className="hidden"
           />
-        </div>
 
-        {previewImages.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="group flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#10221C] p-6 text-center text-slate-500 dark:text-slate-400 transition hover:border-emerald-500 hover:text-emerald-500"
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white text-2xl shadow-sm transition group-hover:bg-emerald-700">
+                +
+              </div>
+              <span className="mt-4 text-sm font-semibold">Añadir imagen</span>
+              <span className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                JPG, PNG
+              </span>
+            </button>
+
             {previewImages.map((src, index) => (
-              <img
+              <div
                 key={index}
-                src={src}
-                alt="preview"
-                className="w-full h-32 object-cover rounded-lg border border-slate-700"
-              />
+                className="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#0F1920] shadow-sm"
+              >
+                <img
+                  src={src}
+                  alt={`preview ${index + 1}`}
+                  className="h-40 w-full object-cover"
+                />
+              </div>
             ))}
           </div>
-        )}
+        </div>
 
         {links.length > 0 && (
           <div className="mt-4">
