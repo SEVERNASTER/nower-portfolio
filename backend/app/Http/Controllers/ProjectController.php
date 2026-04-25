@@ -3,11 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Services\ProjectLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ProjectController extends Controller
 {
+    protected $projectLinkService;
+
+    public function __construct(ProjectLinkService $projectLinkService)
+    {
+        $this->projectLinkService = $projectLinkService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -21,9 +29,9 @@ class ProjectController extends Controller
         }
 
         if ($user->role === 'admin') {
-            $projects = Project::with('user')->orderBy('created_at', 'desc')->get();
+            $projects = Project::with(['user', 'links'])->orderBy('created_at', 'desc')->get();
         } else {
-            $projects = Project::with('user')
+            $projects = Project::with(['user', 'links'])
                 ->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -44,6 +52,9 @@ class ProjectController extends Controller
             'evidence_url' => 'nullable|string',
             'tags' => 'required|array',
             'tags.*' => 'string|max:50',
+            'links' => 'nullable|array',
+            'links.*.platform_name' => 'required_with:links|string|max:50',
+            'links.*.url' => 'required_with:links|url|max:255',
         ]);
 
         $clerkId = $request->attributes->get('clerk_user_id');
@@ -61,7 +72,11 @@ class ProjectController extends Controller
             'tags' => $validated['tags'],
         ]);
 
-        return response()->json($project, 201);
+        if (isset($validated['links'])) {
+            $this->projectLinkService->syncLinks($project, $validated['links']);
+        }
+
+        return response()->json($project->load('links'), 201);
     }
 
     /**
@@ -77,7 +92,7 @@ class ProjectController extends Controller
         }
 
         // READ DETAIL: Muestra el detalle del proyecto
-        return response()->json($project->load('user'));
+        return response()->json($project->load(['user', 'links']));
     }
 
     /**
@@ -98,11 +113,18 @@ class ProjectController extends Controller
             'evidence_url' => 'nullable|string',
             'tags' => 'sometimes|required|array',
             'tags.*' => 'string|max:50',
+            'links' => 'sometimes|nullable|array',
+            'links.*.platform_name' => 'required_with:links|string|max:50',
+            'links.*.url' => 'required_with:links|url|max:255',
         ]);
 
         $project->update($validated);
 
-        return response()->json($project);
+        if (array_key_exists('links', $validated)) {
+            $this->projectLinkService->syncLinks($project, $validated['links'] ?? []);
+        }
+
+        return response()->json($project->load('links'));
     }
 
     /**
