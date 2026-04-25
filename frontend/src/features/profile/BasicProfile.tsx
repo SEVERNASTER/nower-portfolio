@@ -173,7 +173,7 @@ export const BasicProfile: React.FC = () => {
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
-  const avatarUrl = previewImage || backendImageUrl;
+  const avatarUrl = previewImage || backendImageUrl || user?.imageUrl;
 
   const profile = {
     ...mockProfile,
