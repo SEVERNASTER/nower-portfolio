@@ -35,6 +35,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{
     title?: string;
     description?: string;
@@ -181,7 +182,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     setLinks(links.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: any = {};
 
@@ -195,14 +196,19 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       return;
     }
 
-    onSubmit({
-      title,
-      description,
-      tags,
-      links,
-      images,
-      evidence_url: "",
-    });
+    setIsSubmitting(true);
+    try {
+      await onSubmit({
+        title,
+        description,
+        tags,
+        links,
+        images,
+        evidence_url: "",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -503,11 +509,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-        <Button type="button" variant="ghost" onClick={onCancel}>
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
           Cancelar
         </Button>
-        <Button type="submit" variant="primary">
-          Guardar Proyecto
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
+          {isSubmitting ? 'Guardando...' : 'Guardar Proyecto'}
         </Button>
       </div>
     </form>
