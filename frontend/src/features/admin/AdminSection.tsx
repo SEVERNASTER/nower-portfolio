@@ -87,6 +87,7 @@ interface PortfolioDetail {
         descripcion: string;
         tecnologias: string[];
         enlace: string;
+        imagenes?: string[];
     }>;
     experiencia: Array<{
         id: string;
@@ -243,7 +244,8 @@ export const AdminSection: React.FC = () => {
                             titulo: p.title || 'Sin título',
                             descripcion: p.description || '',
                             tecnologias: parseTags(p.tags),
-                            enlace: ensureValidUrl(p.evidence_url || fallBackLink)
+                            enlace: ensureValidUrl(p.evidence_url || fallBackLink),
+                            imagenes: Array.isArray(p.images) ? p.images.map((img: any) => img.url) : []
                         };
                     }),
                     experiencia: [],
@@ -565,6 +567,15 @@ export const AdminSection: React.FC = () => {
                                         <div className="grid gap-4">
                                             {selectedPortfolio.proyectos.map((proyecto) => (
                                                 <div key={proyecto.id} className="group relative overflow-hidden rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 transition-all hover:border-emerald-300/30 hover:bg-emerald-500/5 hover:shadow-md">
+                                                    {proyecto.imagenes && proyecto.imagenes.length > 0 && (
+                                                        <div className="mb-5 overflow-hidden rounded-xl border border-[#1d4254]">
+                                                            <img
+                                                                src={proyecto.imagenes[0]}
+                                                                alt={proyecto.titulo}
+                                                                className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            />
+                                                        </div>
+                                                    )}
                                                     <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
                                                         <div>
                                                             <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors text-base">{proyecto.titulo}</h4>

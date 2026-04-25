@@ -71,6 +71,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       </div>
 
+      {/* Image */}
+      {project.imageUrls?.[0] || project.imageUrl ? (
+        <div className="mb-5 overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800">
+          <img
+            src={project.imageUrls?.[0] || project.imageUrl}
+            alt={project.title}
+            className="h-48 w-full object-cover"
+          />
+        </div>
+      ) : null}
+
       {/* Body */}
       <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors mb-2">
         {project.title}
