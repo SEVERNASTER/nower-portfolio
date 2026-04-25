@@ -22,15 +22,15 @@ export const ProjectsList: React.FC = () => {
 
   const buildFormData = (projectData: any) => {
     const formData = new FormData();
-    formData.append('title', projectData.title);
-    formData.append('description', projectData.description);
+    formData.append("title", projectData.title);
+    formData.append("description", projectData.description);
 
     if (projectData.evidence_url) {
-      formData.append('evidence_url', projectData.evidence_url);
+      formData.append("evidence_url", projectData.evidence_url);
     }
 
     if (projectData.tags?.length) {
-      projectData.tags.forEach((tag: string) => formData.append('tags[]', tag));
+      projectData.tags.forEach((tag: string) => formData.append("tags[]", tag));
     }
 
     if (projectData.links?.length) {
@@ -42,7 +42,7 @@ export const ProjectsList: React.FC = () => {
 
     if (projectData.images?.length) {
       projectData.images.forEach((file: File) => {
-        formData.append('images[]', file);
+        formData.append("images[]", file);
       });
     }
 
@@ -145,18 +145,21 @@ export const ProjectsList: React.FC = () => {
 
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:8000/api/projects/${editingProject.id}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Accept": "application/json",
+      const response = await fetch(
+        `http://localhost:8000/api/projects/${editingProject.id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+          body: (() => {
+            const formData = buildFormData(newData);
+            formData.append("_method", "PUT");
+            return formData;
+          })(),
         },
-        body: (() => {
-          const formData = buildFormData(newData);
-          formData.append('_method', 'PUT');
-          return formData;
-        })(),
-      });
+      );
 
       if (response.ok) {
         const updatedProject = await response.json();
@@ -169,7 +172,8 @@ export const ProjectsList: React.FC = () => {
           repositoryUrl: updatedProject.evidence_url || undefined,
           liveUrl: undefined,
           imageUrl: undefined,
-          imageUrls: updatedProject.images?.map((image: any) => image.url) || [],
+          imageUrls:
+            updatedProject.images?.map((image: any) => image.url) || [],
           links: updatedProject.links || [],
           createdAt: updatedProject.created_at || new Date().toISOString(),
         };
@@ -325,19 +329,7 @@ export const ProjectsList: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
-            onClick={() => setIsAdding(true)}
-            className="group cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 
-                 bg-transparent hover:border-emerald-500 hover:bg-emerald-500/5 
-                 transition-all duration-300 flex flex-col items-center justify-center 
-                 h-56"
-          >
-            <Plus className="h-10 w-10 text-slate-400 group-hover:text-emerald-500 transition" />
-            <p className="mt-4 text-slate-500 group-hover:text-emerald-500 font-medium transition">
-              Añadir Proyecto
-            </p>
-          </div>
-
+          {/* PROYECTOS PRIMERO */}
           {projects.map((project: Project) => (
             <ProjectCard
               key={project.id}
@@ -352,6 +344,20 @@ export const ProjectsList: React.FC = () => {
               }}
             />
           ))}
+
+          {/*CARD AÑADIR PROYECTO AL FINAL */}
+          <div
+            onClick={() => setIsAdding(true)}
+            className="group cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 
+               bg-transparent hover:border-emerald-500 hover:bg-emerald-500/5 
+               transition-all duration-300 flex flex-col items-center justify-center 
+               h-full min-h-[260px]"
+          >
+            <Plus className="h-10 w-10 text-slate-400 group-hover:text-emerald-500 transition" />
+            <p className="mt-4 text-slate-500 group-hover:text-emerald-500 font-medium transition">
+              Añadir Proyecto
+            </p>
+          </div>
         </div>
       )}
 
