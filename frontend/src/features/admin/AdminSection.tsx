@@ -96,6 +96,7 @@ interface PortfolioDetail {
     }>;
     skills: string[];
     status: 'Pendiente' | 'Aprobado' | 'Rechazado';
+    imagen_profile?: string;
 }
 const parseTags = (tags: any): string[] => {
     if (Array.isArray(tags)) return tags;
@@ -247,7 +248,8 @@ export const AdminSection: React.FC = () => {
                     }),
                     experiencia: [],
                     skills: (u.skills || []).map((s: any) => s.name),
-                    status: 'Pendiente'
+                    status: 'Pendiente',
+                    imagen_profile: u.imagen_profile
                 }));
 
                 setUsers(adminUsers);
@@ -440,10 +442,18 @@ export const AdminSection: React.FC = () => {
                                 </button>
 
                                 {/* Avatar Overlay */}
-                                <div className="absolute -bottom-14 sm:-bottom-20 left-6 sm:left-10 h-28 w-28 sm:h-40 sm:w-40 rounded-full border-4 border-slate-50 dark:border-[#121c22] bg-white dark:bg-slate-800 flex items-center justify-center shadow-lg z-10 transition-transform hover:scale-105 duration-300">
-                                    <span className="text-5xl sm:text-7xl font-black bg-gradient-to-br from-emerald-500 to-teal-700 bg-clip-text text-transparent">
-                                        {selectedPortfolio.nombre.charAt(0)}
-                                    </span>
+                                <div className="absolute -bottom-14 sm:-bottom-20 left-6 sm:left-10 h-28 w-28 sm:h-40 sm:w-40 rounded-full border-4 border-slate-50 dark:border-[#121c22] bg-white dark:bg-slate-800 flex items-center justify-center shadow-lg z-10 transition-transform hover:scale-105 duration-300 overflow-hidden">
+                                    {selectedPortfolio.imagen_profile ? (
+                                        <img 
+                                            src={selectedPortfolio.imagen_profile} 
+                                            alt={selectedPortfolio.nombre} 
+                                            className="h-full w-full object-cover"
+                                        />
+                                    ) : (
+                                        <span className="text-5xl sm:text-7xl font-black bg-gradient-to-br from-emerald-500 to-teal-700 bg-clip-text text-transparent">
+                                            {selectedPortfolio.nombre.charAt(0)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
