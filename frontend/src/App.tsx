@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 
 const baseNavItems: NavItem[] = [
   { name: "Perfil Básico", icon: User, path: "/profile" },
-  { name: "Proyectos", icon: FolderGit2, badge: "2", path: "/projects" },
+  { name: "Proyectos", icon: FolderGit2, path: "/projects" },
   { name: "Habilidades", icon: Code, path: "/skills" },
   { name: "Experiencia", icon: Briefcase, path: "/experience" },
 ];
