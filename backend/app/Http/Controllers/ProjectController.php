@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Services\CloudinaryService;
 use App\Services\ProjectLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,10 +11,12 @@ use Illuminate\Support\Facades\Auth;
 class ProjectController extends Controller
 {
     protected $projectLinkService;
+    protected $cloudinaryService;
 
-    public function __construct(ProjectLinkService $projectLinkService)
+    public function __construct(ProjectLinkService $projectLinkService, CloudinaryService $cloudinaryService)
     {
         $this->projectLinkService = $projectLinkService;
+        $this->cloudinaryService = $cloudinaryService;
     }
 
     /**
@@ -29,9 +32,9 @@ class ProjectController extends Controller
         }
 
         if ($user->role === 'admin') {
-            $projects = Project::with(['user', 'links'])->orderBy('created_at', 'desc')->get();
+            $projects = Project::with(['user', 'links', 'images'])->orderBy('created_at', 'desc')->get();
         } else {
-            $projects = Project::with(['user', 'links'])
+            $projects = Project::with(['user', 'links', 'images'])
                 ->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -55,6 +58,8 @@ class ProjectController extends Controller
             'links' => 'nullable|array',
             'links.*.platform_name' => 'required_with:links|string|max:50',
             'links.*.url' => 'required_with:links|url|max:255',
+            'images' => 'sometimes|array',
+            'images.*' => 'image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $clerkId = $request->attributes->get('clerk_user_id');
@@ -76,7 +81,9 @@ class ProjectController extends Controller
             $this->projectLinkService->syncLinks($project, $validated['links']);
         }
 
-        return response()->json($project->load('links'), 201);
+        $this->uploadProjectImages($project, $request);
+
+        return response()->json($project->load(['links', 'images']), 201);
     }
 
     /**
@@ -92,7 +99,7 @@ class ProjectController extends Controller
         }
 
         // READ DETAIL: Muestra el detalle del proyecto
-        return response()->json($project->load(['user', 'links']));
+        return response()->json($project->load(['user', 'links', 'images']));
     }
 
     /**
@@ -116,6 +123,8 @@ class ProjectController extends Controller
             'links' => 'sometimes|nullable|array',
             'links.*.platform_name' => 'required_with:links|string|max:50',
             'links.*.url' => 'required_with:links|url|max:255',
+            'images' => 'sometimes|array',
+            'images.*' => 'image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $project->update($validated);
@@ -124,7 +133,34 @@ class ProjectController extends Controller
             $this->projectLinkService->syncLinks($project, $validated['links'] ?? []);
         }
 
-        return response()->json($project->load('links'));
+        $this->uploadProjectImages($project, $request);
+
+        return response()->json($project->load(['links', 'images']));
+    }
+
+    private function uploadProjectImages(Project $project, Request $request): void
+    {
+        if (!$request->hasFile('images')) {
+            return;
+        }
+
+        $files = $request->file('images');
+        if (!is_array($files)) {
+            return;
+        }
+
+        foreach ($files as $index => $file) {
+            if (!$file || !$file->isValid()) {
+                continue;
+            }
+
+            $result = $this->cloudinaryService->upload($file, "project_{$project->id}_{$index}", 'project_images');
+
+            $project->images()->create([
+                'url' => $result['url'] ?? '',
+                'public_id' => $result['public_id'] ?? null,
+            ]);
+        }
     }
 
     /**
