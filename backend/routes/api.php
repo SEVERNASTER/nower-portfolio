@@ -7,6 +7,8 @@ use App\Http\Controllers\SkillController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\AdminDashboardController;
 
 // PUBLIC route. Anyone can see it.
 Route::get('/health', function () {
@@ -35,4 +37,25 @@ Route::middleware([ClerkAuth::class])->group(function () {
     Route::apiResource('skills', SkillController::class)->only([
         'index', 'store', 'update', 'destroy',
     ]);
+
+    // Projects CRUD (Usuarios y Admin)
+    Route::apiResource('projects', ProjectController::class)->only([
+        'index', 'store', 'show', 'update', 'destroy',
+    ]);
+});
+
+// ADMIN routes. MUST have Clerk token AND Admin role to enter.
+Route::middleware([\App\Http\Middleware\ClerkAuth::class, \App\Http\Middleware\AdminAuth::class])->group(function () {
+
+    Route::get('/admin/users-with-projects', [AdminDashboardController::class, 'getUsersWithProjects']);    
+    // Endpoint para frontend de verificación si el AdminAuth es exitoso
+    Route::get('/admin/validate', function (Request $request) {
+        $user = $request->attributes->get('auth_user');
+        return response()->json([
+            'message' => 'Validación de administrador exitosa',
+            'user' => $user
+        ]);
+    });
+
+    // Aquí irían el resto de rutas de moderación y reportes...
 });

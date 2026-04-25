@@ -65,7 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
     }, []);
 
     const userName = backendName || user?.fullName || mockProfile.fullName;
-    const avatarUrl = userImage;
+    const avatarUrl = userImage || user?.imageUrl || undefined;
 
     return (
         <aside className={`fixed inset-y-0 left-0 z-50 w-72 transform flex-col bg-white dark:bg-[#17262C] border-r border-slate-200 dark:border-slate-800/60 transition-transform duration-300 lg:static lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex`}>
@@ -128,8 +128,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
                     </div>
                     <div className="flex flex-1 flex-col text-left">
                         <span className="text-sm font-bold text-slate-900 dark:text-white leading-none">{userName}</span>
-                        <div className="mt-1 flex items-center gap-2 text-slate-500 dark:text-slate-400 uppercase">
-                        </div>
+
                     </div>
                     <button 
                         onClick={() => signOut()}

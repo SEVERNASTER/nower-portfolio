@@ -24,6 +24,8 @@ export interface Project {
     repositoryUrl?: string;
     liveUrl?: string;
     imageUrl?: string;
+    imageUrls?: string[];
+    links?: { platform_name: string; url: string }[];
     createdAt: string;
 }
 

