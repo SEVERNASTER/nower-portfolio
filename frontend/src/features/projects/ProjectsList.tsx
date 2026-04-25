@@ -17,6 +17,35 @@ export const ProjectsList: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null);
 
+  const buildFormData = (projectData: any) => {
+    const formData = new FormData();
+    formData.append('title', projectData.title);
+    formData.append('description', projectData.description);
+
+    if (projectData.evidence_url) {
+      formData.append('evidence_url', projectData.evidence_url);
+    }
+
+    if (projectData.tags?.length) {
+      projectData.tags.forEach((tag: string) => formData.append('tags[]', tag));
+    }
+
+    if (projectData.links?.length) {
+      projectData.links.forEach((link: any, index: number) => {
+        formData.append(`links[${index}][platform_name]`, link.platform_name);
+        formData.append(`links[${index}][url]`, link.url);
+      });
+    }
+
+    if (projectData.images?.length) {
+      projectData.images.forEach((file: File) => {
+        formData.append('images[]', file);
+      });
+    }
+
+    return formData;
+  };
+
   // CARGAR SKILLS
   useEffect(() => {
     const loadSkills = async () => {
@@ -75,7 +104,7 @@ export const ProjectsList: React.FC = () => {
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        body: JSON.stringify(newData),
+        body: buildFormData(newData),
       });
 
       if (response.ok) {
@@ -89,6 +118,7 @@ export const ProjectsList: React.FC = () => {
           repositoryUrl: savedProject.evidence_url || undefined,
           liveUrl: undefined,
           imageUrl: undefined,
+          imageUrls: savedProject.images?.map((image: any) => image.url) || [],
           links: savedProject.links || [],
           createdAt: savedProject.created_at || new Date().toISOString(),
         };
@@ -112,13 +142,16 @@ export const ProjectsList: React.FC = () => {
     try {
       const token = await getToken();
       const response = await fetch(`http://localhost:8000/api/projects/${editingProject.id}`, {
-        method: "PUT",
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        body: JSON.stringify(newData),
+        body: (() => {
+          const formData = buildFormData(newData);
+          formData.append('_method', 'PUT');
+          return formData;
+        })(),
       });
 
       if (response.ok) {
@@ -132,6 +165,7 @@ export const ProjectsList: React.FC = () => {
           repositoryUrl: updatedProject.evidence_url || undefined,
           liveUrl: undefined,
           imageUrl: undefined,
+          imageUrls: updatedProject.images?.map((image: any) => image.url) || [],
           links: updatedProject.links || [],
           createdAt: updatedProject.created_at || new Date().toISOString(),
         };
@@ -204,6 +238,7 @@ export const ProjectsList: React.FC = () => {
           repositoryUrl: p.evidence_url || undefined,
           liveUrl: undefined,
           imageUrl: undefined,
+          imageUrls: p.images?.map((image: any) => image.url) || [],
           links: p.links || [],
           createdAt: p.created_at || new Date().toISOString(),
         }));
