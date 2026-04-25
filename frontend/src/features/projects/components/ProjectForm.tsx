@@ -28,6 +28,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   const [urlError, setUrlError] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<{
     title?: string;
     description?: string;
@@ -69,6 +72,18 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter((file) => file.type.startsWith("image/"));
+
+    if (validFiles.length === 0) {
+      return;
+    }
+
+    setImages((prev) => [...prev, ...validFiles]);
+    const previews = validFiles.map((file) => URL.createObjectURL(file));
+    setPreviewImages((prev) => [...prev, ...previews]);
+  };
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter((t) => t !== tagToRemove));
@@ -136,6 +151,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       description,
       tags,
       links,
+      images,
       evidence_url: "",
     });
   };
@@ -341,6 +357,42 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             Añadir
           </Button>
         </div>
+
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 text-white text-xl hover:bg-emerald-700 transition"
+          >
+            +
+          </button>
+
+          <span className="text-sm text-slate-400">
+            Agregar imágenes del proyecto
+          </span>
+
+          <input
+            type="file"
+            multiple
+            accept="image/png,image/jpeg"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            className="hidden"
+          />
+        </div>
+
+        {previewImages.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {previewImages.map((src, index) => (
+              <img
+                key={index}
+                src={src}
+                alt="preview"
+                className="w-full h-32 object-cover rounded-lg border border-slate-700"
+              />
+            ))}
+          </div>
+        )}
 
         {links.length > 0 && (
           <div className="mt-4">
