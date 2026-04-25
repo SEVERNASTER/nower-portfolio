@@ -3,6 +3,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { IconType } from 'react-icons';
 
 import {
   Check,
@@ -33,8 +34,7 @@ import {
   SiTypescript,
 } from 'react-icons/si';
 import {
-  useLocation,
-  useNavigate,
+  useLocation
 } from 'react-router-dom';
 
 import { useAuth } from '@clerk/clerk-react';
@@ -97,182 +97,18 @@ interface PortfolioDetail {
     skills: string[];
     status: 'Pendiente' | 'Aprobado' | 'Rechazado';
 }
-
-const sectionItems: Array<{
-    key: AdminSectionKey;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-}> = [
-    { key: 'metrics', label: 'Métricas', icon: FileText },
-    { key: 'users', label: 'Usuarios', icon: User },
-    { key: 'reports', label: 'Reportes', icon: FolderOpen },
-];
-
-const initialUsers: AdminUser[] = [
-    { id: 'USR-001', name: 'Ana Rojas', email: 'ana.rojas@nower.com', status: 'Activo', registeredAt: '2026-01-12' },
-    { id: 'USR-002', name: 'Carlos Vega', email: 'carlos.vega@nower.com', status: 'Inactivo', registeredAt: '2026-01-30' },
-    { id: 'USR-003', name: 'Daniela Lima', email: 'daniela.lima@nower.com', status: 'Activo', registeredAt: '2026-02-14' },
-    { id: 'USR-004', name: 'Mateo Perez', email: 'mateo.perez@nower.com', status: 'Inactivo', registeredAt: '2026-02-20' }
-];
-
-const profiles: AdminProfile[] = [
-    {
-        id: 'PRF-001',
-        owner: 'Ana Rojas',
-        role: 'Frontend Developer',
-        city: 'Cochabamba',
-        portfolioUrl: 'https://nower.io/ana-rojas',
-        updatedAt: '2026-03-08'
-    },
-    {
-        id: 'PRF-002',
-        owner: 'Carlos Vega',
-        role: 'Backend Engineer',
-        city: 'La Paz',
-        portfolioUrl: 'https://nower.io/carlos-vega',
-        updatedAt: '2026-03-11'
-    },
-    {
-        id: 'PRF-003',
-        owner: 'Daniela Lima',
-        role: 'UI/UX Designer',
-        city: 'Santa Cruz',
-        portfolioUrl: 'https://nower.io/daniela-lima',
-        updatedAt: '2026-03-15'
+const parseTags = (tags: any): string[] => {
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === 'string') {
+        try {
+            const parsed = JSON.parse(tags);
+            if (Array.isArray(parsed)) return parsed;
+        } catch (e) {
+            return tags.split(',').map(t => t.trim()).filter(Boolean);
+        }
     }
-];
-
-const mockPortfolios: PortfolioDetail[] = [
-    {
-        id: 'PRT-001',
-        userId: 'USR-001',
-        nombre: 'Ana Rojas',
-        rol: 'Frontend Developer',
-        ciudad: 'Cochabamba',
-        email: 'ana.rojas@nower.com',
-        telefono: '+591 71234567',
-        bio: 'Desarrolladora frontend con 3 años de experiencia en React, TypeScript y aplicaciones web modernas. Apasionada por crear interfaces de usuario intuitivas y performant.',
-        proyectos: [
-            {
-                id: 'PRJ-001',
-                titulo: 'E-commerce Platform',
-                descripcion: 'Plataforma de comercio electrónico con carrito de compras, pasarela de pago y panel de administración.',
-                tecnologias: ['React', 'Node.js', 'MongoDB', 'Stripe'],
-                enlace: 'https://github.com/ana-rojas/ecommerce'
-            },
-            {
-                id: 'PRJ-002',
-                titulo: 'Task Manager App',
-                descripcion: 'Aplicación de gestión de tareas con drag & drop, notificaciones y sincronización en tiempo real.',
-                tecnologias: ['React', 'Firebase', 'Tailwind CSS'],
-                enlace: 'https://github.com/ana-rojas/taskmanager'
-            }
-        ],
-        experiencia: [
-            {
-                id: 'EXP-001',
-                cargo: 'Frontend Developer',
-                empresa: 'Tech Solutions Bolivia',
-                periodo: '2023 - Presente'
-            },
-            {
-                id: 'EXP-002',
-                cargo: 'Junior Developer',
-                empresa: 'Startup Digital',
-                periodo: '2021 - 2023'
-            }
-        ],
-        skills: ['React', 'TypeScript', 'Tailwind CSS', 'Node.js', 'Git', 'Figma'],
-        status: 'Pendiente'
-    },
-    {
-        id: 'PRT-002',
-        userId: 'USR-002',
-        nombre: 'Carlos Vega',
-        rol: 'Backend Engineer',
-        ciudad: 'La Paz',
-        email: 'carlos.vega@nower.com',
-        telefono: '+591 79876543',
-        bio: 'Ingeniero backend especializado en APIs RESTful, microservicios y arquitectura cloud. Experiencia con AWS y Docker.',
-        proyectos: [
-            {
-                id: 'PRJ-003',
-                titulo: 'API Gateway Service',
-                descripcion: 'Gateway centralizado para gestión de microservicios con autenticación y rate limiting.',
-                tecnologias: ['Node.js', 'Express', 'Redis', 'Docker'],
-                enlace: 'https://github.com/carlosvega/api-gateway'
-            }
-        ],
-        experiencia: [
-            {
-                id: 'EXP-003',
-                cargo: 'Backend Engineer',
-                empresa: 'CloudTech Bolivia',
-                periodo: '2022 - Presente'
-            }
-        ],
-        skills: ['Node.js', 'Python', 'PostgreSQL', 'AWS', 'Docker', 'Kubernetes'],
-        status: 'Aprobado'
-    },
-    {
-        id: 'PRT-003',
-        userId: 'USR-003',
-        nombre: 'Daniela Lima',
-        rol: 'UI/UX Designer',
-        ciudad: 'Santa Cruz',
-        email: 'daniela.lima@nower.com',
-        telefono: '+591 60123456',
-        bio: 'Diseñadora UI/UX con enfoque en accesibilidad y experiencia de usuario. Dominio de Figma y herramientas de prototipado.',
-        proyectos: [
-            {
-                id: 'PRJ-004',
-                titulo: 'Finance App Design',
-                descripcion: 'Diseño completo de aplicación móvil para gestión financiera personal.',
-                tecnologias: ['Figma', 'Adobe XD', 'Protopie'],
-                enlace: 'https://dribbble.com/daniela-lima'
-            }
-        ],
-        experiencia: [
-            {
-                id: 'EXP-004',
-                cargo: 'UI/UX Designer',
-                empresa: 'Creative Agency',
-                periodo: '2021 - Presente'
-            }
-        ],
-        skills: ['Figma', 'Adobe XD', 'Sketch', 'User Research', 'Prototyping', 'HTML/CSS'],
-        status: 'Rechazado'
-    },
-    {
-        id: 'PRT-004',
-        userId: 'USR-004',
-        nombre: 'Mateo Perez',
-        rol: 'Full Stack Developer',
-        ciudad: 'Cochabamba',
-        email: 'mateo.perez@nower.com',
-        telefono: '+591 73334444',
-        bio: 'Desarrollador full stack con experiencia en el stack MERN y arquitecturas serverless.',
-        proyectos: [
-            {
-                id: 'PRJ-005',
-                titulo: 'Social Media Dashboard',
-                descripcion: 'Dashboard para gestión de redes sociales con analytics y programación de posts.',
-                tecnologias: ['React', 'Next.js', 'Prisma', 'PostgreSQL'],
-                enlace: 'https://github.com/mateoperez/social-dashboard'
-            }
-        ],
-        experiencia: [
-            {
-                id: 'EXP-005',
-                cargo: 'Full Stack Developer',
-                empresa: 'Digital Innovations',
-                periodo: '2023 - Presente'
-            }
-        ],
-        skills: ['React', 'Next.js', 'TypeScript', 'Prisma', 'PostgreSQL', 'AWS'],
-        status: 'Pendiente'
-    }
-];
+    return [];
+};
 
 const cardBaseClass =
     'rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-5 shadow-sm';
@@ -290,7 +126,7 @@ const getStatusBadge = (status: string) => {
 const skillMetaMap: Record<
     string,
     {
-        icon: React.ComponentType<{ className?: string }>;
+        icon: any;
         iconClassName: string;
     }
 > = {
@@ -350,9 +186,17 @@ const skillMetaMap: Record<
 
 const normalizeSkillName = (skill: string) => skill.trim().toLowerCase();
 
+const ensureValidUrl = (url?: string): string => {
+    if (!url || url.trim() === '' || url === '#') return '#';
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+        return `https://${trimmedUrl}`;
+    }
+    return trimmedUrl;
+};
+
 export const AdminSection: React.FC = () => {
     const location = useLocation();
-    const navigate = useNavigate();
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [portfolios, setPortfolios] = useState<PortfolioDetail[]>([]);
     const [selectedPortfolio, setSelectedPortfolio] = useState<PortfolioDetail | null>(null);
@@ -391,13 +235,16 @@ export const AdminSection: React.FC = () => {
                     email: u.email,
                     telefono: u.phone || 'N/A',
                     bio: u.bio || '',
-                    proyectos: (u.projects || []).map((p: any) => ({
-                        id: p.id.toString(),
-                        titulo: p.title || 'Sin título',
-                        descripcion: p.description || '',
-                        tecnologias: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? JSON.parse(p.tags) : []),
-                        enlace: p.evidence_url || '#'
-                    })),
+                    proyectos: (u.projects || []).map((p: any) => {
+                        const fallBackLink = Array.isArray(p.links) && p.links.length > 0 ? p.links[0].url : '#';
+                        return {
+                            id: p.id.toString(),
+                            titulo: p.title || 'Sin título',
+                            descripcion: p.description || '',
+                            tecnologias: parseTags(p.tags),
+                            enlace: ensureValidUrl(p.evidence_url || fallBackLink)
+                        };
+                    }),
                     experiencia: [],
                     skills: (u.skills || []).map((s: any) => s.name),
                     status: 'Pendiente'
@@ -445,12 +292,6 @@ export const AdminSection: React.FC = () => {
 
     const closePortfolioModal = () => {
         setSelectedPortfolio(null);
-    };
-
-    const updatePortfolioStatus = (portfolioId: string, status: 'Aprobado' | 'Rechazado') => {
-        setPortfolios((prev) =>
-            prev.map((p) => (p.id === portfolioId ? { ...p, status } : p))
-        );
     };
 
     const getPortfolioByUserId = (userId: string): PortfolioDetail | undefined => {
@@ -719,15 +560,22 @@ export const AdminSection: React.FC = () => {
                                                             <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors text-base">{proyecto.titulo}</h4>
                                                             <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{proyecto.descripcion}</p>
                                                         </div>
-                                                        <a
-                                                            href={proyecto.enlace}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-emerald-400/25 bg-[#13243a] px-5 py-2.5 text-sm font-bold text-emerald-300 shadow-[inset_0_0_12px_rgba(20,215,163,0.05),0_0_0_1px_rgba(20,215,163,0.06)] transition-all duration-200 hover:border-emerald-500 hover:bg-emerald-500 hover:text-white hover:shadow-[0_0_18px_rgba(20,215,163,0.20)] active:border-emerald-600 active:bg-emerald-600 active:text-white active:shadow-[0_0_20px_rgba(20,215,163,0.24)]"
-                                                        >
-                                                            <ExternalLink className="h-4 w-4" />
-                                                            Visitar
-                                                        </a>
+                                                        {proyecto.enlace !== '#' ? (
+                                                            <a
+                                                                href={proyecto.enlace}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-emerald-400/25 bg-[#13243a] px-5 py-2.5 text-sm font-bold text-emerald-300 shadow-[inset_0_0_12px_rgba(20,215,163,0.05),0_0_0_1px_rgba(20,215,163,0.06)] transition-all duration-200 hover:border-emerald-500 hover:bg-emerald-500 hover:text-white hover:shadow-[0_0_18px_rgba(20,215,163,0.20)] active:border-emerald-600 active:bg-emerald-600 active:text-white active:shadow-[0_0_20px_rgba(20,215,163,0.24)]"
+                                                            >
+                                                                <ExternalLink className="h-4 w-4" />
+                                                                Visitar
+                                                            </a>
+                                                        ) : (
+                                                            <span className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-slate-700/50 bg-[#13243a]/50 px-5 py-2.5 text-sm font-bold text-slate-500 cursor-not-allowed">
+                                                                <ExternalLink className="h-4 w-4 opacity-50" />
+                                                                Sin Link
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="mt-5 flex flex-wrap gap-2">
                                                         {proyecto.tecnologias.map((tech) => {
