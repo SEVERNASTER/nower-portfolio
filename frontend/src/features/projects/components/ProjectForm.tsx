@@ -31,6 +31,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<File[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [imageAlert, setImageAlert] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
   const [errors, setErrors] = useState<{
     title?: string;
     description?: string;
@@ -74,15 +78,60 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const validFiles = files.filter((file) => file.type.startsWith("image/"));
 
-    if (validFiles.length === 0) {
+    if (files.length === 0) {
       return;
     }
 
-    setImages((prev) => [...prev, ...validFiles]);
-    const previews = validFiles.map((file) => URL.createObjectURL(file));
-    setPreviewImages((prev) => [...prev, ...previews]);
+    const acceptedFiles: File[] = [];
+    const messages: string[] = [];
+    const maxSize = 2 * 1024 * 1024; // 2 MB
+
+    files.forEach((file) => {
+      if (!['image/png', 'image/jpeg'].includes(file.type)) {
+        messages.push(`El formato ${file.name} no está permitido.`);
+        return;
+      }
+
+      if (file.size > maxSize) {
+        messages.push(`${file.name} excede el tamaño máximo de 2 MB.`);
+        return;
+      }
+
+      acceptedFiles.push(file);
+    });
+
+    if (acceptedFiles.length > 0) {
+      setImages((prev) => [...prev, ...acceptedFiles]);
+      const previews = acceptedFiles.map((file) => URL.createObjectURL(file));
+      setPreviewImages((prev) => [...prev, ...previews]);
+    }
+
+    if (acceptedFiles.length > 0 && messages.length === 0) {
+      setImageAlert({
+        type: 'success',
+        message: `${acceptedFiles.length} imagen(es) válida(s) agregada(s). Se guardarán al enviar el proyecto.`,
+      });
+    } else if (acceptedFiles.length > 0 && messages.length > 0) {
+      setImageAlert({
+        type: 'info',
+        message: `${acceptedFiles.length} imagen(es) agregada(s). ${messages.join(' ')}`,
+      });
+    } else {
+      setImageAlert({
+        type: 'error',
+        message: messages.join(' '),
+      });
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewImages((prev) => prev.filter((_, i) => i !== index));
+    setImageAlert({
+      type: 'info',
+      message: 'Imagen eliminada antes de guardar.',
+    });
   };
 
   const removeTag = (tagToRemove: string) => {
@@ -368,6 +417,20 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             className="hidden"
           />
 
+          {imageAlert && (
+            <div
+              className={`mb-4 rounded-2xl border px-4 py-3 text-sm ${
+                imageAlert.type === 'success'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-200'
+                  : imageAlert.type === 'error'
+                    ? 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200'
+              }`}
+            >
+              {imageAlert.message}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <button
               type="button"
@@ -379,15 +442,22 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               </div>
               <span className="mt-4 text-sm font-semibold">Añadir imagen</span>
               <span className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-                JPG, PNG
+                JPG, PNG • Máx 2 MB
               </span>
             </button>
 
             {previewImages.map((src, index) => (
               <div
                 key={index}
-                className="overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#0F1920] shadow-sm"
+                className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#0F1920] shadow-sm"
               >
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute right-3 top-3 z-10 rounded-full bg-white/90 p-2 text-slate-700 shadow-sm transition hover:bg-white dark:bg-slate-900/90 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <X className="h-4 w-4" />
+                </button>
                 <img
                   src={src}
                   alt={`preview ${index + 1}`}
