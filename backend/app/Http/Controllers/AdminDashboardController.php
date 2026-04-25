@@ -14,7 +14,7 @@ class AdminDashboardController extends Controller
     {
         $users = User::where('role', 'user')
             ->has('projects')
-            ->with(['projects.links', 'skills'])
+            ->with(['projects.links', 'projects.images', 'skills'])
             ->orderBy('created_at', 'desc')
             ->get();
             
