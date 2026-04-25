@@ -15,7 +15,10 @@ export const ProjectsList: React.FC = () => {
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [projectToDelete, setProjectToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const buildFormData = (projectData: any) => {
     const formData = new FormData();
@@ -55,7 +58,7 @@ export const ProjectsList: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`, // Enviamos el token
             "Content-Type": "application/json",
-            "Accept": "application/json",
+            Accept: "application/json",
           },
         });
         const data = await res.json();
@@ -101,8 +104,7 @@ export const ProjectsList: React.FC = () => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`, // Enviamos el token
-          "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
         body: buildFormData(newData),
       });
@@ -128,7 +130,9 @@ export const ProjectsList: React.FC = () => {
       } else {
         const errorData = await response.json();
         console.error("Error del backend al crear:", errorData);
-        alert(`Error al guardar: ${errorData.message || JSON.stringify(errorData.errors)}`);
+        alert(
+          `Error al guardar: ${errorData.message || JSON.stringify(errorData.errors)}`,
+        );
       }
     } catch (e) {
       console.error("Error creando proyecto:", e);
@@ -138,7 +142,7 @@ export const ProjectsList: React.FC = () => {
   // ACTUALIZAR PROYECTO
   const handleUpdateProject = async (newData: any) => {
     if (!editingProject) return;
-    
+
     try {
       const token = await getToken();
       const response = await fetch(`http://localhost:8000/api/projects/${editingProject.id}`, {
@@ -169,35 +173,41 @@ export const ProjectsList: React.FC = () => {
           links: updatedProject.links || [],
           createdAt: updatedProject.created_at || new Date().toISOString(),
         };
-        setProjects(projects.map(p => p.id === editingProject.id ? mappedProject : p));
+        setProjects(
+          projects.map((p) => (p.id === editingProject.id ? mappedProject : p)),
+        );
         setIsAdding(false);
         setEditingProject(null);
       } else {
         const errorData = await response.json();
         console.error("Error del backend al actualizar:", errorData);
-        alert(`Error al actualizar: ${errorData.message || JSON.stringify(errorData.errors)}`);
+        alert(
+          `Error al actualizar: ${errorData.message || JSON.stringify(errorData.errors)}`,
+        );
       }
     } catch (e) {
       console.error("Error actualizando proyecto:", e);
     }
   };
 
-
   const confirmDelete = async () => {
     if (!projectToDelete) return;
-    
+
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:8000/api/projects/${projectToDelete.id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Accept": "application/json",
+      const response = await fetch(
+        `http://localhost:8000/api/projects/${projectToDelete.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         },
-      });
+      );
 
       if (response.ok) {
-        setProjects(projects.filter(p => p.id !== projectToDelete.id));
+        setProjects(projects.filter((p) => p.id !== projectToDelete.id));
       }
     } catch (e) {
       console.error("Error eliminando proyecto:", e);
@@ -216,7 +226,7 @@ export const ProjectsList: React.FC = () => {
         const res = await fetch("http://localhost:8000/api/projects", {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Accept": "application/json",
+            Accept: "application/json",
           },
         });
 
@@ -227,7 +237,7 @@ export const ProjectsList: React.FC = () => {
 
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error ?? "Error cargando proyectos");
-        
+
         // Mapear proyectos del backend al formato del frontend
         const mappedProjects: Project[] = data.map((p: any) => ({
           id: p.id.toString(),
@@ -290,8 +300,13 @@ export const ProjectsList: React.FC = () => {
   return (
     <div className="w-full space-y-6">
       <div className="mb-8 flex justify-between items-end">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Proyectos</h1>
-        <Button onClick={() => setIsAdding(true)} className="flex items-center gap-2">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+          Proyectos
+        </h1>
+        <Button
+          onClick={() => setIsAdding(true)}
+          className="flex items-center gap-2"
+        >
           <Plus className="h-5 w-5" />
           Añadir Proyecto
         </Button>
@@ -300,26 +315,29 @@ export const ProjectsList: React.FC = () => {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-32">
           <div className="relative">
-            {/* Outer Ring */}
             <div className="h-16 w-16 rounded-full border-4 border-slate-100 dark:border-slate-800"></div>
-            {/* Animated Spinner */}
             <div className="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
-            {/* Inner pulsing circle */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 animate-pulse"></div>
           </div>
           <p className="mt-6 text-sm font-medium text-slate-500 dark:text-slate-400 animate-pulse">
             Sincronizando tus proyectos...
           </p>
         </div>
-      ) : projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 px-4 bg-slate-50 dark:bg-[#10221C] rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-          <p className="text-slate-600 dark:text-slate-400 mb-4">No hay proyectos creados todavía.</p>
-          <Button variant="outline" onClick={() => setIsAdding(true)}>
-            Crear mi primer proyecto
-          </Button>
-        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            onClick={() => setIsAdding(true)}
+            className="group cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 
+                 bg-transparent hover:border-emerald-500 hover:bg-emerald-500/5 
+                 transition-all duration-300 flex flex-col items-center justify-center 
+                 h-56"
+          >
+            <Plus className="h-10 w-10 text-slate-400 group-hover:text-emerald-500 transition" />
+            <p className="mt-4 text-slate-500 group-hover:text-emerald-500 font-medium transition">
+              Añadir Proyecto
+            </p>
+          </div>
+
           {projects.map((project: Project) => (
             <ProjectCard
               key={project.id}

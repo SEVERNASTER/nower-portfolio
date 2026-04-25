@@ -115,6 +115,9 @@ const parseTags = (tags: any): string[] => {
 const cardBaseClass =
     'rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-5 shadow-sm';
 
+const portfolioCardClass =
+    'rounded-2xl border border-slate-200 dark:border-[#1d4254] bg-white dark:bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 sm:p-6 shadow-sm dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_0_0_28px_rgba(20,215,163,0.05),0_10px_30px_rgba(0,0,0,0.18)] transition-all hover:shadow-md dark:hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_0_34px_rgba(20,215,163,0.07),0_14px_34px_rgba(0,0,0,0.22)]';
+
 const getStatusBadge = (status: string) => {
     if (status === 'Activo' || status === 'Aprobado' || status === 'Aprobada') {
         return <Badge variant="success">{status}</Badge>;
@@ -483,14 +486,14 @@ export const AdminSection: React.FC = () => {
                                 {/* LEFT COLUMN: Info */}
                                 <div className="md:col-span-5 lg:col-span-4 space-y-6">
                                     {/* Contact Card */}
-                                    <div className="rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_0_0_28px_rgba(20,215,163,0.05),0_10px_30px_rgba(0,0,0,0.18)] transition-all hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_0_34px_rgba(20,215,163,0.07),0_14px_34px_rgba(0,0,0,0.22)]">                                        
+                                    <div className={portfolioCardClass}>                                        
                                         <h3 className="mb-5 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-emerald-400">
                                             <ContactRound className="h-4 w-4" />
                                             Contacto
                                         </h3>
                                         <div className="space-y-5">
                                             <div className="flex items-center gap-4">
-                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/10 bg-emerald-500/10 text-emerald-400 shadow-[inset_0_0_12px_rgba(20,215,163,0.06)] transition-transform hover:-translate-y-1 duration-300">
+                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 dark:border-emerald-400/10 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm dark:shadow-[inset_0_0_12px_rgba(20,215,163,0.06)] transition-transform hover:-translate-y-1 duration-300">
                                                     <MapPin className="h-5 w-5" />
                                                 </div>
                                                 <div>
@@ -499,7 +502,7 @@ export const AdminSection: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/10 bg-emerald-500/10 text-emerald-400 shadow-[inset_0_0_12px_rgba(20,215,163,0.06)] transition-transform hover:-translate-y-1 duration-300">
+                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 dark:border-emerald-400/10 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm dark:shadow-[inset_0_0_12px_rgba(20,215,163,0.06)] transition-transform hover:-translate-y-1 duration-300">
                                                     <Mail className="h-5 w-5" />
                                                 </div>
                                                 <div className="overflow-hidden">
@@ -508,7 +511,7 @@ export const AdminSection: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/10 bg-emerald-500/10 text-emerald-400 shadow-[inset_0_0_12px_rgba(20,215,163,0.06)] transition-transform hover:-translate-y-1 duration-300">
+                                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/20 dark:border-emerald-400/10 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm dark:shadow-[inset_0_0_12px_rgba(20,215,163,0.06)] transition-transform hover:-translate-y-1 duration-300">
                                                     <Phone className="h-5 w-5" />
                                                 </div>
                                                 <div className="overflow-hidden">
@@ -520,7 +523,7 @@ export const AdminSection: React.FC = () => {
                                     </div>
                                     
                                     {/* Bio Card */}
-                                    <div className="rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_0_0_28px_rgba(20,215,163,0.05),0_10px_30px_rgba(0,0,0,0.18)] transition-all hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_0_34px_rgba(20,215,163,0.07),0_14px_34px_rgba(0,0,0,0.22)]">
+                                    <div className={portfolioCardClass}>
                                         <h3 className="mb-5 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-emerald-400">
                                             <User className="h-4 w-4" />
                                             Sobre mi
@@ -531,7 +534,7 @@ export const AdminSection: React.FC = () => {
                                     </div>
                                     
                                     {/* Skills Card */}
-                                    <div className="rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 sm:p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_0_0_28px_rgba(20,215,163,0.05),0_10px_30px_rgba(0,0,0,0.18)] transition-all hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_0_34px_rgba(20,215,163,0.07),0_14px_34px_rgba(0,0,0,0.22)]">
+                                    <div className={portfolioCardClass}>
                                         <h3 className="mb-4 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-emerald-400">
                                             <Sparkles className="h-4 w-4" />
                                             Habilidades ({selectedPortfolio.skills.length})
@@ -545,7 +548,7 @@ export const AdminSection: React.FC = () => {
                                                 return (
                                                     <span
                                                         key={skill}
-                                                        className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/15 bg-[#102637] px-3 py-1.5 text-xs font-semibold text-slate-200 shadow-[inset_0_0_12px_rgba(20,215,163,0.05)] transition-all hover:border-emerald-400/30 hover:bg-[#133042] cursor-default"
+                                                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 dark:border-emerald-400/15 dark:bg-[#102637] dark:text-slate-200 shadow-sm dark:shadow-[inset_0_0_12px_rgba(20,215,163,0.05)] px-3 py-1.5 text-xs font-semibold transition-all hover:border-emerald-300 hover:bg-emerald-50 dark:hover:border-emerald-400/30 dark:hover:bg-[#133042] cursor-default"
                                                     >
                                                         {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
                                                         <span>{skill}</span>
@@ -559,14 +562,14 @@ export const AdminSection: React.FC = () => {
                                 {/* RIGHT COLUMN: Projects & Experience */}
                                 <div className="md:col-span-7 lg:col-span-8 space-y-6">
                                     {/* Projects Card */}
-                                    <div className="rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-6 sm:p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.03),inset_0_0_28px_rgba(20,215,163,0.05),0_10px_30px_rgba(0,0,0,0.18)] transition-all hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),inset_0_0_34px_rgba(20,215,163,0.07),0_14px_34px_rgba(0,0,0,0.22)]">
+                                    <div className={portfolioCardClass}>
                                         <h3 className="mb-6 flex items-center gap-2 text-[13px] font-bold uppercase tracking-wide text-emerald-400">
                                             <FolderOpen className="h-4 w-4" />
                                             Proyectos Destacados
                                         </h3>
                                         <div className="grid gap-4">
                                             {selectedPortfolio.proyectos.map((proyecto) => (
-                                                <div key={proyecto.id} className="group relative overflow-hidden rounded-2xl border border-[#1d4254] bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] p-5 transition-all hover:border-emerald-300/30 hover:bg-emerald-500/5 hover:shadow-md">
+                                                <div key={proyecto.id} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:bg-[linear-gradient(135deg,#102634_0%,#0b1f30_55%,#0c2236_100%)] dark:border-[#1d4254] p-5 transition-all hover:border-emerald-300 hover:bg-white dark:hover:border-emerald-300/30 dark:hover:bg-emerald-500/5 hover:shadow-md">
                                                     {proyecto.imagenes && proyecto.imagenes.length > 0 && (
                                                         <div className="mb-5 overflow-hidden rounded-xl border border-[#1d4254]">
                                                             <img
@@ -586,13 +589,13 @@ export const AdminSection: React.FC = () => {
                                                                 href={proyecto.enlace}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-emerald-400/25 bg-[#13243a] px-5 py-2.5 text-sm font-bold text-emerald-300 shadow-[inset_0_0_12px_rgba(20,215,163,0.05),0_0_0_1px_rgba(20,215,163,0.06)] transition-all duration-200 hover:border-emerald-500 hover:bg-emerald-500 hover:text-white hover:shadow-[0_0_18px_rgba(20,215,163,0.20)] active:border-emerald-600 active:bg-emerald-600 active:text-white active:shadow-[0_0_20px_rgba(20,215,163,0.24)]"
+                                                                className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:border-emerald-400/25 dark:bg-[#13243a] dark:text-emerald-300 px-5 py-2.5 text-sm font-bold shadow-sm dark:shadow-[inset_0_0_12px_rgba(20,215,163,0.05),0_0_0_1px_rgba(20,215,163,0.06)] transition-all duration-200 hover:border-emerald-500 hover:bg-emerald-500 hover:text-white dark:hover:border-emerald-500 dark:hover:bg-emerald-500 dark:hover:text-white hover:shadow-[0_0_18px_rgba(20,215,163,0.20)] active:border-emerald-600 active:bg-emerald-600 active:shadow-[0_0_20px_rgba(20,215,163,0.24)]"
                                                             >
                                                                 <ExternalLink className="h-4 w-4" />
                                                                 Visitar
                                                             </a>
                                                         ) : (
-                                                            <span className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-slate-700/50 bg-[#13243a]/50 px-5 py-2.5 text-sm font-bold text-slate-500 cursor-not-allowed">
+                                                            <span className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700/50 dark:bg-[#13243a]/50 px-5 py-2.5 text-sm font-bold text-slate-400 dark:text-slate-500 cursor-not-allowed">
                                                                 <ExternalLink className="h-4 w-4 opacity-50" />
                                                                 Sin Link
                                                             </span>
