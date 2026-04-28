@@ -46,6 +46,12 @@ export const ProjectsList: React.FC = () => {
       });
     }
 
+    if (projectData.remove_image_ids?.length) {
+      projectData.remove_image_ids.forEach((id: string | number) => {
+        formData.append('remove_image_ids[]', id.toString());
+      });
+    }
+
     return formData;
   };
 
@@ -121,6 +127,11 @@ export const ProjectsList: React.FC = () => {
           liveUrl: undefined,
           imageUrl: undefined,
           imageUrls: savedProject.images?.map((image: any) => image.url) || [],
+          images: savedProject.images?.map((image: any) => ({
+            id: image.id.toString(),
+            url: image.url,
+            public_id: image.public_id,
+          })) || [],
           links: savedProject.links || [],
           createdAt: savedProject.created_at || new Date().toISOString(),
         };
@@ -170,6 +181,11 @@ export const ProjectsList: React.FC = () => {
           liveUrl: undefined,
           imageUrl: undefined,
           imageUrls: updatedProject.images?.map((image: any) => image.url) || [],
+          images: updatedProject.images?.map((image: any) => ({
+            id: image.id.toString(),
+            url: image.url,
+            public_id: image.public_id,
+          })) || [],
           links: updatedProject.links || [],
           createdAt: updatedProject.created_at || new Date().toISOString(),
         };
@@ -249,6 +265,11 @@ export const ProjectsList: React.FC = () => {
           liveUrl: undefined,
           imageUrl: undefined,
           imageUrls: p.images?.map((image: any) => image.url) || [],
+          images: p.images?.map((image: any) => ({
+            id: image.id.toString(),
+            url: image.url,
+            public_id: image.public_id,
+          })) || [],
           links: p.links || [],
           createdAt: p.created_at || new Date().toISOString(),
         }));

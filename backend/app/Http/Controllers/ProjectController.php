@@ -125,12 +125,28 @@ class ProjectController extends Controller
             'links.*.url' => 'required_with:links|url|max:255',
             'images' => 'sometimes|array',
             'images.*' => 'image|mimes:jpg,jpeg,png|max:2048',
+            'remove_image_ids' => 'sometimes|array',
+            'remove_image_ids.*' => 'integer|exists:project_images,id',
         ]);
 
         $project->update($validated);
 
         if (array_key_exists('links', $validated)) {
             $this->projectLinkService->syncLinks($project, $validated['links'] ?? []);
+        }
+
+        if (!empty($validated['remove_image_ids'])) {
+            $imagesToRemove = $project->images()->whereIn('id', $validated['remove_image_ids'])->get();
+            foreach ($imagesToRemove as $image) {
+                if ($image->public_id) {
+                    try {
+                        $this->cloudinaryService->delete($image->public_id);
+                    } catch (\Exception $e) {
+                        // Ignorar errores en eliminación en Cloudinary y continuar con la limpieza local.
+                    }
+                }
+                $image->delete();
+            }
         }
 
         $this->uploadProjectImages($project, $request);

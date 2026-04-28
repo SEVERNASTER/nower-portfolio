@@ -79,4 +79,13 @@ class CloudinaryService
             'public_id' => $result['public_id'] ?? "{$folder}/{$publicId}",
         ];
     }
+
+    public function delete(string $publicId): bool
+    {
+        $result = $this->cloudinary->uploadApi()->destroy($publicId, [
+            'resource_type' => 'image',
+        ]);
+
+        return isset($result['result']) && $result['result'] === 'ok';
+    }
 }

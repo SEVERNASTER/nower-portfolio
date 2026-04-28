@@ -31,6 +31,12 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<File[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<{
+    id: string;
+    url: string;
+    public_id?: string;
+  }[]>(initialData?.images || []);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const [imageAlert, setImageAlert] = useState<{
     type: 'success' | 'error' | 'info';
     message: string;
@@ -48,6 +54,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       setDescription(initialData.description || "");
       setTags(initialData.tags || []);
       setLinks(initialData.links || []);
+      setExistingImages(initialData.images || []);
+      setRemovedImageIds([]);
     }
   }, [initialData]);
 
@@ -131,7 +139,21 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     setPreviewImages((prev) => prev.filter((_, i) => i !== index));
     setImageAlert({
       type: 'info',
-      message: 'Imagen eliminada antes de guardar.',
+      message: 'Imagen nueva eliminada antes de guardar.',
+    });
+  };
+
+  const removeExistingImage = (index: number) => {
+    setExistingImages((prev) => {
+      const image = prev[index];
+      if (image) {
+        setRemovedImageIds((ids) => [...ids, image.id]);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+    setImageAlert({
+      type: 'info',
+      message: 'Imagen existente eliminada. Se eliminará al guardar.',
     });
   };
 
@@ -204,6 +226,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         tags,
         links,
         images,
+        remove_image_ids: removedImageIds,
         evidence_url: "",
       });
     } finally {
@@ -452,9 +475,29 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               </span>
             </button>
 
+            {existingImages.map((image, index) => (
+              <div
+                key={`existing-${image.id}`}
+                className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#0F1920] shadow-sm"
+              >
+                <button
+                  type="button"
+                  onClick={() => removeExistingImage(index)}
+                  className="absolute right-3 top-3 z-10 rounded-full bg-white/90 p-2 text-slate-700 shadow-sm transition hover:bg-white dark:bg-slate-900/90 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <img
+                  src={image.url}
+                  alt={`imagen existente ${index + 1}`}
+                  className="h-40 w-full object-cover"
+                />
+              </div>
+            ))}
+
             {previewImages.map((src, index) => (
               <div
-                key={index}
+                key={`new-${index}`}
                 className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-[#0F1920] shadow-sm"
               >
                 <button
