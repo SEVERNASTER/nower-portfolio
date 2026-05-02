@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\AdminDashboardController;
 
 // PUBLIC route. Anyone can see it.
@@ -40,6 +41,11 @@ Route::middleware([ClerkAuth::class])->group(function () {
 
     // Projects CRUD (Usuarios y Admin)
     Route::apiResource('projects', ProjectController::class)->only([
+        'index', 'store', 'show', 'update', 'destroy',
+    ]);
+
+    // Experience CRUD
+    Route::apiResource('experience', ExperienceController::class)->only([
         'index', 'store', 'show', 'update', 'destroy',
     ]);
 });

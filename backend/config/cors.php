@@ -46,6 +46,6 @@ return [
      * true si el frontend envía cookies o headers de autenticación
      * (ej: Authorization). Requiere que allowed_origins NO sea ['*'].
      */
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 ];
