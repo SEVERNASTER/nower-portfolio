@@ -1,14 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Avatar } from '../../components/ui/Avatar';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+
+import {
+  AlertCircle,
+  Camera,
+  CheckCircle2,
+  ChevronDown,
+  Sparkles,
+  X,
+} from 'lucide-react';
+
 import { useUser } from '@clerk/clerk-react';
+
+import { Avatar } from '../../components/ui/Avatar';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
 import { mockProfile } from '../../data/mockData';
+import { PlatformIcon } from '../projects/components/PlatformIcon';
+import {
+  getProfile,
+  syncUser,
+} from './profileService';
 import { useProfile } from './useProfile';
-import { syncUser, getProfile } from './profileService';
 
 // ─── BasicProfile ─────────────────────────────────────────────────────────────
+type ProfessionalLink = {
+  platform_name: string;
+  url: string;
+};
+
+const PROFESSIONAL_PLATFORMS = ['LinkedIn', 'GitHub', 'Behance'];
 
 export const BasicProfile: React.FC = () => {
   const {
@@ -18,10 +42,28 @@ export const BasicProfile: React.FC = () => {
 
   const { user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const socialDropdownRef = useRef<HTMLDivElement>(null);
 
-  const [form, setForm] = useState({
-    fullName: '', profession: '', bio: '', phone: '', city: '',
-  });
+  const [currentPlatform, setCurrentPlatform] = useState(PROFESSIONAL_PLATFORMS[0]);
+  const [currentUrl, setCurrentUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
+  const [isSocialDropdownOpen, setIsSocialDropdownOpen] = useState(false);
+
+ const [form, setForm] = useState<{
+  fullName: string;
+  profession: string;
+  bio: string;
+  phone: string;
+  city: string;
+  socialLinks: ProfessionalLink[];
+}>({
+  fullName: '',
+  profession: '',
+  bio: '',
+  phone: '',
+  city: '',
+  socialLinks: [],
+});
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -38,13 +80,19 @@ export const BasicProfile: React.FC = () => {
         const data = await getProfile(user.id);
 
         if (data.user) {
-          const u = data.user as Record<string, string>;
+          const u = data.user as Record<string, any>;
           setForm({
             fullName: u.full_name ?? '',
             profession: u.profession ?? '',
             bio: u.bio ?? '',
             phone: u.phone ?? '',
             city: u.city ?? '',
+            socialLinks: Array.isArray(u.social_links)
+              ? u.social_links.map((link: any) => ({
+                  platform_name: link.platform_name,
+                  url: link.url,
+                }))
+              : [],
           });
 
           if (u.imagen_profile) {
@@ -63,6 +111,20 @@ export const BasicProfile: React.FC = () => {
     load();
   }, [user?.id]);
 
+  useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      socialDropdownRef.current &&
+      !socialDropdownRef.current.contains(event.target as Node)
+    ) {
+      setIsSocialDropdownOpen(false);
+    }
+  };
+
+  document.addEventListener('mousedown', handleClickOutside);
+  return () => document.removeEventListener('mousedown', handleClickOutside);
+}, []);
+
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -77,6 +139,74 @@ export const BasicProfile: React.FC = () => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 8);
     setForm(prev => ({ ...prev, phone: value }));
     if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+  };
+
+  const normalizeUrl = (url: string) => {
+    const trimmed = url.trim();
+
+    if (!trimmed) return '';
+
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+
+    return `https://${trimmed}`;
+  };
+
+  const validateUrl = (url: string) => {
+    if (!url.trim()) {
+      setUrlError('');
+      return false;
+    }
+
+    try {
+      new URL(normalizeUrl(url));
+      setUrlError('');
+      return true;
+    } catch {
+      setUrlError('Enlace no válido');
+      return false;
+    }
+  };
+
+  const handleUrlChange = (value: string) => {
+    setCurrentUrl(value);
+    validateUrl(value);
+  };
+
+  const addSocialLink = () => {
+    if (!validateUrl(currentUrl)) return;
+
+    const alreadyExists = form.socialLinks.some(
+      (link) => link.platform_name.toLowerCase() === currentPlatform.toLowerCase()
+    );
+
+    if (alreadyExists) {
+      setUrlError(`Ya agregaste un enlace de ${currentPlatform}`);
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: [
+        ...prev.socialLinks,
+        {
+          platform_name: currentPlatform,
+          url: normalizeUrl(currentUrl),
+        },
+      ],
+    }));
+
+    setCurrentPlatform(PROFESSIONAL_PLATFORMS[0]);
+    setCurrentUrl('');
+    setUrlError('');
+  };
+
+  const removeSocialLink = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: prev.socialLinks.filter((_, i) => i !== index),
+    }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,8 +254,8 @@ export const BasicProfile: React.FC = () => {
     setSuccess('');
 
     try {
-      // ✅ Una sola llamada que incluye la imagen si fue seleccionada.
-      // El backend la sube a Cloudinary y devuelve la URL.
+      // Una sola llamada que incluye la imagen si fue seleccionada
+      // El backend la sube a Cloudinary y devuelve la URL
       const data = await syncUser({
         clerk_id: user.id,
         full_name: form.fullName,
@@ -134,6 +264,7 @@ export const BasicProfile: React.FC = () => {
         bio: form.bio,
         phone: form.phone,
         city: form.city,
+        social_links: form.socialLinks,
         image: selectedImage ?? null,
       });
 
@@ -364,16 +495,148 @@ export const BasicProfile: React.FC = () => {
               </select>
               {errors.city && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.city}</p>}
             </div>
-            <div className="md:col-span-2 flex flex-col gap-3">
 
+            {/* Redes profesionales */}
+            <div className="space-y-3 md:col-span-2">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Redes profesionales
+              </label>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                {/* Selector de plataforma */}
+                <div className="relative sm:w-1/4" ref={socialDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsSocialDropdownOpen(!isSocialDropdownOpen)}
+                    className="w-full flex items-center justify-between p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-white/5 dark:text-white outline-none focus:border-emerald-500 transition-all hover:border-emerald-400"
+                  >
+                    <span className="flex items-center gap-2 truncate">
+                      <PlatformIcon
+                        platform={currentPlatform}
+                        className="h-5 w-5 text-slate-500 dark:text-slate-400"
+                      />
+                      <span className="truncate">{currentPlatform}</span>
+                    </span>
+
+                    <ChevronDown
+                      className={`h-4 w-4 text-slate-400 transition-transform duration-300 ${
+                        isSocialDropdownOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {isSocialDropdownOpen && (
+                    <div className="absolute z-50 w-full bottom-full mb-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#17262C] shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                      {PROFESSIONAL_PLATFORMS.map((platform) => (
+                        <button
+                          key={platform}
+                          type="button"
+                          onClick={() => {
+                            setCurrentPlatform(platform);
+                            setIsSocialDropdownOpen(false);
+                            setUrlError('');
+                          }}
+                          className={`w-full flex items-center gap-3 p-3 text-left text-sm transition-colors ${
+                            currentPlatform === platform
+                              ? 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold'
+                              : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                          }`}
+                        >
+                          <PlatformIcon
+                            platform={platform}
+                            className={`h-5 w-5 ${
+                              currentPlatform === platform
+                                ? 'text-emerald-500'
+                                : 'text-slate-400'
+                            }`}
+                          />
+                          {platform}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Input de enlace */}
+                <div className="flex-1 flex flex-col gap-1">
+                  <input
+                    type="text"
+                    value={currentUrl}
+                    onChange={(e) => handleUrlChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addSocialLink();
+                      }
+                    }}
+                    placeholder="https://..."
+                    className={`w-full p-3 rounded-xl border bg-white/50 dark:bg-white/5 dark:text-white outline-none transition-colors ${
+                      urlError
+                        ? 'border-red-500 focus:border-red-600'
+                        : 'border-slate-300 dark:border-slate-700 focus:border-emerald-500'
+                    }`}
+                  />
+
+                  {urlError && (
+                    <span className="text-[10px] font-medium text-red-500 ml-1">
+                      {urlError}
+                    </span>
+                  )}
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={addSocialLink}
+                  variant="secondary"
+                  className="px-4"
+                >
+                  Añadir
+                </Button>
+              </div>
+
+              {/* Redes añadidas */}
+              {form.socialLinks.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                    Redes añadidas:
+                  </p>
+
+                  <div className="flex flex-row flex-wrap gap-3">
+                    {form.socialLinks.map((link, index) => (
+                      <div
+                        key={`${link.platform_name}-${index}`}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#10221C] border border-slate-200 dark:border-slate-700/50 shadow-sm group"
+                      >
+                        <PlatformIcon
+                          platform={link.platform_name}
+                          className="h-5 w-5 text-slate-600 dark:text-slate-300"
+                        />
+
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          {link.platform_name}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => removeSocialLink(index)}
+                          className="text-slate-400 hover:text-red-500 transition-colors ml-1 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="md:col-span-2 flex flex-col gap-3">
               {success && (
                 <div className="w-full rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 flex items-center gap-3 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
                   <CheckCircle2 className="h-5 w-5" />
                   {success}
                 </div>
               )}
-
-
             </div>
           </div>
 

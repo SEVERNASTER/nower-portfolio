@@ -34,6 +34,10 @@ export interface SyncPayload {
   phone?:      string;
   city?:       string;
   image?:      File | null;
+  social_links?: {
+    platform_name: string;
+    url: string;
+  }[];
 }
 
 // ─── Helper de error ──────────────────────────────────────────────────────────
@@ -65,6 +69,14 @@ export async function syncUser(payload: SyncPayload) {
   if (payload.bio)        form.append('bio',        payload.bio);
   if (payload.phone)      form.append('phone',      payload.phone);
   if (payload.city)       form.append('city',       payload.city);
+  if (payload.social_links?.length) {
+    payload.social_links.forEach((link, index) => {
+      form.append(`social_links[${index}][platform_name]`, link.platform_name);
+      form.append(`social_links[${index}][url]`, link.url);
+    });
+  } else {
+    form.append('social_links', '');
+  }
 
   // El campo se llama "image" — debe coincidir con el backend
   if (payload.image) {
