@@ -5,33 +5,49 @@ import type { Experience } from './components/ExperienceCard';
 import { Button } from '../../components/ui/Button';
 import { AddExperienceModal } from './AddExperienceModal';
 
+import { useAuth } from '@clerk/clerk-react';
+
 export const ExperienceList: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [experiences, setExperiences] = useState<Experience[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const { getToken, isLoaded, isSignedIn } = useAuth();
 
     useEffect(() => {
-        fetch('http://localhost:8000/api/experience', {
-            credentials: 'include',
-        })
-            .then(async (res) => {
+        if (!isLoaded) return;
+        if (!isSignedIn) {
+            window.location.href = '/login';
+            return;
+        }
+
+        const loadExperience = async () => {
+            try {
+                const token = await getToken();
+                const res = await fetch('http://localhost:8000/api/experience', {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
                 if (res.status === 401) {
                     window.location.href = '/login';
-                    return [];
+                    return;
                 }
 
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) {
                     throw new Error(data?.error ?? 'Error cargando experiencia');
                 }
-                return data as Experience[];
-            })
-            .then((data) => setExperiences(data))
-            .catch((e) => {
+                setExperiences(data as Experience[]);
+            } catch (e) {
                 setError(e instanceof Error ? e.message : 'Error cargando experiencia');
                 setExperiences([]);
-            });
-    }, []);
+            }
+        };
+
+        loadExperience();
+    }, [getToken, isLoaded, isSignedIn]);
 
     return (
         <div className="w-full max-w-5xl mx-auto space-y-8 animate-fade-in">
