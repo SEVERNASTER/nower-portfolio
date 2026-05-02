@@ -4,15 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\CloudinaryService;
+use App\Services\SocialLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
+    protected SocialLinkService $socialLinkService;
+
+    public function __construct(SocialLinkService $socialLinkService)
+    {
+        $this->socialLinkService = $socialLinkService;
+    }
+
     public function sync(Request $request)
     {
         try {
+            if ($request->input('social_links') === '') {
+                $request->merge([
+                    'social_links' => [],
+                ]);
+            }
             // Validaciones básicas (SOLO identidad)
             $validator = Validator::make($request->all(), [
                 'clerk_id' => 'required|string',
@@ -24,6 +37,9 @@ class UserController extends Controller
                 'city' => 'nullable|string|max:100',
                 'imagen_profile' => 'nullable|url|max:255',
                 'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+                'social_links' => 'nullable|array',
+                'social_links.*.platform_name' => 'required_with:social_links|string|in:LinkedIn,GitHub,Behance',
+                'social_links.*.url' => 'required_with:social_links|url|max:255',
             ], [
                 'full_name.required' => 'El nombre completo es obligatorio.',
                 'full_name.max' => 'El nombre no puede exceder 100 caracteres.',
@@ -72,6 +88,16 @@ class UserController extends Controller
             }
 
             $user->save();
+
+            if ($request->exists('social_links')) {
+                $links = $request->input('social_links') ?? [];
+
+                if (!is_array($links)) {
+                    $links = [];
+                }
+
+                $this->socialLinkService->syncLinks($user, $links);
+            }
 
             // ─── Manejo de imagen ────────────────────────────────────────────
 
@@ -122,7 +148,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Usuario sincronizado correctamente',
-                'user'    => $user,
+                'user'    => $user->load('socialLinks'),
             ]);
 
         } catch (\Exception $e) {

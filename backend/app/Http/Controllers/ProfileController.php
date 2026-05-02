@@ -17,7 +17,9 @@ class ProfileController extends Controller
                 ], 400);
             }
 
-            $user = User::where('clerk_id', $request->clerk_id)->first();
+            $user = User::with('socialLinks')
+                ->where('clerk_id', $request->clerk_id)
+                ->first();
 
             if (!$user) {
                 return response()->json([
@@ -33,6 +35,13 @@ class ProfileController extends Controller
                     'phone' => $user->phone,
                     'city' => $user->city,
                     'imagen_profile' => $user->imagen_profile,
+                    'social_links' => $user->socialLinks->map(function ($link) {
+                        return [
+                            'id' => $link->id,
+                            'platform_name' => $link->platform_name,
+                            'url' => $link->url,
+                        ];
+                    })->values(),
                 ]
             ]);
 
