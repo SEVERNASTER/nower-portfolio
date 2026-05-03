@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Briefcase, Plus } from 'lucide-react';
 import { ExperienceCard } from './components/ExperienceCard';
 import type { Experience } from './components/ExperienceCard';
@@ -6,12 +6,33 @@ import { Button } from '../../components/ui/Button';
 import { AddExperienceModal } from './AddExperienceModal';
 
 import { useAuth } from '@clerk/clerk-react';
+import { fetchUserExperiences } from './experienceApi';
 
 export const ExperienceList: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [experiences, setExperiences] = useState<Experience[]>([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { getToken, isLoaded, isSignedIn } = useAuth();
+
+    const loadExperiences = useCallback(async () => {
+        setError(null);
+        setLoading(true);
+        try {
+            const token = await getToken();
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            const list = await fetchUserExperiences(token);
+            setExperiences(list);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Error cargando experiencia');
+            setExperiences([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [getToken]);
 
     useEffect(() => {
         if (!isLoaded) return;
@@ -19,35 +40,8 @@ export const ExperienceList: React.FC = () => {
             window.location.href = '/login';
             return;
         }
-
-        const loadExperience = async () => {
-            try {
-                const token = await getToken();
-                const res = await fetch('http://localhost:8000/api/experience', {
-                    method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                if (res.status === 401) {
-                    window.location.href = '/login';
-                    return;
-                }
-
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                    throw new Error(data?.error ?? 'Error cargando experiencia');
-                }
-                setExperiences(data as Experience[]);
-            } catch (e) {
-                setError(e instanceof Error ? e.message : 'Error cargando experiencia');
-                setExperiences([]);
-            }
-        };
-
-        loadExperience();
-    }, [getToken, isLoaded, isSignedIn]);
+        void loadExperiences();
+    }, [isLoaded, isSignedIn, loadExperiences]);
 
     return (
         <div className="w-full max-w-5xl mx-auto space-y-8 animate-fade-in">
@@ -74,16 +68,24 @@ export const ExperienceList: React.FC = () => {
                 </div>
             )}
 
-            {/* Timeline Container - Tinted the line slightly purple! */}
-            <div className="relative border-l-2 border-purple-100 dark:border-slate-800 ml-4 md:ml-6 space-y-8 pb-4">
+            {loading ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400 pl-4 md:pl-6">Cargando experiencias…</p>
+            ) : experiences.length === 0 && !error ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400 pl-4 md:pl-6">
+                    Aún no registras experiencias. Pulsa &quot;Añadir Experiencia&quot; para crear la primera.
+                </p>
+            ) : (
+                <div className="relative border-l-2 border-purple-100 dark:border-slate-800 ml-4 md:ml-6 space-y-8 pb-4">
+                    {experiences.map((exp) => (
+                        <ExperienceCard key={exp.id} exp={exp} />
+                    ))}
+                </div>
+            )}
 
-                {experiences.map((exp) => (
-                    <ExperienceCard key={exp.id} exp={exp} />
-                ))}
-            </div>
             <AddExperienceModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
+                onSaved={() => void loadExperiences()}
             />
         </div>
     );

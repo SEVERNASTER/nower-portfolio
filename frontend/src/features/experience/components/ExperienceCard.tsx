@@ -12,6 +12,8 @@ export interface Experience {
     current: boolean;
     description: string;
     skills: string[];
+    /** Origen API: work | academic */
+    experienceType?: 'work' | 'academic';
 }
 
 export interface ExperienceCardProps {
@@ -34,6 +36,16 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp }) => {
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 flex-wrap">
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white">{exp.role}</h3>
+                            {exp.experienceType === 'academic' && (
+                                <span className="px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400 rounded-full border border-violet-200 dark:border-violet-500/20">
+                                    Académica
+                                </span>
+                            )}
+                            {exp.experienceType === 'work' && (
+                                <span className="px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold bg-slate-100 text-slate-700 dark:bg-slate-500/10 dark:text-slate-300 rounded-full border border-slate-200 dark:border-slate-600/30">
+                                    Laboral
+                                </span>
+                            )}
                             {/* Status Badge */}
                             {exp.current && (
                                 <span className="px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-full border border-emerald-200 dark:border-emerald-500/20">
@@ -57,10 +69,12 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp }) => {
                             </div>
 
                             {/* ROSE: Location */}
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/5 text-xs font-bold text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/10">
-                                <MapPin className="h-3.5 w-3.5" />
-                                {exp.location}
-                            </div>
+                            {exp.location.trim() !== '' && (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/5 text-xs font-bold text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/10">
+                                    <MapPin className="h-3.5 w-3.5" />
+                                    {exp.location}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -74,13 +88,15 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp }) => {
                     {exp.description}
                 </p>
 
-                {/* VIBRANT Tech Stack Badges */}
-                <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <Terminal className="h-4 w-4 text-purple-400 mr-1" />
-                    {exp.skills.map((skill, index) => (
-                        <TechBadge key={skill} skill={skill} index={index} />
-                    ))}
-                </div>
+                {/* Tech stack (opcional; API actual no persiste lista separada) */}
+                {exp.skills.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <Terminal className="h-4 w-4 text-purple-400 mr-1" />
+                        {exp.skills.map((skill, index) => (
+                            <TechBadge key={skill} skill={skill} index={index} />
+                        ))}
+                    </div>
+                )}
 
             </div>
         </div>
