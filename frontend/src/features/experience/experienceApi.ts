@@ -60,18 +60,20 @@ function splitDescriptionAndTechnologies(raw: string | null): { text: string; sk
 export function mapApiExperienceToCard(row: ApiExperienceRow): Experience {
     const current = row.end_date == null;
     const { text, skills } = splitDescriptionAndTechnologies(row.description);
-    return {
-        id: String(row.id),
-        role: row.title,
-        company: row.institution,
-        location: '',
-        startDate: row.start_date ? formatMonthYear(row.start_date) : '—',
-        endDate: current ? 'Actual' : formatMonthYear(row.end_date),
-        current,
-        description: text,
-        skills,
-        experienceType: row.type,
-    };
+return {
+    id: String(row.id),
+    role: row.title,
+    company: row.institution,
+    location: '',
+    startDate: row.start_date ? formatMonthYear(row.start_date) : '—',
+    endDate: current ? 'Actual' : formatMonthYear(row.end_date),
+    current,
+    description: text,
+    skills,
+    experienceType: row.type,
+    rawStartDate: row.start_date,
+    rawEndDate: row.end_date,
+};
 }
 
 export function parseExperienceListPayload(data: unknown): ApiExperienceRow[] {
@@ -130,6 +132,46 @@ export async function createExperience(token: string, body: ExperienceCreatePayl
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
+    });
+
+    const data: unknown = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+        throw new Error(readErrorMessage(data as Record<string, unknown>));
+    }
+}
+export async function updateExperience(
+    token: string,
+    id: string | number,
+    body: ExperienceCreatePayload
+): Promise<void> {
+    const res = await fetch(`${API_URL}/experience/${id}`, {
+        method: 'PUT',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    });
+
+    const data: unknown = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+        throw new Error(readErrorMessage(data as Record<string, unknown>));
+    }
+}
+
+export async function deleteExperience(
+    token: string,
+    id: string | number
+): Promise<void> {
+    const res = await fetch(`${API_URL}/experience/${id}`, {
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+        },
     });
 
     const data: unknown = await res.json().catch(() => ({}));

@@ -3,20 +3,25 @@ import { X, Briefcase, Building2, MapPin, Calendar, AlignLeft, Terminal, Plus, L
 import { useAuth } from '@clerk/clerk-react';
 import {
     createExperience,
+    updateExperience,
     monthInputToEndDate,
     monthInputToStartDate,
 } from './experienceApi';
+
+import type { Experience } from './components/ExperienceCard';
 
 interface AddExperienceModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSaved?: () => void;
+    experienceToEdit?: Experience | null;
 }
 
 export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
     isOpen,
     onClose,
     onSaved,
+    experienceToEdit,
 }) => {
     const { getToken } = useAuth();
 
@@ -34,14 +39,41 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
     const [technologies, setTechnologies] = useState<string[]>([]);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
+    const isEditing = Boolean(experienceToEdit);
+
+const dateToMonthInput = (date?: string | null) => {
+    if (!date) return '';
+    return date.slice(0, 7);
+};
+
+const fillFormForEdit = (experience: Experience) => {
+    setTitle(experience.role ?? '');
+    setInstitution(experience.company ?? '');
+    setExperienceKind(experience.experienceType ?? 'work');
+    setStartMonth(dateToMonthInput(experience.rawStartDate));
+    setEndMonth(dateToMonthInput(experience.rawEndDate));
+    setIsCurrent(experience.current);
+    setDescription(experience.description ?? '');
+    setModality('Remoto');
+    setLocation(experience.location ?? '');
+    setTechInput('');
+    setTechnologies(experience.skills ?? []);
+    setSubmitError(null);
+};
 
     useEffect(() => {
         if (isOpen) {
             setIsVisible(true);
+
+        if (experienceToEdit) {
+            fillFormForEdit(experienceToEdit);
         } else {
-            setTimeout(() => setIsVisible(false), 300);
+            resetForm();
         }
-    }, [isOpen]);
+    } else {
+        setTimeout(() => setIsVisible(false), 300);
+    }
+}, [isOpen, experienceToEdit]);
 
     const resetForm = () => {
         setTitle('');
@@ -117,14 +149,20 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                 setSubmitError('Sesión no válida. Vuelve a iniciar sesión.');
                 return;
             }
-            await createExperience(token, {
+            const payload = {
                 type: experienceKind,
                 title: t,
                 institution: inst,
                 start_date: startDate,
                 end_date: endDate,
                 description: buildDescriptionPayload(),
-            });
+            };
+
+        if (experienceToEdit) {
+            await updateExperience(token, experienceToEdit.id, payload);
+        } else {
+            await createExperience(token, payload);
+ }
             resetForm();
             onSaved?.();
             onClose();
@@ -154,8 +192,12 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                             <Briefcase className="h-5 w-5" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Añadir Experiencia</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Registra un nuevo rol en tu trayectoria.</p>
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+    {isEditing ? 'Editar Experiencia' : 'Añadir Experiencia'}
+</h2>
+<p className="text-xs text-slate-500 dark:text-slate-400">
+    {isEditing ? 'Actualiza los datos de tu experiencia.' : 'Registra un nuevo rol en tu trayectoria.'}
+</p>
                         </div>
                     </div>
                     <button
@@ -379,7 +421,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                         disabled={saving}
                         className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-900/20 transition-all focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-[#0B1120] disabled:opacity-60"
                     >
-                        {saving ? 'Guardando…' : 'Guardar Experiencia'}
+                        {saving ? 'Guardando…' : isEditing ? 'Actualizar Experiencia' : 'Guardar Experiencia'}
                     </button>
                 </div>
             </div>

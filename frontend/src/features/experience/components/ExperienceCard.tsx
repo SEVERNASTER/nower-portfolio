@@ -1,5 +1,5 @@
-import React from 'react';
-import { MoreVertical, Calendar, MapPin, Building2, Terminal } from 'lucide-react';
+import React, { useState } from 'react';
+import { MoreVertical, Calendar, MapPin, Building2, Terminal, Pencil, Trash2 } from 'lucide-react';
 import { TechBadge } from './TechBadge';
 
 export interface Experience {
@@ -14,13 +14,18 @@ export interface Experience {
     skills: string[];
     /** Origen API: work | academic */
     experienceType?: 'work' | 'academic';
+    rawStartDate?: string | null;
+    rawEndDate?: string | null;
 }
 
 export interface ExperienceCardProps {
     exp: Experience;
+    onEdit?: (experience: Experience) => void;
+    onDelete?: (experience: Experience) => void;
 }
 
-export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp }) => {
+export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp, onEdit, onDelete }) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     return (
         <div className="relative pl-8 md:pl-12">
             {/* Timeline Dot - Bright Purple for current, Indigo for past */}
@@ -79,10 +84,46 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp }) => {
                     </div>
 
                     {/* Options Menu */}
-                    <button className="p-2 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors">
-                        <MoreVertical className="h-5 w-5" />
-                    </button>
-                </div>
+                   <div className="relative">
+    <button
+        type="button"
+        onClick={() => setIsMenuOpen((prev) => !prev)}
+        className="p-2 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+        aria-label="Opciones de experiencia"
+    >
+        <MoreVertical className="h-5 w-5" />
+    </button>
+
+    {isMenuOpen && (
+        <div className="absolute right-0 top-10 z-20 w-40 rounded-xl bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
+            <button
+                type="button"
+                onClick={() => {
+                    setIsMenuOpen(false);
+                    onEdit?.(exp);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+                <Pencil className="h-4 w-4" />
+                Editar
+            </button>
+
+            <button
+                type="button"
+                onClick={() => {
+                    setIsMenuOpen(false);
+                    onDelete?.(exp);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+            >
+                <Trash2 className="h-4 w-4" />
+                Eliminar
+            </button>
+        </div>
+    )}
+</div>
+                   
+</div>                
 
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
                     {exp.description}
