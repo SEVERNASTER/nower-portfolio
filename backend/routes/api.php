@@ -48,7 +48,12 @@ Route::middleware([ClerkAuth::class])->group(function () {
     Route::apiResource('experience', ExperienceController::class)->only([
         'index', 'store', 'show', 'update', 'destroy',
     ]);
-});
+    // Experience Academic
+    // En routes/api.php
+    Route::apiResource('experience', ExperienceController::class);
+    // Alias o ruta específica para educación
+    Route::post('education', [ExperienceController::class, 'store']);
+    });
 
 // ADMIN routes. MUST have Clerk token AND Admin role to enter.
 Route::middleware([\App\Http\Middleware\ClerkAuth::class, \App\Http\Middleware\AdminAuth::class])->group(function () {

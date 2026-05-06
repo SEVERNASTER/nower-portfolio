@@ -16,6 +16,9 @@ export interface Experience {
     experienceType?: 'work' | 'academic';
     rawStartDate?: string | null;
     rawEndDate?: string | null;
+    /*academico */
+    degree_type?: string; 
+    status?: 'En curso' | 'Graduado' | 'Pausado';
 }
 
 export interface ExperienceCardProps {

@@ -6,6 +6,8 @@ export interface ApiExperienceRow {
     type: 'work' | 'academic';
     title: string;
     institution: string;
+    degree_type: string | null;
+    status: 'En curso' | 'Graduado' | 'Pausado' | null;
     start_date: string | null;
     end_date: string | null;
     description: string | null;
@@ -15,6 +17,8 @@ export interface ExperienceCreatePayload {
     type: 'work' | 'academic';
     title: string;
     institution: string;
+    degree_type?: string | null; 
+    status?: 'En curso' | 'Graduado' | 'Pausado' | null;
     start_date: string | null;
     end_date: string | null;
     description: string | null;
@@ -71,6 +75,8 @@ return {
     description: text,
     skills,
     experienceType: row.type,
+    degree_type: row.degree_type || undefined,
+        status: row.status || undefined,
     rawStartDate: row.start_date,
     rawEndDate: row.end_date,
 };
