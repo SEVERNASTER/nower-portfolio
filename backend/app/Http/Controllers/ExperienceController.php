@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreEducationRequest;
 use App\Http\Requests\StoreExperienceRequest;
+use App\Http\Requests\UpdateEducationRequest;
 use App\Http\Requests\UpdateExperienceRequest;
 use App\Http\Resources\ExperienceResource;
 use App\Models\User;
@@ -92,6 +94,62 @@ class ExperienceController extends Controller
 
         return response()->json([
             'message' => 'Experiencia eliminada exitosamente.',
+        ]);
+    }
+
+    /**
+     * GET /api/education — formación académica del usuario autenticado.
+     */
+    public function educationIndex(Request $request): JsonResponse
+    {
+        $user       = $this->resolveUser($request);
+        $education = $this->experienceService->getUserEducation($user);
+
+        return response()->json(ExperienceResource::collection($education));
+    }
+
+    /**
+     * POST /api/education — crea un registro académico (type = academic).
+     */
+    public function educationStore(StoreEducationRequest $request): JsonResponse
+    {
+        $user        = $this->resolveUser($request);
+        $experience = $this->experienceService->create($user, $request->validated());
+
+        return response()->json([
+            'message' => 'Formación académica registrada correctamente.',
+            'data'    => new ExperienceResource($experience),
+        ], 201);
+    }
+
+    /**
+     * PUT /api/education/{id}
+     */
+    public function educationUpdate(UpdateEducationRequest $request, int $id): JsonResponse
+    {
+        $user = $this->resolveUser($request);
+        $data = array_merge($request->validated(), ['type' => 'academic']);
+        $experience = $this->experienceService->update($user, $id, $data);
+
+        return response()->json([
+            'message' => 'Formación académica actualizada correctamente.',
+            'data'    => new ExperienceResource($experience),
+        ]);
+    }
+
+    /**
+     * DELETE /api/education/{id}
+     */
+    public function educationDestroy(Request $request, int $id): JsonResponse
+    {
+        $user = $this->resolveUser($request);
+        $experience = $user->experiences()
+            ->where('type', 'academic')
+            ->findOrFail($id);
+        $experience->delete();
+
+        return response()->json([
+            'message' => 'Formación académica eliminada correctamente.',
         ]);
     }
 
