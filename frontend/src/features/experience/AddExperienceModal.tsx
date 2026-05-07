@@ -9,7 +9,6 @@ import {
   Terminal,
   Plus,
   Laptop,
-  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@clerk/clerk-react";
 import {
@@ -38,7 +37,6 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
 
   const [title, setTitle] = useState("");
   const [institution, setInstitution] = useState("");
-  const [experienceKind, setExperienceKind] = useState<"work" | "academic">("work");
   const [isCurrent, setIsCurrent] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [modality, setModality] = useState("Remoto");
@@ -51,13 +49,9 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   
-  const [degreeType, setDegreeType] = useState("");
-  const [status, setStatus] = useState<"En curso" | "Graduado" | "Pausado">("Graduado");
-
   const isEditing = Boolean(experienceToEdit);
-  
-  // Lógica para deshabilitar fecha fin (Criterio de aceptación: Academic "En curso" o Work "isCurrent")
-  const isEndDateDisabled = isCurrent || (experienceKind === 'academic' && status === 'En curso');
+
+  const isEndDateDisabled = isCurrent;
 
   const dateToMonthInput = (date?: string | null) => {
     if (!date) return "";
@@ -67,7 +61,6 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
   const fillFormForEdit = (experience: Experience) => {
     setTitle(experience.role ?? "");
     setInstitution(experience.company ?? "");
-    setExperienceKind(experience.experienceType ?? "work");
     setStartMonth(dateToMonthInput(experience.rawStartDate));
     setEndMonth(dateToMonthInput(experience.rawEndDate));
     setIsCurrent(experience.current);
@@ -76,9 +69,6 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
     setLocation(experience.location ?? "");
     setTechInput("");
     setTechnologies(experience.skills ?? []);
-    // Si la API soporta estos campos, se asignarían aquí:
-    // setDegreeType(experience.degree_type ?? "");
-    // setStatus(experience.status ?? "Graduado");
     setSubmitError(null);
   };
 
@@ -98,7 +88,6 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
   const resetForm = () => {
     setTitle("");
     setInstitution("");
-    setExperienceKind("work");
     setIsCurrent(false);
     setModality("Remoto");
     setLocation("");
@@ -107,8 +96,6 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
     setDescription("");
     setTechInput("");
     setTechnologies([]);
-    setDegreeType("");
-    setStatus("Graduado");
     setSubmitError(null);
   };
 
@@ -174,11 +161,11 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
       }
       
       const payload = {
-        type: experienceKind,
+        type: "work" as const,
         title: t,
         institution: inst,
-        degree_type: experienceKind === 'academic' ? degreeType : null,
-        status: experienceKind === 'academic' ? status : null,
+        degree_type: null,
+        status: null,
         start_date: startDate,
         end_date: endDate,
         description: buildDescriptionPayload(),
@@ -215,11 +202,11 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
-              {experienceKind === 'work' ? <Briefcase className="h-5 w-5" /> : <GraduationCap className="h-5 w-5" />}
+              <Briefcase className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                {isEditing ? "Editar Experiencia" : "Añadir Experiencia"}
+                {isEditing ? "Editar experiencia laboral" : "Añadir experiencia laboral"}
               </h2>
             </div>
           </div>
@@ -232,24 +219,11 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
         <div className="p-6 overflow-y-auto custom-scrollbar">
           <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             
-            {/* Tipo de Experiencia */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Tipo</label>
-              <select
-                value={experienceKind}
-                onChange={(e) => setExperienceKind(e.target.value as "work" | "academic")}
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500"
-              >
-                <option value="work">Laboral</option>
-                <option value="academic">Académica</option>
-              </select>
-            </div>
-
             {/* Fila: Rol e Institución */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  {experienceKind === "academic" ? "Título o Certificación" : "Rol / Cargo"}
+                  Rol / Cargo
                 </label>
                 <div className="relative">
                   <Briefcase className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
@@ -257,7 +231,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder={experienceKind === 'academic' ? "Ej. Lic. en Informática" : "Ej. Frontend Developer"}
+                    placeholder="Ej. Frontend Developer"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500"
                   />
                 </div>
@@ -265,7 +239,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  {experienceKind === "academic" ? "Institución" : "Empresa"}
+                  Empresa
                 </label>
                 <div className="relative">
                   <Building2 className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
@@ -278,34 +252,6 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                 </div>
               </div>
             </div>
-
-            {/* Campos Adicionales Académicos */}
-            {experienceKind === 'academic' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Tipo de Grado</label>
-                  <input
-                    type="text"
-                    value={degreeType}
-                    onChange={(e) => setDegreeType(e.target.value)}
-                    placeholder="Ej. Grado, Master, Certificación"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Estado</label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as any)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500"
-                  >
-                    <option value="Graduado">Graduado</option>
-                    <option value="En curso">En curso</option>
-                    <option value="Pausado">Pausado</option>
-                  </select>
-                </div>
-              </div>
-            )}
 
             {/* Fila: Modalidad y Ubicación */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -356,17 +302,15 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Fecha de Fin</label>
-                  {experienceKind === 'work' && (
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isCurrent}
-                        onChange={() => setIsCurrent(!isCurrent)}
-                        className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
-                      />
-                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Trabajo actual</span>
-                    </label>
-                  )}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isCurrent}
+                      onChange={() => setIsCurrent(!isCurrent)}
+                      className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Trabajo actual</span>
+                  </label>
                 </div>
                 <div className="relative">
                   <Calendar className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />

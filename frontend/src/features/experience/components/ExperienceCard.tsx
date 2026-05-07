@@ -17,7 +17,7 @@ export interface Experience {
     rawStartDate?: string | null;
     rawEndDate?: string | null;
     /*academico */
-    degree_type?: string; 
+    degree_type?: string;
     status?: 'En curso' | 'Graduado' | 'Pausado';
 }
 

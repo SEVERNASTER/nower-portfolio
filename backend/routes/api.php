@@ -44,16 +44,16 @@ Route::middleware([ClerkAuth::class])->group(function () {
         'index', 'store', 'show', 'update', 'destroy',
     ]);
 
-    // Experience CRUD
+    // Experience CRUD (laboral + legado; el frontend laboral usa type work)
     Route::apiResource('experience', ExperienceController::class)->only([
         'index', 'store', 'show', 'update', 'destroy',
     ]);
-    // Experience Academic
-    // En routes/api.php
-    Route::apiResource('experience', ExperienceController::class);
-    // Alias o ruta específica para educación
-    Route::post('education', [ExperienceController::class, 'store']);
-    });
+
+    Route::get('education', [ExperienceController::class, 'educationIndex']);
+    Route::post('education', [ExperienceController::class, 'educationStore']);
+    Route::put('education/{id}', [ExperienceController::class, 'educationUpdate']);
+    Route::delete('education/{id}', [ExperienceController::class, 'educationDestroy']);
+});
 
 // ADMIN routes. MUST have Clerk token AND Admin role to enter.
 Route::middleware([\App\Http\Middleware\ClerkAuth::class, \App\Http\Middleware\AdminAuth::class])->group(function () {
