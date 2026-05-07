@@ -65,10 +65,12 @@ class UserController extends Controller
                 $platform = $link['platform_name'] ?? '';
                 $url = $link['url'] ?? '';
 
+                $profilePathSegment = '(?:[a-zA-Z0-9._-]|%[0-9A-Fa-f]{2})+';
+
                 $patterns = [
-                    'LinkedIn' => '/^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?(\?.*)?$/',
-                    'GitHub' => '/^https:\/\/github\.com\/[a-zA-Z0-9-]+\/?(\?.*)?$/',
-                    'Behance' => '/^https:\/\/(www\.)?behance\.net\/[a-zA-Z0-9_-]+\/?(\?.*)?$/',
+                    'LinkedIn' => '/^https:\/\/(www\.)?linkedin\.com\/in\/' . $profilePathSegment . '\/?(\?.*)?$/i',
+                    'GitHub' => '/^https:\/\/(www\.)?github\.com\/' . $profilePathSegment . '\/?(\?.*)?$/i',
+                    'Behance' => '/^https:\/\/(www\.)?behance\.net\/' . $profilePathSegment . '\/?(\?.*)?$/i',
                 ];
 
                 if (!isset($patterns[$platform]) || !preg_match($patterns[$platform], $url)) {
