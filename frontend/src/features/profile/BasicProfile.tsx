@@ -197,6 +197,13 @@ export const BasicProfile: React.FC = () => {
       ],
     }));
 
+    if (errors.socialLinks) {
+      setErrors((prev) => ({
+        ...prev,
+        socialLinks: '',
+      }));
+    }
+
     setCurrentPlatform(PROFESSIONAL_PLATFORMS[0]);
     setCurrentUrl('');
     setUrlError('');
@@ -237,6 +244,10 @@ export const BasicProfile: React.FC = () => {
     if (!form.bio.trim()) newErrors.bio = 'La biografía es obligatoria.';
     if (!/^[0-9]{8}$/.test(form.phone)) newErrors.phone = 'Teléfono inválido (8 dígitos).';
     if (!form.city.trim()) newErrors.city = 'La ciudad es obligatoria.';
+
+    if (form.socialLinks.length === 0) {
+      newErrors.socialLinks = 'Debes agregar al menos una red profesional.';
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -499,7 +510,7 @@ export const BasicProfile: React.FC = () => {
             {/* Redes profesionales */}
             <div className="space-y-3 md:col-span-2">
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Redes profesionales
+                Redes profesionales <span className="text-red-500">*</span>
               </label>
 
               <div className="flex flex-col sm:flex-row gap-2">
@@ -593,6 +604,13 @@ export const BasicProfile: React.FC = () => {
                   Añadir
                 </Button>
               </div>
+
+              {errors.socialLinks && (
+                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.socialLinks}
+                </p>
+              )}
 
               {/* Redes añadidas */}
               {form.socialLinks.length > 0 && (
