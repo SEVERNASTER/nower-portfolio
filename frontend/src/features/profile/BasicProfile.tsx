@@ -142,40 +142,65 @@ export const BasicProfile: React.FC = () => {
   };
 
   const normalizeUrl = (url: string) => {
-    const trimmed = url.trim();
-
-    if (!trimmed) return '';
-
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      return trimmed;
-    }
-
-    return `https://${trimmed}`;
+    return url.trim();
   };
 
-  const validateUrl = (url: string) => {
-    if (!url.trim()) {
-      setUrlError('');
-      return false;
+  const getPlatformUrlError = (platform: string, url: string) => {
+    const trimmedUrl = url.trim();
+
+    if (!trimmedUrl) {
+      return 'El enlace es obligatorio.';
+    }
+
+    if (!trimmedUrl.startsWith('https://')) {
+      return 'El enlace debe comenzar con https://';
     }
 
     try {
-      new URL(normalizeUrl(url));
-      setUrlError('');
-      return true;
+      new URL(trimmedUrl);
     } catch {
-      setUrlError('Enlace no válido');
-      return false;
+      return 'El formato del enlace no es válido.';
     }
+
+    const platformPatterns: Record<string, RegExp> = {
+      LinkedIn: /^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?(\?.*)?$/,
+      GitHub: /^https:\/\/github\.com\/[a-zA-Z0-9-]+\/?(\?.*)?$/,
+      Behance: /^https:\/\/(www\.)?behance\.net\/[a-zA-Z0-9_-]+\/?(\?.*)?$/,
+    };
+
+    const platformExamples: Record<string, string> = {
+      LinkedIn: 'Ejemplo válido: https://www.linkedin.com/in/usuario',
+      GitHub: 'Ejemplo válido: https://github.com/usuario',
+      Behance: 'Ejemplo válido: https://www.behance.net/usuario',
+    };
+
+    const pattern = platformPatterns[platform];
+
+    if (!pattern.test(trimmedUrl)) {
+      return `El enlace no corresponde a ${platform}. ${platformExamples[platform]}`;
+    }
+
+    return '';
+  };
+
+  const validateUrl = (url: string, platform = currentPlatform) => {
+    const error = getPlatformUrlError(platform, url);
+    setUrlError(error);
+    return error === '';
   };
 
   const handleUrlChange = (value: string) => {
     setCurrentUrl(value);
-    validateUrl(value);
+
+    if (value.trim()) {
+      validateUrl(value, currentPlatform);
+    } else {
+      setUrlError('');
+    }
   };
 
   const addSocialLink = () => {
-    if (!validateUrl(currentUrl)) return;
+    if (!validateUrl(currentUrl, currentPlatform)) return;
 
     const alreadyExists = form.socialLinks.some(
       (link) => link.platform_name.toLowerCase() === currentPlatform.toLowerCase()
@@ -247,6 +272,17 @@ export const BasicProfile: React.FC = () => {
 
     if (form.socialLinks.length === 0) {
       newErrors.socialLinks = 'Debes agregar al menos una red profesional.';
+    } else {
+      const invalidLink = form.socialLinks.find((link) => {
+        return getPlatformUrlError(link.platform_name, link.url) !== '';
+      });
+
+      if (invalidLink) {
+        newErrors.socialLinks = getPlatformUrlError(
+          invalidLink.platform_name,
+          invalidLink.url
+        );
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -545,7 +581,12 @@ export const BasicProfile: React.FC = () => {
                           onClick={() => {
                             setCurrentPlatform(platform);
                             setIsSocialDropdownOpen(false);
-                            setUrlError('');
+
+                            if (currentUrl.trim()) {
+                              validateUrl(currentUrl, platform);
+                            } else {
+                              setUrlError('');
+                            }
                           }}
                           className={`w-full flex items-center gap-3 p-3 text-left text-sm transition-colors ${
                             currentPlatform === platform
