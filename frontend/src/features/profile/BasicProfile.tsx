@@ -9,6 +9,7 @@ import {
   Camera,
   CheckCircle2,
   ChevronDown,
+  Pencil,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -48,6 +49,7 @@ export const BasicProfile: React.FC = () => {
   const [currentUrl, setCurrentUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [isSocialDropdownOpen, setIsSocialDropdownOpen] = useState(false);
+  const [editingSocialLinkIndex, setEditingSocialLinkIndex] = useState<number | null>(null);
 
  const [form, setForm] = useState<{
   fullName: string;
@@ -239,6 +241,60 @@ export const BasicProfile: React.FC = () => {
       ...prev,
       socialLinks: prev.socialLinks.filter((_, i) => i !== index),
     }));
+
+    if (editingSocialLinkIndex === index) {
+      cancelEditingSocialLink();
+    }
+  };
+
+  const startEditingSocialLink = (index: number) => {
+    const link = form.socialLinks[index];
+
+    setEditingSocialLinkIndex(index);
+    setCurrentPlatform(link.platform_name);
+    setCurrentUrl(link.url);
+    setUrlError('');
+  };
+
+  const cancelEditingSocialLink = () => {
+    setEditingSocialLinkIndex(null);
+    setCurrentPlatform(PROFESSIONAL_PLATFORMS[0]);
+    setCurrentUrl('');
+    setUrlError('');
+  };
+
+  const updateSocialLink = () => {
+    if (editingSocialLinkIndex === null) return;
+
+    if (!validateUrl(currentUrl, currentPlatform)) return;
+
+    const alreadyExists = form.socialLinks.some(
+      (link, index) =>
+        index !== editingSocialLinkIndex &&
+        link.platform_name.toLowerCase() === currentPlatform.toLowerCase()
+    );
+
+    if (alreadyExists) {
+      setUrlError(`Ya agregaste un enlace de ${currentPlatform}`);
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: prev.socialLinks.map((link, index) =>
+        index === editingSocialLinkIndex
+          ? {
+              platform_name: currentPlatform,
+              url: normalizeUrl(currentUrl),
+            }
+          : link
+      ),
+    }));
+
+    setEditingSocialLinkIndex(null);
+    setCurrentPlatform(PROFESSIONAL_PLATFORMS[0]);
+    setCurrentUrl('');
+    setUrlError('');
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -638,12 +694,22 @@ export const BasicProfile: React.FC = () => {
 
                 <Button
                   type="button"
-                  onClick={addSocialLink}
+                  onClick={editingSocialLinkIndex === null ? addSocialLink : updateSocialLink}
                   variant="secondary"
                   className="px-4 h-[50px] shrink-0 whitespace-nowrap"
                 >
-                  Añadir
+                  {editingSocialLinkIndex === null ? 'Añadir' : 'Actualizar'}
                 </Button>
+
+                {editingSocialLinkIndex !== null && (
+                  <button
+                    type="button"
+                    onClick={cancelEditingSocialLink}
+                    className="h-[50px] px-4 rounded-xl text-sm font-semibold text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                )}
               </div>
 
               {errors.socialLinks && (
@@ -664,7 +730,11 @@ export const BasicProfile: React.FC = () => {
                     {form.socialLinks.map((link, index) => (
                       <div
                         key={`${link.platform_name}-${index}`}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#10221C] border border-slate-200 dark:border-slate-700/50 shadow-sm group hover:border-emerald-500 transition-colors"
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border shadow-sm group transition-colors ${
+                          editingSocialLinkIndex === index
+                            ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-500'
+                            : 'bg-slate-50 dark:bg-[#10221C] border-slate-200 dark:border-slate-700/50 hover:border-emerald-500'
+                        }`}
                       >
                         <a
                           href={link.url}
@@ -683,6 +753,15 @@ export const BasicProfile: React.FC = () => {
                           </span>
                         </a>
                         
+                        <button
+                          type="button"
+                          onClick={() => startEditingSocialLink(index)}
+                          className="text-slate-400 hover:text-emerald-500 transition-colors ml-1 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800"
+                          title={`Editar ${link.platform_name}`}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => removeSocialLink(index)}

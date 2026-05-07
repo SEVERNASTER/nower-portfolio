@@ -60,6 +60,30 @@ class UserController extends Controller
                 ], 422);
             }
 
+            $socialLinks = $request->input('social_links', []);
+            foreach ($socialLinks as $index => $link) {
+                $platform = $link['platform_name'] ?? '';
+                $url = $link['url'] ?? '';
+
+                $patterns = [
+                    'LinkedIn' => '/^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?(\?.*)?$/',
+                    'GitHub' => '/^https:\/\/github\.com\/[a-zA-Z0-9-]+\/?(\?.*)?$/',
+                    'Behance' => '/^https:\/\/(www\.)?behance\.net\/[a-zA-Z0-9_-]+\/?(\?.*)?$/',
+                ];
+
+                if (!isset($patterns[$platform]) || !preg_match($patterns[$platform], $url)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Error de validación de redes profesionales',
+                        'errors' => [
+                            "social_links.$index.url" => [
+                                "El enlace ingresado no corresponde a la plataforma $platform."
+                            ]
+                        ],
+                    ], 422);
+                }
+            }
+
             // Buscar o crear usuario SIN sobrescribir datos existentes
             $user = User::firstOrCreate(
                 ['clerk_id' => $request->clerk_id],
