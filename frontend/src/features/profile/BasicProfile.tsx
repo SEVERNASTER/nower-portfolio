@@ -513,7 +513,7 @@ export const BasicProfile: React.FC = () => {
                 Redes profesionales <span className="text-red-500">*</span>
               </label>
 
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-2">
                 {/* Selector de plataforma */}
                 <div className="relative sm:w-1/4" ref={socialDropdownRef}>
                   <button
@@ -599,7 +599,7 @@ export const BasicProfile: React.FC = () => {
                   type="button"
                   onClick={addSocialLink}
                   variant="secondary"
-                  className="px-4"
+                  className="px-4 h-[50px] shrink-0 whitespace-nowrap"
                 >
                   Añadir
                 </Button>
@@ -623,21 +623,30 @@ export const BasicProfile: React.FC = () => {
                     {form.socialLinks.map((link, index) => (
                       <div
                         key={`${link.platform_name}-${index}`}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#10221C] border border-slate-200 dark:border-slate-700/50 shadow-sm group"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#10221C] border border-slate-200 dark:border-slate-700/50 shadow-sm group hover:border-emerald-500 transition-colors"
                       >
-                        <PlatformIcon
-                          platform={link.platform_name}
-                          className="h-5 w-5 text-slate-600 dark:text-slate-300"
-                        />
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={`Abrir ${link.platform_name}`}
+                          className="flex items-center gap-2 text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                        >
+                          <PlatformIcon
+                            platform={link.platform_name}
+                            className="h-5 w-5"
+                          />
 
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                          {link.platform_name}
-                        </span>
-
+                          <span className="text-sm font-medium">
+                            {link.platform_name}
+                          </span>
+                        </a>
+                        
                         <button
                           type="button"
                           onClick={() => removeSocialLink(index)}
                           className="text-slate-400 hover:text-red-500 transition-colors ml-1 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800"
+                          title={`Eliminar ${link.platform_name}`}
                         >
                           <X className="h-3 w-3" />
                         </button>
