@@ -167,18 +167,18 @@ export const BasicProfile: React.FC = () => {
     const profilePathSegment = '(?:[a-zA-Z0-9._-]|%[0-9A-Fa-f]{2})+';
 
 const platformPatterns: Record<string, RegExp> = {
-  LinkedIn: new RegExp(
-    `^https:\\/\\/(www\\.)?linkedin\\.com\\/in\\/${profilePathSegment}\\/?(\\?.*)?$`,
-    'i'
-  ),
-  GitHub: new RegExp(
-    `^https:\\/\\/(www\\.)?github\\.com\\/${profilePathSegment}\\/?(\\?.*)?$`,
-    'i'
-  ),
-  Behance: new RegExp(
-    `^https:\\/\\/(www\\.)?behance\\.net\\/${profilePathSegment}\\/?(\\?.*)?$`,
-    'i'
-  ),
+    linkedin: new RegExp(
+        `^https:\\/\\/(www\\.)?linkedin\\.com\\/in\\/${profilePathSegment}\\/?$`,
+        'i'
+    ),
+    github: new RegExp(
+        `^https:\\/\\/(www\\.)?github\\.com\\/${profilePathSegment}\\/?$`,
+        'i'
+    ),
+    behance: new RegExp(
+        `^https:\\/\\/(www\\.)?behance\\.net\\/${profilePathSegment}\\/?$`,
+        'i'
+    ),
 };
 
     const platformExamples: Record<string, string> = {
@@ -187,10 +187,15 @@ const platformPatterns: Record<string, RegExp> = {
       Behance: 'Ejemplo válido: https://www.behance.net/usuario',
     };
 
-    const pattern = platformPatterns[platform];
+    const normalizedPlatform = platform.toLowerCase();
+    const pattern = platformPatterns[normalizedPlatform];
+
+    if (!pattern) {
+      return 'La plataforma seleccionada no es válida.';
+    }
 
     if (!pattern.test(trimmedUrl)) {
-      return `El enlace no corresponde a ${platform}. ${platformExamples[platform]}`;
+      return `El enlace no corresponde a ${platform}. ${platformExamples[platform] ?? ''}`;
     }
 
     return '';
