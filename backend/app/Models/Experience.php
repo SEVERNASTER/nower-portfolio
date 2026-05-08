@@ -15,6 +15,8 @@ class Experience extends Model
         'type',
         'title',
         'institution',
+        'degree_type',
+        'status',
         'start_date',
         'end_date',
         'description',

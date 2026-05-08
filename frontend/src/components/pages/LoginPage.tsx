@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Lock, Layers, ShieldCheck } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useSignIn } from "@clerk/clerk-react";
-const ALLOWED_DOMAINS = ["@est.umss.edu", "@ms.umss.edu"];
+import { useSignIn  } from "@clerk/clerk-react";
+
 
 export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,13 +14,12 @@ export const LoginPage: React.FC = () => {
   const [isMicrosoftAuthLoading, setIsMicrosoftAuthLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
   // Handle errors from redirect (URL params)
   React.useEffect(() => {
     const errorParam = searchParams.get("error") || searchParams.get("clerk_error");
     if (errorParam) {
       if (errorParam === "access_denied" || errorParam.includes("not_allowed")) {
-        setError(`Acceso denegado: Usa tu cuenta institucional (${ALLOWED_DOMAINS.join(" o ")})`);
+        setError(`Acceso denegado. Verifica tus permisos o inténtalo de nuevo.`);
       } else {
         setError("Error en el inicio de sesión. Por favor, intenta de nuevo.");
       }
@@ -33,6 +32,7 @@ export const LoginPage: React.FC = () => {
   // Initialize Clerk's signIn object
   const { signIn, isLoaded } = useSignIn();
 
+
   // Handle Custom Email/Password Login via Clerk
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,11 +40,6 @@ export const LoginPage: React.FC = () => {
     setError("");
 
     try {
-      const isDomainValid = ALLOWED_DOMAINS.some(domain => email.toLowerCase().endsWith(domain));
-      if (!isDomainValid) {
-        setError(`Solo se permiten correos institucionales (${ALLOWED_DOMAINS.join(" o ")})`);
-        return;
-      }
       const result = await signIn.create({
         identifier: email,
         password,
@@ -62,7 +57,7 @@ export const LoginPage: React.FC = () => {
       const errorMessage = firstError?.message || "";
 
       if (firstError?.code === "form_identifier_not_allowed" || errorMessage.includes("domain")) {
-        setError(`Este dominio no está permitido. Usa tu cuenta institucional (${ALLOWED_DOMAINS.join(" o ")})`);
+        setError(`Este correo no tiene permisos para iniciar sesión.`);
       } else if (errorMessage.toLowerCase().includes("strategy")) {
         setError("Tu cuenta está vinculada a Google o Microsoft. Por favor, usa el botón correspondiente para entrar.");
       } else {
@@ -221,9 +216,6 @@ export const LoginPage: React.FC = () => {
                   className="w-full rounded-xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-[#111827] px-4 py-3.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                   required
                 />
-                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 px-1 italic">
-                  * Debes usar tu correo institucional (@est.umss.edu o @ms.umss.edu)
-                </p>
               </div>
 
               {/* Password Input */}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { MoreVertical, Calendar, MapPin, Building2, Terminal } from 'lucide-react';
+import React, { useState } from 'react';
+import { MoreVertical, Calendar, MapPin, Building2, Terminal, Pencil, Trash2 } from 'lucide-react';
 import { TechBadge } from './TechBadge';
 
 export interface Experience {
@@ -12,13 +12,23 @@ export interface Experience {
     current: boolean;
     description: string;
     skills: string[];
+    /** Origen API: work | academic */
+    experienceType?: 'work' | 'academic';
+    rawStartDate?: string | null;
+    rawEndDate?: string | null;
+    /*academico */
+    degree_type?: string;
+    status?: 'En curso' | 'Graduado' | 'Pausado';
 }
 
 export interface ExperienceCardProps {
     exp: Experience;
+    onEdit?: (experience: Experience) => void;
+    onDelete?: (experience: Experience) => void;
 }
 
-export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp }) => {
+export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp, onEdit, onDelete }) => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     return (
         <div className="relative pl-8 md:pl-12">
             {/* Timeline Dot - Bright Purple for current, Indigo for past */}
@@ -34,6 +44,16 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp }) => {
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 flex-wrap">
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white">{exp.role}</h3>
+                            {exp.experienceType === 'academic' && (
+                                <span className="px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400 rounded-full border border-violet-200 dark:border-violet-500/20">
+                                    Académica
+                                </span>
+                            )}
+                            {exp.experienceType === 'work' && (
+                                <span className="px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold bg-slate-100 text-slate-700 dark:bg-slate-500/10 dark:text-slate-300 rounded-full border border-slate-200 dark:border-slate-600/30">
+                                    Laboral
+                                </span>
+                            )}
                             {/* Status Badge */}
                             {exp.current && (
                                 <span className="px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-full border border-emerald-200 dark:border-emerald-500/20">
@@ -57,30 +77,70 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp }) => {
                             </div>
 
                             {/* ROSE: Location */}
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/5 text-xs font-bold text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/10">
-                                <MapPin className="h-3.5 w-3.5" />
-                                {exp.location}
-                            </div>
+                            {exp.location.trim() !== '' && (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/5 text-xs font-bold text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/10">
+                                    <MapPin className="h-3.5 w-3.5" />
+                                    {exp.location}
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Options Menu */}
-                    <button className="p-2 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors">
-                        <MoreVertical className="h-5 w-5" />
-                    </button>
-                </div>
+                   <div className="relative">
+    <button
+        type="button"
+        onClick={() => setIsMenuOpen((prev) => !prev)}
+        className="p-2 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
+        aria-label="Opciones de experiencia"
+    >
+        <MoreVertical className="h-5 w-5" />
+    </button>
+
+    {isMenuOpen && (
+        <div className="absolute right-0 top-10 z-20 w-40 rounded-xl bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-700 shadow-lg overflow-hidden">
+            <button
+                type="button"
+                onClick={() => {
+                    setIsMenuOpen(false);
+                    onEdit?.(exp);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+                <Pencil className="h-4 w-4" />
+                Editar
+            </button>
+
+            <button
+                type="button"
+                onClick={() => {
+                    setIsMenuOpen(false);
+                    onDelete?.(exp);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+            >
+                <Trash2 className="h-4 w-4" />
+                Eliminar
+            </button>
+        </div>
+    )}
+</div>
+                   
+</div>                
 
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
                     {exp.description}
                 </p>
 
-                {/* VIBRANT Tech Stack Badges */}
-                <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <Terminal className="h-4 w-4 text-purple-400 mr-1" />
-                    {exp.skills.map((skill, index) => (
-                        <TechBadge key={skill} skill={skill} index={index} />
-                    ))}
-                </div>
+                {/* Tech stack (opcional; API actual no persiste lista separada) */}
+                {exp.skills.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <Terminal className="h-4 w-4 text-purple-400 mr-1" />
+                        {exp.skills.map((skill, index) => (
+                            <TechBadge key={skill} skill={skill} index={index} />
+                        ))}
+                    </div>
+                )}
 
             </div>
         </div>

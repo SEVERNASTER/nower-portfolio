@@ -15,6 +15,12 @@ export interface UserProfile {
     status: 'ACTIVO' | 'INACTIVO';
 }
 
+export interface ProjectImage {
+    id: string;
+    url: string;
+    public_id?: string;
+}
+
 export interface Project {
     id: string;
     title: string;
@@ -24,6 +30,9 @@ export interface Project {
     repositoryUrl?: string;
     liveUrl?: string;
     imageUrl?: string;
+    imageUrls?: string[];
+    images?: ProjectImage[];
+    links?: { platform_name: string; url: string }[];
     createdAt: string;
 }
 
