@@ -21,6 +21,7 @@ export const ExperienceList: React.FC = () => {
     const [education, setEducation] = useState<Experience[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
     const [editingEducation, setEditingEducation] = useState<Experience | null>(null);
     const [experienceToDelete, setExperienceToDelete] = useState<Experience | null>(null);
@@ -80,6 +81,14 @@ export const ExperienceList: React.FC = () => {
         }
         void loadAll();
     }, [isLoaded, isSignedIn, loadAll]);
+
+    const showSuccessToast = (message: string) => {
+    setSuccessMessage(message);
+
+    window.setTimeout(() => {
+        setSuccessMessage(null);
+    }, 3000);
+};
 
     const handleOpenCreateWorkModal = () => {
         setEditingExperience(null);
@@ -141,9 +150,11 @@ export const ExperienceList: React.FC = () => {
 
             setExperiences((prev) =>
                 prev.filter((item) => item.id !== experienceToDelete.id)
-            );
+       );
 
-            setExperienceToDelete(null);
+       showSuccessToast('Eliminado');
+
+       setExperienceToDelete(null);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Error eliminando experiencia');
         } finally {
@@ -178,7 +189,11 @@ export const ExperienceList: React.FC = () => {
 
     return (
         <div className="w-full max-w-5xl mx-auto space-y-8 animate-fade-in">
-
+            {successMessage && (
+                <div className="fixed top-6 right-6 z-[9999] rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg">
+                    {successMessage}
+                </div>
+           )}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#17262C]/80 p-6 rounded-2xl border border-slate-200 dark:border-slate-800/60 shadow-sm">
                 <div className="flex items-center gap-4">
                     <div
@@ -297,10 +312,14 @@ export const ExperienceList: React.FC = () => {
                     setIsWorkModalOpen(false);
                     setEditingExperience(null);
                 }}
-                onSaved={() => {
+                onSaved={(message) => {
                     setEditingExperience(null);
                     void loadWork();
-                }}
+
+                    if (message) {
+                      showSuccessToast(message);
+                 }
+            }}
                 experienceToEdit={editingExperience}
             />
 

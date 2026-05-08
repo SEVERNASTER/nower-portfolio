@@ -23,7 +23,7 @@ import type { Experience } from "./components/ExperienceCard";
 interface AddExperienceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaved?: () => void;
+  onSaved?: (message?: string) => void;
   experienceToEdit?: Experience | null;
 }
 
@@ -173,11 +173,12 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
 
       if (experienceToEdit) {
         await updateExperience(token, experienceToEdit.id, payload);
+        onSaved?.('Registro actualizado');
       } else {
         await createExperience(token, payload);
+        onSaved?.('Experiencia registrada exitosamente');
       }
       resetForm();
-      onSaved?.();
       onClose();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Error al guardar.");
