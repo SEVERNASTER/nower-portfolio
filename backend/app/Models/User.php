@@ -72,6 +72,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the achievements for the user.
+     */
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(Achievement::class);
+    }
+
+    /**
      * Get the portfolio for the user.
      */
     public function portfolio(): HasOne

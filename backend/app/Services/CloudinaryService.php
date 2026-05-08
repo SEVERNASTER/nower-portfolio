@@ -52,16 +52,19 @@ class CloudinaryService
         }
 
         // El SDK de Cloudinary PHP sube directamente desde la ruta temporal del servidor.
+        $isImage = str_starts_with($file->getClientMimeType(), 'image/');
         $uploadOptions = [
             'folder'        => $folder,
             'public_id'     => $publicId,
             'overwrite'     => true,
-            'resource_type' => 'image',
-            // Transformaciones opcionales al subir
-            'transformation' => [
-                ['width' => 400, 'height' => 400, 'crop' => 'fill', 'gravity' => 'face'],
-            ],
+            'resource_type' => $isImage ? 'image' : 'auto',
         ];
+
+        if ($isImage) {
+            $uploadOptions['transformation'] = [
+                ['width' => 400, 'height' => 400, 'crop' => 'fill', 'gravity' => 'face'],
+            ];
+        }
 
         if ($uploadPreset = config('cloudinary.upload_preset')) {
             $uploadOptions['upload_preset'] = $uploadPreset;
@@ -83,7 +86,7 @@ class CloudinaryService
     public function delete(string $publicId): bool
     {
         $result = $this->cloudinary->uploadApi()->destroy($publicId, [
-            'resource_type' => 'image',
+            'resource_type' => 'auto',
         ]);
 
         return isset($result['result']) && $result['result'] === 'ok';
