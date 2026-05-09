@@ -53,6 +53,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     institution?: string;
     obtainedAt?: string;
     description?: string;
+    evidence?: string;
   }>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -195,6 +196,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     if (!institution.trim()) newErrors.institution = 'La institución es obligatoria';
     if (!obtainedAt) newErrors.obtainedAt = 'La fecha de obtención es obligatoria';
     if (description.length > 1000) newErrors.description = 'La descripción no puede exceder 1000 caracteres';
+    if (existingFiles.length + selectedFiles.length === 0) newErrors.evidence = 'Debes agregar al menos un archivo de evidencia';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -228,6 +230,8 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
   const previewFile = getPreviewFile();
   const totalFiles = existingFiles.length + selectedFiles.length;
+  const hasEvidence = totalFiles > 0;
+  const isSaveDisabled = !title.trim() || !institution.trim() || !obtainedAt || !hasEvidence || isSubmitting;
 
   return (
     <form
@@ -236,7 +240,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     >
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Título del Logro *
+          Título del Logro <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -252,7 +256,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Institución *
+          Institución <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -268,7 +272,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Fecha de Obtención *
+          Fecha de Obtención <span className="text-red-500">*</span>
         </label>
         <input
           type="date"
@@ -283,7 +287,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Descripción
+          Descripción <span className="text-red-500">*</span>
         </label>
         <textarea
           value={description}
@@ -299,7 +303,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
       <div className="space-y-3">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Evidencia (Certificado o Imagen)
+          Evidencia (Certificado o Imagen) <span className="text-red-500">*</span>
         </label>
 
         {alert && (
@@ -393,6 +397,10 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
               ))}
             </div>
           )}
+
+          {errors.evidence && (
+            <p className="text-xs text-red-500">{errors.evidence}</p>
+          )}
         </div>
 
         <input
@@ -409,7 +417,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
           Cancelar
         </Button>
-        <Button type="submit" variant="primary" disabled={isSubmitting}>
+        <Button type="submit" variant="primary" disabled={isSaveDisabled}>
           {isSubmitting ? 'Guardando...' : 'Guardar Logro'}
         </Button>
       </div>

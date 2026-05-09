@@ -190,8 +190,52 @@ class AchievementController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        //
+        $clerkId = $request->attributes->get('clerk_user_id');
+        $user = \App\Models\User::where('clerk_id', $clerkId)->first();
+
+        if (! $user) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
+
+        $achievement = Achievement::with('files')->find($id);
+        if (! $achievement) {
+            return response()->json(['error' => 'Logro no encontrado'], 404);
+        }
+
+        if ($achievement->user_id !== $user->id && $user->role !== 'admin') {
+            return response()->json(['error' => 'No tienes permiso para eliminar este logro'], 403);
+        }
+
+        try {
+            foreach ($achievement->files as $file) {
+                if ($file->public_id) {
+                    try {
+                        $this->cloudinaryService->delete($file->public_id);
+                    } catch (\Throwable $e) {
+                        \Log::error('Cloudinary delete fallo para achievement file: ' . $e->getMessage());
+                    }
+                }
+                $file->delete();
+            }
+
+            if ($achievement->file_public_id) {
+                try {
+                    $this->cloudinaryService->delete($achievement->file_public_id);
+                } catch (\Throwable $e) {
+                    \Log::error('Cloudinary delete fallo para logro legacy file: ' . $e->getMessage());
+                }
+            }
+
+            $achievement->delete();
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Error eliminando logro: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logro eliminado correctamente',
+        ], 200);
     }
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Award, FileText, Edit3 } from 'lucide-react';
+import { Plus, Award, FileText, Edit3, Trash2 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { Button } from '../../components/ui/Button';
 import { AchievementForm, AchievementFile } from './components/AchievementForm';
@@ -24,6 +24,7 @@ export const AchievementsList: React.FC = () => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
+  const [deletingAchievement, setDeletingAchievement] = useState<Achievement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { getToken, isLoaded, isSignedIn } = useAuth();
 
@@ -119,6 +120,38 @@ export const AchievementsList: React.FC = () => {
     setEditingAchievement(achievement);
   };
 
+  const handleDeleteAchievement = async (id: string) => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`http://localhost:8000/api/achievements/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setAchievements((prev) => prev.filter((achievement) => achievement.id !== id));
+        setDeletingAchievement(null);
+      } else {
+        const errorData = await response.json();
+        console.error('Error eliminando logro:', errorData);
+        alert(`Error al eliminar: ${errorData.message || 'No se pudo eliminar el logro'}`);
+      }
+    } catch (error) {
+      console.error('Error eliminando logro:', error);
+      alert('Error al eliminar el logro');
+    }
+  };
+
+  const handleDeleteClick = (achievement: Achievement) => {
+    setDeletingAchievement(achievement);
+  };
+
+  const handleCancelDelete = () => {
+    setDeletingAchievement(null);
+  };
+
   const handleUpdateAchievement = async (formData: FormData) => {
     if (!editingAchievement) return;
 
@@ -156,10 +189,17 @@ export const AchievementsList: React.FC = () => {
 
   const shouldShowEmptyState = !isLoading && achievements.length === 0;
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
+    <div className="w-full max-w-6xl mx-auto h-full flex flex-col min-h-0 p-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8 shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
             <Award className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
@@ -185,9 +225,9 @@ export const AchievementsList: React.FC = () => {
 
       {/* Form Modal */}
       {(isAdding || editingAchievement) && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-[#17262C] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 z-50 bg-black/50 p-4 flex items-center justify-center">
+          <div className="bg-white dark:bg-[#17262C] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <div className="p-6 overflow-y-auto max-h-[90vh]">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                   {editingAchievement ? 'Editar Logro' : 'Nuevo Logro'}
@@ -222,23 +262,65 @@ export const AchievementsList: React.FC = () => {
         </div>
       )}
 
-      {/* Achievements Grid */}
-      {shouldShowEmptyState ? (
-        <div className="text-center py-12">
-          <Award className="h-16 w-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-            No tienes logros registrados
-          </h3>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
-            Comienza añadiendo tu primera certificación o reconocimiento
-          </p>
-          <Button onClick={() => setIsAdding(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Añadir Primer Logro
-          </Button>
+      {deletingAchievement && (
+        <div className="fixed inset-0 z-50 bg-black/50 p-4 flex items-center justify-center">
+          <div className="bg-white dark:bg-[#17262C] rounded-3xl max-w-xl w-full shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+                    Confirmar eliminación
+                  </h2>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                    ¿Estás seguro de que deseas eliminar <span className="font-semibold text-slate-900 dark:text-white">{deletingAchievement.title}</span>? Esta acción no se puede deshacer.
+                  </p>
+                </div>
+                <button
+                  onClick={handleCancelDelete}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  onClick={handleCancelDelete}
+                  className="w-full sm:w-auto px-4 py-2 rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  Cancelar
+                </button>
+                <Button
+                  onClick={() => handleDeleteAchievement(deletingAchievement.id)}
+                  className="w-full sm:w-auto bg-rose-600 text-white hover:bg-rose-700"
+                >
+                  Eliminar logro
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      )}
+
+      {/* Achievements Grid */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        {shouldShowEmptyState ? (
+          <div className="flex h-full flex-col items-center justify-center text-center py-12">
+            <Award className="h-16 w-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+              No tienes logros registrados
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
+              Comienza añadiendo tu primera certificación o reconocimiento
+            </p>
+            <Button onClick={() => setIsAdding(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Añadir Primer Logro
+            </Button>
+          </div>
+        ) : (
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <div className="h-full overflow-y-auto pr-2 pb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
           {achievements.map((achievement) => {
             const preview = getAchievementPreview(achievement);
             const totalFiles = achievement.files?.length ?? (achievement.file_url ? 1 : 0);
@@ -259,13 +341,22 @@ export const AchievementsList: React.FC = () => {
                       {formatDate(achievement.obtained_at)}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleEditAchievement(achievement)}
-                    className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  >
-                    <Edit3 className="h-4 w-4" />
-                    <span className="sr-only">Editar logro</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditAchievement(achievement)}
+                      className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                      <span className="sr-only">Editar logro</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(achievement)}
+                      className="rounded-2xl border border-rose-200 bg-rose-50 text-rose-600 p-2 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-900"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Eliminar logro</span>
+                    </button>
+                  </div>
                 </div>
 
                 {achievement.description && (
@@ -318,8 +409,11 @@ export const AchievementsList: React.FC = () => {
               </div>
             );
           })}
-        </div>
-      )}
+                </div>
+              </div>
+            </div>
+        )}
+      </div>
     </div>
   );
 };
