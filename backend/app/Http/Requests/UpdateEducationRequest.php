@@ -11,12 +11,14 @@ class UpdateEducationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $clerkId = $this->request->attributes->get('clerk_user_id');
+        $clerkId = $this->get('clerk_user_id');
+
         if (! $clerkId) {
             return false;
         }
 
         $user = User::where('clerk_id', $clerkId)->first();
+
         if (! $user) {
             return false;
         }
@@ -55,7 +57,7 @@ class UpdateEducationRequest extends FormRequest
                 'nullable',
                 'date',
                 'after_or_equal:start_date',
-                Rule::requiredIf(fn () => in_array($this->status, ['Graduado', 'Pausado'], true)),
+                Rule::requiredIf(fn() => in_array($this->status, ['Graduado', 'Pausado'], true)),
                 function ($attribute, $value, $fail) use ($minYear, $currentYear) {
                     if (! $value) {
                         return;

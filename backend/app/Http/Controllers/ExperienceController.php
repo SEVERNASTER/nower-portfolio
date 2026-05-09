@@ -159,7 +159,7 @@ class ExperienceController extends Controller
      */
     private function resolveUser(Request $request): User
     {
-        $clerkId = $request->attributes->get('clerk_user_id');
+        $clerkId = $request->get('clerk_user_id');
 
         return User::firstOrCreate(
             ['clerk_id' => $clerkId],

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { X, GraduationCap, Building2, Calendar, AlignLeft } from 'lucide-react';
-import { useAuth } from '@clerk/clerk-react';
+import React, { useEffect, useState } from "react";
+import { X, GraduationCap, Building2, Calendar, AlignLeft } from "lucide-react";
+import { useAuth } from "@clerk/clerk-react";
 import {
   createEducation,
   updateEducation,
@@ -8,18 +8,18 @@ import {
   monthInputToStartDate,
   type EducationCreatePayload,
   type EducationStatus,
-} from './educationApi';
-import type { Experience } from '../experience/components/ExperienceCard';
+} from "./educationApi";
+import type { Experience } from "../experience/components/ExperienceCard";
 
 const DEGREE_PRESETS = [
-  'Licenciatura',
-  'Maestría',
-  'Doctorado',
-  'Grado técnico',
-  'Certificación',
+  "Licenciatura",
+  "Maestría",
+  "Doctorado",
+  "Grado técnico",
+  "Certificación",
 ] as const;
 
-const OTRO = 'Otro';
+const OTRO = "Otro";
 
 interface AddEducationModalProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ interface AddEducationModalProps {
 
 function currentYearMonth(): string {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function monthGt(a: string, b: string): boolean {
@@ -43,7 +43,7 @@ function rangesOverlapSameInstitution(
   startIso: string,
   endIso: string | null,
   others: Experience[],
-  excludeId?: string
+  excludeId?: string,
 ): boolean {
   const inst = institution.trim().toLowerCase();
   const s = new Date(startIso).setHours(0, 0, 0, 0);
@@ -73,58 +73,58 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
   existingEducation,
 }) => {
   const { getToken } = useAuth();
-  const [institution, setInstitution] = useState('');
-  const [title, setTitle] = useState('');
+  const [institution, setInstitution] = useState("");
+  const [title, setTitle] = useState("");
   const [degreePreset, setDegreePreset] = useState<string>(DEGREE_PRESETS[0]);
-  const [degreeCustom, setDegreeCustom] = useState('');
-  const [status, setStatus] = useState<EducationStatus>('Graduado');
-  const [startMonth, setStartMonth] = useState('');
-  const [endMonth, setEndMonth] = useState('');
-  const [description, setDescription] = useState('');
+  const [degreeCustom, setDegreeCustom] = useState("");
+  const [status, setStatus] = useState<EducationStatus>("Graduado");
+  const [startMonth, setStartMonth] = useState("");
+  const [endMonth, setEndMonth] = useState("");
+  const [description, setDescription] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   const isEditing = Boolean(educationToEdit);
-  const endDisabled = status === 'En curso';
+  const endDisabled = status === "En curso";
 
   const resetForm = () => {
-    setInstitution('');
-    setTitle('');
+    setInstitution("");
+    setTitle("");
     setDegreePreset(DEGREE_PRESETS[0]);
-    setDegreeCustom('');
-    setStatus('Graduado');
-    setStartMonth('');
-    setEndMonth('');
-    setDescription('');
+    setDegreeCustom("");
+    setStatus("Graduado");
+    setStartMonth("");
+    setEndMonth("");
+    setDescription("");
     setFieldErrors({});
     setSubmitError(null);
   };
 
   const dateToMonthInput = (date?: string | null) => {
-    if (!date) return '';
+    if (!date) return "";
     return date.slice(0, 7);
   };
 
   const fillForEdit = (edu: Experience) => {
-    setInstitution(edu.company ?? '');
-    setTitle(edu.role ?? '');
-    const dt = edu.degree_type?.trim() ?? '';
+    setInstitution(edu.company ?? "");
+    setTitle(edu.role ?? "");
+    const dt = edu.degree_type?.trim() ?? "";
     if (dt && (DEGREE_PRESETS as readonly string[]).includes(dt)) {
       setDegreePreset(dt);
-      setDegreeCustom('');
+      setDegreeCustom("");
     } else if (dt) {
       setDegreePreset(OTRO);
       setDegreeCustom(dt);
     } else {
       setDegreePreset(DEGREE_PRESETS[0]);
-      setDegreeCustom('');
+      setDegreeCustom("");
     }
-    setStatus(edu.status ?? 'Graduado');
+    setStatus(edu.status ?? "Graduado");
     setStartMonth(dateToMonthInput(edu.rawStartDate));
     setEndMonth(dateToMonthInput(edu.rawEndDate));
-    setDescription(edu.description ?? '');
+    setDescription(edu.description ?? "");
     setFieldErrors({});
     setSubmitError(null);
   };
@@ -141,8 +141,8 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
   }, [isOpen, educationToEdit]);
 
   useEffect(() => {
-    if (status === 'En curso') {
-      setEndMonth('');
+    if (status === "En curso") {
+      setEndMonth("");
     }
   }, [status]);
 
@@ -167,28 +167,33 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
     const tit = title.trim();
     const capYm = currentYearMonth();
 
-    if (!inst) errs.institution = 'La institución es obligatoria.';
+    if (!inst) errs.institution = "La institución es obligatoria.";
     else if (inst.length < 3)
-      errs.institution = 'Indica al menos 3 caracteres para la institución.';
+      errs.institution = "Indica al menos 3 caracteres para la institución.";
 
-    if (!tit) errs.title = 'El título o grado es obligatorio.';
+    if (!tit) errs.title = "El título o grado es obligatorio.";
     else if (tit.length < 2)
-      errs.title = 'El título debe tener al menos 2 caracteres.';
+      errs.title = "El título debe tener al menos 2 caracteres.";
 
     const dt = resolveDegreeType();
-    if (!dt) errs.degree_type = 'Selecciona o describe el tipo de grado.';
+    if (!dt) errs.degree_type = "Selecciona o describe el tipo de grado.";
 
-    if (!startMonth) errs.start_month = 'La fecha de inicio es obligatoria.';
+    if (!startMonth) errs.start_month = "La fecha de inicio es obligatoria.";
     else if (startMonth > capYm)
-      errs.start_month = 'La fecha de inicio no puede ser futura.';
+      errs.start_month = "La fecha de inicio no puede ser futura.";
 
     if (!endDisabled) {
-      if (!endMonth) errs.end_month = 'La fecha de fin es obligatoria para este estado.';
+      if (!endMonth)
+        errs.end_month = "La fecha de fin es obligatoria para este estado.";
       else {
-        if (endMonth > capYm)
-          errs.end_month = 'La fecha de fin no puede ser futura.';
-        if (startMonth && !monthGt(endMonth, startMonth)) {
-          errs.end_month = 'La fecha de fin debe ser posterior a la de inicio.';
+        if (startMonth && endMonth) {
+          const start = new Date(`${startMonth}-01`);
+          const end = new Date(`${endMonth}-01`);
+
+          if (end <= start) {
+            errs.end_month =
+              "La fecha de fin debe ser posterior a la de inicio.";
+          }
         }
       }
     }
@@ -200,19 +205,31 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
       startDate &&
       !endDisabled &&
       endDate &&
-      rangesOverlapSameInstitution(inst, startDate, endDate, existingEducation, educationToEdit?.id)
+      rangesOverlapSameInstitution(
+        inst,
+        startDate,
+        endDate,
+        existingEducation,
+        educationToEdit?.id,
+      )
     ) {
       errs.start_month =
-        'Las fechas se solapan con otra formación en la misma institución.';
+        "Las fechas se solapan con otra formación en la misma institución.";
     }
 
     if (
       startDate &&
       endDisabled &&
-      rangesOverlapSameInstitution(inst, startDate, null, existingEducation, educationToEdit?.id)
+      rangesOverlapSameInstitution(
+        inst,
+        startDate,
+        null,
+        existingEducation,
+        educationToEdit?.id,
+      )
     ) {
       errs.start_month =
-        'Las fechas se solapan con otra formación en la misma institución.';
+        "Las fechas se solapan con otra formación en la misma institución.";
     }
 
     return errs;
@@ -248,7 +265,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
     try {
       const token = await getToken();
       if (!token) {
-        setSubmitError('Sesión no válida.');
+        setSubmitError("Sesión no válida.");
         return;
       }
 
@@ -267,13 +284,21 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
       if (e.validationErrors && Object.keys(e.validationErrors).length > 0) {
         const mapped: Record<string, string> = {};
         for (const [k, v] of Object.entries(e.validationErrors)) {
-          if (k === 'start_date') mapped.start_month = v;
-          else if (k === 'end_date') mapped.end_month = v;
+          if (k === "start_date") mapped.start_month = v;
+          else if (k === "end_date") mapped.end_month = v;
           else mapped[k] = v;
         }
         setFieldErrors((prev) => ({ ...prev, ...mapped }));
       }
-      setSubmitError(e instanceof Error ? e.message : 'Error al guardar.');
+      if (e instanceof Error) {
+        setSubmitError(
+          e.message?.trim()
+            ? e.message
+            : "No se pudo guardar la formación académica.",
+        );
+      } else {
+        setSubmitError("No se pudo guardar la formación académica.");
+      }
     } finally {
       setSaving(false);
     }
@@ -284,13 +309,13 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div
-        className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"}`}
         onClick={handleClose}
         aria-hidden
       />
 
       <div
-        className={`relative w-full max-w-2xl bg-white dark:bg-[#0B1120] rounded-3xl shadow-2xl border border-teal-200/60 dark:border-teal-900/40 flex flex-col max-h-[90vh] transition-all duration-300 transform ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'}`}
+        className={`relative w-full max-w-2xl bg-white dark:bg-[#0B1120] rounded-3xl shadow-2xl border border-teal-200/60 dark:border-teal-900/40 flex flex-col max-h-[90vh] transition-all duration-300 transform ${isOpen ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 translate-y-4"}`}
       >
         <div className="flex items-center justify-between p-6 border-b border-teal-100 dark:border-teal-900/40">
           <div className="flex items-center gap-3">
@@ -298,7 +323,9 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
               <GraduationCap className="h-5 w-5" />
             </div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              {isEditing ? 'Editar formación académica' : 'Añadir formación académica'}
+              {isEditing
+                ? "Editar formación académica"
+                : "Añadir formación académica"}
             </h2>
           </div>
           <button
@@ -324,14 +351,16 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                     value={institution}
                     onChange={(e) => {
                       setInstitution(e.target.value);
-                      clearField('institution');
+                      clearField("institution");
                     }}
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500"
                     placeholder="Universidad o centro de estudios"
                   />
                 </div>
                 {fieldErrors.institution ? (
-                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.institution}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {fieldErrors.institution}
+                  </p>
                 ) : null}
               </div>
 
@@ -344,13 +373,15 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                   value={title}
                   onChange={(e) => {
                     setTitle(e.target.value);
-                    clearField('title');
+                    clearField("title");
                   }}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm outline-none focus:border-teal-500 text-slate-900 dark:text-white"
                   placeholder="Ej. Ingeniería de Sistemas"
                 />
                 {fieldErrors.title ? (
-                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.title}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {fieldErrors.title}
+                  </p>
                 ) : null}
               </div>
 
@@ -362,7 +393,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                   value={degreePreset}
                   onChange={(e) => {
                     setDegreePreset(e.target.value);
-                    clearField('degree_type');
+                    clearField("degree_type");
                   }}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500"
                 >
@@ -379,14 +410,16 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                     value={degreeCustom}
                     onChange={(e) => {
                       setDegreeCustom(e.target.value);
-                      clearField('degree_type');
+                      clearField("degree_type");
                     }}
                     placeholder="Describe el tipo de grado"
                     className="mt-2 w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm outline-none focus:border-teal-500 text-slate-900 dark:text-white"
                   />
                 ) : null}
                 {fieldErrors.degree_type ? (
-                  <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.degree_type}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {fieldErrors.degree_type}
+                  </p>
                 ) : null}
               </div>
 
@@ -418,19 +451,24 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                       max={currentYearMonth()}
                       onChange={(e) => {
                         setStartMonth(e.target.value);
-                        clearField('start_month');
+                        clearField("start_month");
                       }}
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500"
                     />
                   </div>
                   {fieldErrors.start_month ? (
-                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.start_month}</p>
+                    <p className="text-xs text-red-600 dark:text-red-400">
+                      {fieldErrors.start_month}
+                    </p>
                   ) : null}
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                    Fecha de fin {!endDisabled ? <span className="text-red-500">*</span> : null}
+                    Fecha de fin{" "}
+                    {!endDisabled ? (
+                      <span className="text-red-500">*</span>
+                    ) : null}
                   </label>
                   <div className="relative">
                     <Calendar className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
@@ -440,13 +478,13 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                       max={currentYearMonth()}
                       onChange={(e) => {
                         setEndMonth(e.target.value);
-                        clearField('end_month');
+                        clearField("end_month");
                       }}
                       disabled={endDisabled}
                       className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none ${
                         endDisabled
-                          ? 'bg-slate-100 dark:bg-slate-800/50 text-slate-400 cursor-not-allowed border-slate-200 dark:border-slate-800'
-                          : 'bg-slate-50 dark:bg-[#111827] text-slate-900 dark:text-white border-slate-300 dark:border-slate-800 focus:border-teal-500'
+                          ? "bg-slate-100 dark:bg-slate-800/50 text-slate-400 cursor-not-allowed border-slate-200 dark:border-slate-800"
+                          : "bg-slate-50 dark:bg-[#111827] text-slate-900 dark:text-white border-slate-300 dark:border-slate-800 focus:border-teal-500"
                       }`}
                     />
                   </div>
@@ -456,7 +494,9 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                     </p>
                   ) : null}
                   {fieldErrors.end_month ? (
-                    <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.end_month}</p>
+                    <p className="text-xs text-red-600 dark:text-red-400">
+                      {fieldErrors.end_month}
+                    </p>
                   ) : null}
                 </div>
               </div>
@@ -478,7 +518,9 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
             </div>
 
             {submitError ? (
-              <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
+                {submitError}
+              </div>
             ) : null}
           </form>
         </div>
@@ -498,7 +540,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
             disabled={saving}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-60"
           >
-            {saving ? 'Guardando…' : isEditing ? 'Actualizar' : 'Guardar'}
+            {saving ? "Guardando…" : isEditing ? "Actualizar" : "Guardar"}
           </button>
         </div>
       </div>
