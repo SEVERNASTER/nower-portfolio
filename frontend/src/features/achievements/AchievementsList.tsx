@@ -190,18 +190,14 @@ export const AchievementsList: React.FC = () => {
   const shouldShowEmptyState = !isLoading && achievements.length === 0;
 
   useEffect(() => {
-    if (isAdding || editingAchievement || deletingAchievement) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isAdding, editingAchievement, deletingAchievement]);
+  }, []);
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6 space-y-8 animate-fade-in">
+    <div className="w-full max-w-6xl mx-auto h-full flex flex-col min-h-0 p-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-8 shrink-0">
         <div className="flex items-center gap-3">
@@ -306,7 +302,7 @@ export const AchievementsList: React.FC = () => {
       )}
 
       {/* Achievements Grid */}
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {shouldShowEmptyState ? (
           <div className="flex h-full flex-col items-center justify-center text-center py-12">
             <Award className="h-16 w-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
@@ -322,7 +318,9 @@ export const AchievementsList: React.FC = () => {
             </Button>
           </div>
         ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <div className="h-full overflow-y-auto pr-2 pb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
           {achievements.map((achievement) => {
             const preview = getAchievementPreview(achievement);
             const totalFiles = achievement.files?.length ?? (achievement.file_url ? 1 : 0);
@@ -411,6 +409,8 @@ export const AchievementsList: React.FC = () => {
               </div>
             );
           })}
+                </div>
+              </div>
             </div>
         )}
       </div>
