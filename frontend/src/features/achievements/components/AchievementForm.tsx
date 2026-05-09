@@ -240,7 +240,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     >
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Título del Logro *
+          Título del Logro <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -256,7 +256,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Institución *
+          Institución <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -272,7 +272,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Fecha de Obtención *
+          Fecha de Obtención <span className="text-red-500">*</span>
         </label>
         <input
           type="date"
@@ -287,7 +287,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Descripción
+          Descripción <span className="text-red-500">*</span>
         </label>
         <textarea
           value={description}
@@ -303,7 +303,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
       <div className="space-y-3">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Evidencia (Certificado o Imagen)
+          Evidencia (Certificado o Imagen) <span className="text-red-500">*</span>
         </label>
 
         {alert && (

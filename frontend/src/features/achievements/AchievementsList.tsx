@@ -157,9 +157,9 @@ export const AchievementsList: React.FC = () => {
   const shouldShowEmptyState = !isLoading && achievements.length === 0;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
+    <div className="h-full min-h-screen flex flex-col max-w-6xl mx-auto p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-8 shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
             <Award className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
@@ -185,7 +185,7 @@ export const AchievementsList: React.FC = () => {
 
       {/* Form Modal */}
       {(isAdding || editingAchievement) && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4 flex items-center justify-center">
           <div className="bg-white dark:bg-[#17262C] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
@@ -223,22 +223,25 @@ export const AchievementsList: React.FC = () => {
       )}
 
       {/* Achievements Grid */}
-      {shouldShowEmptyState ? (
-        <div className="text-center py-12">
-          <Award className="h-16 w-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-            No tienes logros registrados
-          </h3>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
-            Comienza añadiendo tu primera certificación o reconocimiento
-          </p>
-          <Button onClick={() => setIsAdding(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Añadir Primer Logro
-          </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {shouldShowEmptyState ? (
+          <div className="flex h-full flex-col items-center justify-center text-center py-12">
+            <Award className="h-16 w-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+              No tienes logros registrados
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
+              Comienza añadiendo tu primera certificación o reconocimiento
+            </p>
+            <Button onClick={() => setIsAdding(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Añadir Primer Logro
+            </Button>
+          </div>
+        ) : (
+          <div className="h-full min-h-0 overflow-hidden">
+            <div className="h-full min-h-0 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
           {achievements.map((achievement) => {
             const preview = getAchievementPreview(achievement);
             const totalFiles = achievement.files?.length ?? (achievement.file_url ? 1 : 0);
@@ -318,8 +321,11 @@ export const AchievementsList: React.FC = () => {
               </div>
             );
           })}
-        </div>
-      )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
