@@ -13,12 +13,13 @@ import { BasicProfile } from "./features/profile/BasicProfile";
 import { ProjectsList } from "./features/projects/ProjectsList";
 import { SkillsList } from "./features/skills/SkillsList";
 import { AdminSection } from "./features/admin/AdminSection";
-import { User, FolderGit2, Code, Briefcase, BarChart, Users, PieChart } from "lucide-react";
+import { User, FolderGit2, Code, Briefcase, BarChart, Users, PieChart, Award } from "lucide-react";
 import type { NavItem } from "./components/navigation/Sidebar";
 import { LoginPage } from "./components/pages/LoginPage";
 import { ExperienceList } from "./features/experience/ExperienceList";
 import { RegisterPage } from "./components/pages/RegisterPage";
 import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
+import { AchievementsList } from "./features/achievements/AchievementsList";
 import { useEffect, useState } from "react";
 
 const baseNavItems: NavItem[] = [
@@ -26,6 +27,7 @@ const baseNavItems: NavItem[] = [
   { name: "Proyectos", icon: FolderGit2, path: "/projects" },
   { name: "Habilidades", icon: Code, path: "/skills" },
   { name: "Experiencia", icon: Briefcase, path: "/experience" },
+  { name: "Logros", icon: Award, path: "/achievements" },
 ];
 
 const AppContent: React.FC = () => {
@@ -152,6 +154,7 @@ const AppContent: React.FC = () => {
                         <Route path="/projects" element={<ProjectsList />} />
                         <Route path="/skills" element={<SkillsList />} />
                         <Route path="/experience" element={<ExperienceList />} />
+                        <Route path="/achievements" element={<AchievementsList />} />
                         
                         {/* RUTAS DE ADMIN DENTRO DEL DASHBOARD */}
                         {userRole === 'admin' ? (

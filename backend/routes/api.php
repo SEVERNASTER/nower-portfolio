@@ -10,6 +10,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AchievementController;
 
 // PUBLIC route. Anyone can see it.
 Route::get('/health', function () {
@@ -46,6 +47,11 @@ Route::middleware([ClerkAuth::class])->group(function () {
 
     // Experience CRUD (laboral + legado; el frontend laboral usa type work)
     Route::apiResource('experience', ExperienceController::class)->only([
+        'index', 'store', 'show', 'update', 'destroy',
+    ]);
+
+    // Achievements CRUD
+    Route::apiResource('achievements', AchievementController::class)->only([
         'index', 'store', 'show', 'update', 'destroy',
     ]);
 
