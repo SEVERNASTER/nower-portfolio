@@ -197,18 +197,18 @@ export const AchievementsList: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-6xl mx-auto h-full flex flex-col min-h-0 p-6 animate-fade-in">
+    <div className="w-full space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-            <Award className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#17262C] p-6 rounded-2xl border border-slate-200 dark:border-slate-800/60 shadow-sm mb-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-[#10221C] text-emerald-600 dark:text-emerald-400 shadow-inner">
+            <Award className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
               Logros y Certificaciones
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Registra tus certificaciones, diplomas y reconocimientos
             </p>
           </div>
@@ -216,7 +216,7 @@ export const AchievementsList: React.FC = () => {
 
         <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto justify-center"
         >
           <Plus className="h-4 w-4" />
           Añadir Logro
@@ -302,7 +302,7 @@ export const AchievementsList: React.FC = () => {
       )}
 
       {/* Achievements Grid */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <>
         {shouldShowEmptyState ? (
           <div className="flex h-full flex-col items-center justify-center text-center py-12">
             <Award className="h-16 w-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
@@ -312,16 +312,10 @@ export const AchievementsList: React.FC = () => {
             <p className="text-slate-600 dark:text-slate-400 mb-6">
               Comienza añadiendo tu primera certificación o reconocimiento
             </p>
-            <Button onClick={() => setIsAdding(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Añadir Primer Logro
-            </Button>
           </div>
         ) : (
-            <div className="flex-1 min-h-0 overflow-hidden">
-              <div className="h-full overflow-y-auto pr-2 pb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-6">
-          {achievements.map((achievement) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {achievements.map((achievement) => {
             const preview = getAchievementPreview(achievement);
             const totalFiles = achievement.files?.length ?? (achievement.file_url ? 1 : 0);
             return (
@@ -409,11 +403,9 @@ export const AchievementsList: React.FC = () => {
               </div>
             );
           })}
-                </div>
-              </div>
-            </div>
+          </div>
         )}
-      </div>
+      </>
     </div>
   );
 };

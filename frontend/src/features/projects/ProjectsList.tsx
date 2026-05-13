@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft, Folder } from "lucide-react";
 import { useAuth } from "@clerk/clerk-react"; // 1. Importar el hook de Clerk
 import { Button } from "../../components/ui/Button";
 import type { Project, Skill } from "../../data/mockData";
@@ -320,15 +320,26 @@ export const ProjectsList: React.FC = () => {
   // SI NO ESTÁ AÑADIENDO: Muestra la lista
   return (
     <div className="w-full space-y-6">
-      <div className="mb-8 flex justify-between items-end">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Proyectos
-        </h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-[#17262C] p-6 rounded-2xl border border-slate-200 dark:border-slate-800/60 shadow-sm mb-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 dark:bg-[#10221C] text-emerald-600 dark:text-emerald-400 shadow-inner">
+            <Folder className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Proyectos
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Evidencia tu experiencia practica
+            </p>
+          </div>
+        </div>
+
         <Button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto justify-center"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4 w-4" />
           Añadir Proyecto
         </Button>
       </div>
@@ -344,21 +355,18 @@ export const ProjectsList: React.FC = () => {
             Sincronizando tus proyectos...
           </p>
         </div>
+      ) : projects.length === 0 ? (
+        <div className="flex h-full flex-col items-center justify-center text-center py-12">
+          <Folder className="h-16 w-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+            No tienes proyectos registrados
+          </h3>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            Comienza añadiendo tu proyecto para evidenciar tu experiencia
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
-            onClick={() => setIsAdding(true)}
-            className="group cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 
-                 bg-transparent hover:border-emerald-500 hover:bg-emerald-500/5 
-                 transition-all duration-300 flex flex-col items-center justify-center 
-                 h-56"
-          >
-            <Plus className="h-10 w-10 text-slate-400 group-hover:text-emerald-500 transition" />
-            <p className="mt-4 text-slate-500 group-hover:text-emerald-500 font-medium transition">
-              Añadir Proyecto
-            </p>
-          </div>
-
           {projects.map((project: Project) => (
             <ProjectCard
               key={project.id}
