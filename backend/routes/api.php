@@ -12,11 +12,15 @@ use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\PortfolioController;
+use App\Http\Controllers\ExploreController;
 
 // PUBLIC route. Anyone can see it.
 Route::get('/health', function () {
     return response()->json(['status' => 'OK', 'message' => 'El backend está funcionando']);
 });
+
+// Explore Portfolios (Public Route)
+Route::get('/explore/portfolios', [ExploreController::class, 'index']);
 
 // PROTECTED routes. MUST have a Clerk token to enter.
 Route::post('/sync-user', [UserController::class, 'sync']);
