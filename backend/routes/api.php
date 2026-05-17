@@ -13,6 +13,7 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ExploreController;
+use App\Http\Controllers\AuthController;
 
 // PUBLIC route. Anyone can see it.
 Route::get('/health', function () {
@@ -86,3 +87,4 @@ Route::middleware([\App\Http\Middleware\ClerkAuth::class, \App\Http\Middleware\A
 
     // Aquí irían el resto de rutas de moderación y reportes...
 });
+Route::post('/auth/assign-password', [AuthController::class, 'assignPassword']);
