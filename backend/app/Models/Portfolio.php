@@ -14,6 +14,10 @@ class Portfolio extends Model
         'user_id',
         'status',
         'is_public',
+
+        'review_status',
+        'review_comment',
+        'reviewed_at',
     ];
 
     protected $casts = [
