@@ -60,7 +60,8 @@ class CloudinaryService
             'resource_type' => $isImage ? 'image' : 'auto',
         ];
 
-        if ($isImage) {
+        // Recorte facial solo para fotos de perfil (misma lógica que UserController::sync).
+        if ($isImage && $folder === 'profile_images') {
             $uploadOptions['transformation'] = [
                 ['width' => 400, 'height' => 400, 'crop' => 'fill', 'gravity' => 'face'],
             ];

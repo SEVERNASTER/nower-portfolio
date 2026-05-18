@@ -212,15 +212,12 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
       if (description.trim()) {
         formData.append('description', description.trim());
       }
-      selectedFiles.forEach((file) => {
-        formData.append('evidence[]', file.file);
+      selectedFiles.forEach((file, index) => {
+        formData.append(`evidence[${index}]`, file.file);
       });
       removedFileIds.forEach((id) => {
         formData.append('remove_file_ids[]', id);
       });
-      if (achievementId) {
-        formData.append('_method', 'PUT');
-      }
 
       await onSubmit(formData);
     } finally {

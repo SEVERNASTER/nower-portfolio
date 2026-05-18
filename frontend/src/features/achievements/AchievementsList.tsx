@@ -3,22 +3,13 @@ import { Plus, Award, FileText, Edit3, Trash2 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { Button } from '../../components/ui/Button';
 import { AchievementForm, AchievementFile } from './components/AchievementForm';
-
-interface Achievement {
-  id: string;
-  title: string;
-  institution: string;
-  obtained_at: string;
-  description?: string;
-  file_url?: string;
-  file_public_id?: string;
-  files?: AchievementFile[];
-  created_at: string;
-  user: {
-    id: number;
-    full_name: string;
-  };
-}
+import {
+  Achievement,
+  createAchievement,
+  deleteAchievement,
+  fetchAchievements,
+  updateAchievement,
+} from './achievementsService';
 
 export const AchievementsList: React.FC = () => {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -40,22 +31,7 @@ export const AchievementsList: React.FC = () => {
   const loadAchievements = async () => {
     try {
       const token = await getToken();
-      const res = await fetch('http://localhost:8000/api/achievements', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.status === 401) {
-        window.location.href = '/login';
-        return;
-      }
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.message ?? 'Error cargando logros');
-      }
-
+      const data = await fetchAchievements(token);
       setAchievements(data);
     } catch (error) {
       console.error('Error loading achievements:', error);
@@ -93,26 +69,13 @@ export const AchievementsList: React.FC = () => {
   const handleCreateAchievement = async (formData: FormData) => {
     try {
       const token = await getToken();
-      const response = await fetch('http://localhost:8000/api/achievements', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAchievements([data.achievement, ...achievements]);
-        setIsAdding(false);
-      } else {
-        const errorData = await response.json();
-        console.error('Error del backend:', errorData);
-        alert(`Error al guardar: ${errorData.message || JSON.stringify(errorData.errors)}`);
-      }
+      const data = await createAchievement(token, formData);
+      setAchievements([data.achievement, ...achievements]);
+      setIsAdding(false);
     } catch (error) {
       console.error('Error creando logro:', error);
-      alert('Error al crear el logro');
+      const message = error instanceof Error ? error.message : 'Error al crear el logro';
+      alert(message);
     }
   };
 
@@ -123,24 +86,13 @@ export const AchievementsList: React.FC = () => {
   const handleDeleteAchievement = async (id: string) => {
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:8000/api/achievements/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        setAchievements((prev) => prev.filter((achievement) => achievement.id !== id));
-        setDeletingAchievement(null);
-      } else {
-        const errorData = await response.json();
-        console.error('Error eliminando logro:', errorData);
-        alert(`Error al eliminar: ${errorData.message || 'No se pudo eliminar el logro'}`);
-      }
+      await deleteAchievement(token, id);
+      setAchievements((prev) => prev.filter((achievement) => achievement.id !== id));
+      setDeletingAchievement(null);
     } catch (error) {
       console.error('Error eliminando logro:', error);
-      alert('Error al eliminar el logro');
+      const message = error instanceof Error ? error.message : 'Error al eliminar el logro';
+      alert(message);
     }
   };
 
@@ -157,26 +109,13 @@ export const AchievementsList: React.FC = () => {
 
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:8000/api/achievements/${editingAchievement.id}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setAchievements((prev) => prev.map((item) => item.id === data.achievement.id ? data.achievement : item));
-        setEditingAchievement(null);
-      } else {
-        const errorData = await response.json();
-        console.error('Error actualizando logro:', errorData);
-        alert(`Error al actualizar: ${errorData.message || JSON.stringify(errorData.errors)}`);
-      }
+      const data = await updateAchievement(token, editingAchievement.id, formData);
+      setAchievements((prev) => prev.map((item) => item.id === data.achievement.id ? data.achievement : item));
+      setEditingAchievement(null);
     } catch (error) {
       console.error('Error actualizando logro:', error);
-      alert('Error al actualizar el logro');
+      const message = error instanceof Error ? error.message : 'Error al actualizar el logro';
+      alert(message);
     }
   };
 
