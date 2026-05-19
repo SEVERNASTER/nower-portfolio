@@ -58,7 +58,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  const maxSize = 2 * 1024 * 1024; // 2MB — mismo límite que foto de perfil
 
   useEffect(() => {
     setExistingFiles(initialFiles);
@@ -132,7 +132,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         return;
       }
       if (file.size > maxSize) {
-        errors.push(`El archivo ${file.name} excede el tamaño máximo de 5 MB.`);
+        errors.push(`El archivo ${file.name} excede el tamaño máximo de 2 MB.`);
         return;
       }
 
@@ -212,8 +212,8 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
       if (description.trim()) {
         formData.append('description', description.trim());
       }
-      selectedFiles.forEach((file, index) => {
-        formData.append(`evidence[${index}]`, file.file);
+      selectedFiles.forEach((fileEntry) => {
+        formData.append('evidence[]', fileEntry.file);
       });
       removedFileIds.forEach((id) => {
         formData.append('remove_file_ids[]', id);
@@ -328,7 +328,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
             </div>
             <span className="mt-4 text-sm font-semibold">Agregar más evidencia</span>
             <span className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-              JPG, PNG, PDF • Máx 5 MB por archivo
+              JPG, PNG, PDF • Máx 2 MB por archivo
             </span>
           </button>
 

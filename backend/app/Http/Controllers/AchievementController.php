@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Achievement;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class AchievementController extends Controller
 {
@@ -46,14 +49,7 @@ class AchievementController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:150',
-            'institution' => 'required|string|max:150',
-            'obtained_at' => 'required|date',
-            'description' => 'nullable|string|max:1000',
-            'evidence' => 'nullable|array',
-            'evidence.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
+        $validated = $this->validateAchievementFields($request, requireEvidence: true);
 
         $clerkId = $request->attributes->get('clerk_user_id');
         $user = \App\Models\User::where('clerk_id', $clerkId)->first();
@@ -126,16 +122,7 @@ class AchievementController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:150',
-            'institution' => 'required|string|max:150',
-            'obtained_at' => 'required|date',
-            'description' => 'nullable|string|max:1000',
-            'evidence' => 'nullable|array',
-            'evidence.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'remove_file_ids' => 'nullable|array',
-            'remove_file_ids.*' => 'integer|exists:achievement_files,id',
-        ]);
+        $validated = $this->validateAchievementFields($request);
 
         $achievement = Achievement::with('files')->find($id);
         if (! $achievement) {
@@ -245,18 +232,105 @@ class AchievementController extends Controller
     }
 
     /**
+     * Valida campos de texto y archivos de evidencia (mismo límite 2 MB que foto de perfil).
+     */
+    private function validateAchievementFields(Request $request, bool $requireEvidence = false): array
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:150',
+            'institution' => 'required|string|max:150',
+            'obtained_at' => 'required|date',
+            'description' => 'nullable|string|max:1000',
+            'remove_file_ids' => 'nullable|array',
+            'remove_file_ids.*' => 'integer|exists:achievement_files,id',
+        ]);
+
+        $files = $this->normalizeEvidenceFiles($request);
+
+        if ($requireEvidence && $files === []) {
+            throw ValidationException::withMessages([
+                'evidence' => ['Debes adjuntar al menos un archivo de evidencia (JPG, PNG o PDF, máx. 2 MB).'],
+            ]);
+        }
+
+        if ($files === []) {
+            return $validated;
+        }
+
+        $rules = [];
+        foreach (array_keys($files) as $index) {
+            $rules["evidence.$index"] = 'required|file|mimes:jpeg,jpg,png,pdf|max:2048';
+        }
+
+        $fileValidator = Validator::make(
+            ['evidence' => $files],
+            ['evidence' => 'array', ...$rules],
+            [
+                'evidence.*.file' => 'No se pudo recibir el archivo. Usa JPG, PNG o PDF de máximo 2 MB.',
+                'evidence.*.mimes' => 'Solo se permiten archivos JPG, PNG o PDF.',
+                'evidence.*.max' => 'Cada archivo no puede exceder 2 MB (mismo límite que la foto de perfil).',
+            ]
+        );
+
+        if ($fileValidator->fails()) {
+            throw new ValidationException($fileValidator);
+        }
+
+        return $validated;
+    }
+
+    /**
+     * @return array<int, UploadedFile>
+     */
+    private function normalizeEvidenceFiles(Request $request): array
+    {
+        if (! $request->hasFile('evidence')) {
+            return [];
+        }
+
+        $files = $request->file('evidence');
+
+        if ($files instanceof UploadedFile) {
+            $files = [$files];
+        }
+
+        $normalized = [];
+        foreach ($files as $index => $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            if (! $file->isValid()) {
+                throw ValidationException::withMessages([
+                    "evidence.$index" => [$this->uploadErrorMessage($file->getError())],
+                ]);
+            }
+
+            $normalized[$index] = $file;
+        }
+
+        return $normalized;
+    }
+
+    private function uploadErrorMessage(int $errorCode): string
+    {
+        return match ($errorCode) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE =>
+                'El archivo supera el límite del servidor PHP (upload_max_filesize). Usa archivos de máximo 2 MB.',
+            UPLOAD_ERR_PARTIAL => 'La subida se interrumpió. Intenta de nuevo.',
+            UPLOAD_ERR_NO_FILE => 'No se recibió el archivo. Vuelve a seleccionarlo.',
+            default => 'No se pudo subir el archivo. Prueba con JPG, PNG o PDF de máximo 2 MB.',
+        };
+    }
+
+    /**
      * Sube archivos de evidencia a Cloudinary (mismo servicio y credenciales que el perfil).
      */
     private function uploadEvidenceFiles(Request $request, Achievement $achievement, $user): void
     {
-        if (! $request->hasFile('evidence')) {
-            return;
-        }
+        $files = $this->normalizeEvidenceFiles($request);
 
-        foreach ($request->file('evidence') as $index => $file) {
-            if (! $file || ! $file->isValid()) {
-                continue;
-            }
+        foreach ($files as $index => $file) {
 
             $publicId = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '_', $user->full_name ?? 'USER'))
                 . '_ACH_' . $user->id . '_' . time() . '_' . $index;
