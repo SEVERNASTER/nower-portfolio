@@ -11,11 +11,18 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AchievementController;
+use App\Http\Controllers\PortfolioController;
+use App\Http\Controllers\ExploreController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminPortfolioReviewController;
 
 // PUBLIC route. Anyone can see it.
 Route::get('/health', function () {
     return response()->json(['status' => 'OK', 'message' => 'El backend está funcionando']);
 });
+
+// Explore Portfolios (Public Route)
+Route::get('/explore/portfolios', [ExploreController::class, 'index']);
 
 // PROTECTED routes. MUST have a Clerk token to enter.
 Route::post('/sync-user', [UserController::class, 'sync']);
@@ -59,6 +66,11 @@ Route::middleware([ClerkAuth::class])->group(function () {
     Route::post('education', [ExperienceController::class, 'educationStore']);
     Route::put('education/{id}', [ExperienceController::class, 'educationUpdate']);
     Route::delete('education/{id}', [ExperienceController::class, 'educationDestroy']);
+
+    // Portfolio Publish/Unpublish
+    Route::get('/portfolio/status', [PortfolioController::class, 'status']);
+    Route::post('/portfolio/publish', [PortfolioController::class, 'publish']);
+    Route::post('/portfolio/unpublish', [PortfolioController::class, 'unpublish']);
 });
 
 // ADMIN routes. MUST have Clerk token AND Admin role to enter.
@@ -75,4 +87,10 @@ Route::middleware([\App\Http\Middleware\ClerkAuth::class, \App\Http\Middleware\A
     });
 
     // Aquí irían el resto de rutas de moderación y reportes...
+
+    Route::post('/auth/assign-password', [AuthController::class, 'assignPassword']);
+    Route::post(
+        '/admin/portfolio/review',
+        [AdminPortfolioReviewController::class, 'review']
+    );
 });

@@ -28,6 +28,8 @@ class User extends Authenticatable
         'imagen_profile',
         'phone',
         'city',
+        'password',
+        'must_change_password',
     ];
 
     /**
@@ -36,6 +38,7 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
+        'password',
         'remember_token',
     ];
 
