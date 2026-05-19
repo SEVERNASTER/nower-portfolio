@@ -277,6 +277,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         <input
           type="date"
           value={obtainedAt}
+          max="9999-12-31"
           onChange={(e) => setObtainedAt(e.target.value)}
           className={`w-full p-2.5 rounded-xl border ${errors.obtainedAt ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
         />
