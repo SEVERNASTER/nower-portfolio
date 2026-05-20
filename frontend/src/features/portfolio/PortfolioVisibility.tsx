@@ -6,7 +6,6 @@ import React, {
 
 import {
   CheckCircle2,
-  Eye,
   Globe,
   LayoutTemplate,
   PauseCircle,
@@ -23,7 +22,6 @@ import {
   PortfolioStatus,
   PortfolioTemplateKey,
   publishPortfolio,
-  savePortfolioDraft,
   unpublishPortfolio,
 } from './portfolioService';
 import { renderPortfolioTemplate } from './templates/PortfolioTemplates';
@@ -105,25 +103,6 @@ export const PortfolioVisibility: React.FC = () => {
     }
   };
 
-  const handleSaveDraft = async () => {
-    setActionLoading(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      const token = await getToken();
-      if (!token) return;
-
-      const updated = await savePortfolioDraft(token, selectedTemplate);
-      setStatus(updated);
-      setMessage('Borrador guardado correctamente.');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error guardando borrador');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handlePublish = async () => {
     setActionLoading(true);
     setError(null);
@@ -135,7 +114,6 @@ export const PortfolioVisibility: React.FC = () => {
 
       const result = await publishPortfolio(token, selectedTemplate);
       setStatus(result.data);
-      setMessage(result.message || 'Tu portafolio fue enviado a revisión de administradores.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error enviando portafolio a revisión');
     } finally {
@@ -199,10 +177,10 @@ export const PortfolioVisibility: React.FC = () => {
     }
 
     return (
-      <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-        <PauseCircle className="h-4 w-4" />
-        Borrador
-      </span>
+        <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <PauseCircle className="h-4 w-4" />
+            No publicado
+        </span>
     );
   };
 
@@ -229,7 +207,7 @@ export const PortfolioVisibility: React.FC = () => {
               </h2>
 
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Selecciona una plantilla, previsualiza tu portafolio y envíalo a revisión antes de publicarlo.
+                Selecciona una plantilla, previsualiza tu portafolio y publícalo cuando estés conforme.
               </p>
 
               <div className="mt-4">
@@ -263,12 +241,6 @@ export const PortfolioVisibility: React.FC = () => {
             >
               {publicUrl}
             </a>
-          </div>
-        )}
-
-        {status?.status === 'pending_review' && (
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
-            Tu portafolio fue enviado a revisión. Cuando un administrador lo apruebe, será visible públicamente.
           </div>
         )}
 
@@ -333,36 +305,33 @@ export const PortfolioVisibility: React.FC = () => {
         </div>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/60 dark:bg-[#17262C] sm:flex-row sm:justify-end">
-        <Button
-          variant="secondary"
-          icon={Eye}
-          onClick={() => setIsPreviewOpen(true)}
-        >
-          Previsualizar
-        </Button>
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/60 dark:bg-[#17262C]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 lg:max-w-2xl">
+            Antes de ser publicado y visible para visitantes y reclutadores, tu portafolio será revisado por los administradores para su aprobación o rechazo.
+            </p>
 
-        <Button
-          variant="secondary"
-          onClick={handleSaveDraft}
-          disabled={actionLoading}
-        >
-          Guardar borrador
-        </Button>
-
-        <Button
-          icon={Send}
-          onClick={handlePublish}
-          disabled={actionLoading || status?.status === 'pending_review'}
-        >
-          Enviar a revisión
-        </Button>
+            <div className="w-full lg:w-auto">
+                <Button
+                    icon={Send}
+                    onClick={handlePublish}
+                    disabled={
+                    actionLoading ||
+                    status?.status === 'pending_review' ||
+                    status?.status === 'published'
+                    }
+                    className="w-full justify-center px-10 py-3 text-base font-semibold lg:min-w-[300px]"
+                >
+                    {actionLoading ? 'Publicando...' : 'Publicar portafolio'}
+                </Button>
+            </div>
+        </div>
       </section>
-
+        
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/60 dark:bg-[#17262C]">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-            Vista rápida
+            Previsualizacion de tu portafolio 
           </h3>
         </div>
 

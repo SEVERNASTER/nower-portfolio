@@ -9,6 +9,10 @@ use Illuminate\Support\Str;
 
 class PortfolioService
 {
+    public const STATUS_UNPUBLISHED = 'unpublished';
+    public const STATUS_PENDING_REVIEW = 'pending_review';
+    public const STATUS_PUBLISHED = 'published';
+
     public const TEMPLATE_CLASSIC = 'classic';
     public const TEMPLATE_MODERN = 'modern';
     public const TEMPLATE_CREATIVE = 'creative';
@@ -30,34 +34,15 @@ class PortfolioService
         return $user->portfolio()->firstOrCreate(
             ['user_id' => $user->id],
             [
-                'status' => 'draft',
+                'status' => self::STATUS_UNPUBLISHED,
                 'is_public' => false,
                 'review_status' => null,
                 'review_comment' => null,
+                'reviewed_at' => null,
                 'template_key' => self::TEMPLATE_CLASSIC,
                 'public_slug' => $this->generateUniqueSlug($user),
             ]
         );
-    }
-
-    /**
-     * guarda portafolio como borrador, para que el usr escoja plantilla
-     */
-    public function saveDraft(User $user, string $templateKey): Portfolio
-    {
-        $portfolio = $this->getPortfolioForUser($user);
-
-        $portfolio->update([
-            'status' => 'draft',
-            'is_public' => false,
-            'review_status' => null,
-            'review_comment' => null,
-            'reviewed_at' => null,
-            'template_key' => $templateKey,
-            'public_slug' => $portfolio->public_slug ?: $this->generateUniqueSlug($user),
-        ]);
-
-        return $portfolio->fresh();
     }
 
     /**
@@ -69,7 +54,7 @@ class PortfolioService
             $portfolio = $this->getPortfolioForUser($user);
 
             $portfolio->update([
-                'status' => 'pending_review',
+                'status' => self::STATUS_PENDING_REVIEW,
                 'is_public' => false,
                 'review_status' => 'pending',
                 'review_comment' => null,
@@ -86,7 +71,7 @@ class PortfolioService
     }
 
     /**
-     * despublica portafolio, vuelve a draft y deja de estar visible publicamente
+     * despublica portafolio, ya no queda publico ni pendiente de revision
      */
     public function unpublish(User $user): Portfolio
     {
@@ -94,7 +79,7 @@ class PortfolioService
             $portfolio = $this->getPortfolioForUser($user);
 
             $portfolio->update([
-                'status' => 'draft',
+                'status' => self::STATUS_UNPUBLISHED,
                 'is_public' => false,
                 'review_status' => null,
                 'review_comment' => null,

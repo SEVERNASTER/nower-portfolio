@@ -7,10 +7,7 @@ import {
   Eye,
   Menu,
 } from 'lucide-react';
-import {
-  useLocation,
-  useNavigate,
-} from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { ErrorBoundary } from '../core/ErrorBoundary';
 import type { NavItem } from '../navigation/Sidebar';
@@ -32,7 +29,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab, 
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
     const [isDark, setIsDark] = useState<boolean>(true);
     const location = useLocation();
-    const navigate = useNavigate();
     useEffect(() => {
         if (isDark) {
             document.documentElement.classList.add('dark');
@@ -75,12 +71,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab, 
                         </div>
 
                         {!location.pathname.startsWith('/admin') && (
-                            <Button
-                                    variant="secondary"
-                                    icon={Eye}
-                                    className="hidden sm:flex"
-                                    onClick={() => navigate('/portfolio/visibility')}
-                                >
+                            <Button variant="secondary" icon={Eye} className="hidden sm:flex">
                                     Preview Público
                             </Button>
                         )}

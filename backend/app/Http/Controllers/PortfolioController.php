@@ -73,42 +73,6 @@ class PortfolioController extends Controller
     }
 
     /**
-     * POST /api/portfolio/draft
-     * guarda plantilla seleccionada y mantiene el portafolio en draft
-     */
-    public function saveDraft(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'template_key' => [
-                'required',
-                Rule::in(PortfolioService::allowedTemplates()),
-            ],
-        ]);
-
-        try {
-            $user = $this->resolveUser($request);
-
-            $portfolio = $this->portfolioService->saveDraft(
-                $user,
-                $validated['template_key']
-            );
-
-            return response()->json([
-                'message' => 'Borrador guardado correctamente.',
-                'data' => $this->portfolioPayload($portfolio),
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Error saving portfolio draft: " . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Error al guardar el borrador del portafolio.'
-            ], 500);
-        }
-    }
-
-
-
-    /**
      * POST /api/portfolio/publish
      *
      * envia el portafolio a revision, no lo publica directmente
@@ -153,7 +117,7 @@ class PortfolioController extends Controller
             $portfolio = $this->portfolioService->unpublish($user);
 
             return response()->json([
-                'message' => 'Portafolio despublicado correctamente. Ahora está en borrador.',
+                'message' => 'Portafolio despublicado correctamente. Ya no está visible publicamente.',
                 'data' => $this->portfolioPayload($portfolio),
             ]);
         } catch (\Exception $e) {

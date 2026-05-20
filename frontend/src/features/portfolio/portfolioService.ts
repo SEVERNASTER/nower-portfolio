@@ -4,7 +4,7 @@ export type PortfolioTemplateKey = 'classic' | 'modern' | 'creative';
 
 export interface PortfolioStatus {
   id: number;
-  status: 'draft' | 'pending_review' | 'published';
+  status: 'unpublished' | 'pending_review' | 'published';
   is_public: boolean;
   review_status: null | 'pending' | 'approved' | 'rejected';
   review_comment?: string | null;
@@ -69,22 +69,6 @@ export async function fetchPortfolioPreview(token: string): Promise<PortfolioPre
   });
 
   return handleResponse<PortfolioPreviewResponse>(res);
-}
-
-export async function savePortfolioDraft(
-  token: string,
-  templateKey: PortfolioTemplateKey
-): Promise<PortfolioStatus> {
-  const res = await fetch(`${API_URL}/portfolio/draft`, {
-    method: 'POST',
-    headers: jsonHeaders(token),
-    body: JSON.stringify({
-      template_key: templateKey,
-    }),
-  });
-
-  const json = await handleResponse<{ message: string; data: PortfolioStatus }>(res);
-  return json.data;
 }
 
 export async function publishPortfolio(

@@ -36,7 +36,7 @@ class AdminPortfolioReviewController extends Controller
         // Si se rechaza → ocultar
         if ($request->status === 'rejected') {
 
-            $portfolio->status = 'draft';
+            $portfolio->status = 'unpublished';
 
             $portfolio->is_public = false;
         }
