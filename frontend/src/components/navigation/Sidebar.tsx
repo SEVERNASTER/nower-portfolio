@@ -1,10 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { X, Moon, Sun, LogOut, Globe, User } from 'lucide-react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
 import type { LucideIcon } from 'lucide-react';
-import { Tab } from './Tab';
-import { useUser, useClerk } from '@clerk/clerk-react';
-import { getProfile } from '../../features/profile/profileService';
+import {
+  LogOut,
+  Moon,
+  Sun,
+  User,
+  X,
+} from 'lucide-react';
+
+import {
+  useClerk,
+  useUser,
+} from '@clerk/clerk-react';
+
 import { mockProfile } from '../../data/mockData';
+import { getProfile } from '../../features/profile/profileService';
+import { Tab } from './Tab';
 
 // ==========================================
 // SIDEBAR
@@ -66,6 +81,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
 
     const userName = backendName || user?.fullName || mockProfile.fullName;
     const avatarUrl = userImage || user?.imageUrl || undefined;
+    const portfolioItems = navItems.filter((item) => item.name !== 'Visibilidad Pública');
+    const visibilityItem = navItems.find((item) => item.name === 'Visibilidad Pública');
 
     return (
         <aside className={`fixed inset-y-0 left-0 z-50 w-72 transform flex-col bg-white dark:bg-[#17262C] border-r border-slate-200 dark:border-slate-800/60 transition-transform duration-300 lg:static lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'} flex`}>
@@ -87,8 +104,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
 
             {/* Navigation Links */}
             <nav className="flex-1 space-y-1 px-4 py-6 overflow-y-auto">
-                <p className="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Gestión de Portafolio</p>
-                {navItems.map((item) => (
+                <p className="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+                    Gestión de Portafolio
+                </p>
+                {portfolioItems.map((item) => (
                     <Tab
                         key={item.name}
                         icon={item.icon}
@@ -99,9 +118,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDark, toggleTheme,
                     />
                 ))}
 
-                <div className="mt-8 mb-4 border-t border-slate-200 dark:border-slate-800/60" />
-                <p className="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">Configuración</p>
-                <Tab icon={Globe} label="Visibilidad Pública" active={false} />
+                {visibilityItem && (
+                    <>
+                        <div className="mt-8 mb-4 border-t border-slate-200 dark:border-slate-800/60" />
+
+                        <p className="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+                            Configuración
+                        </p>
+
+                        <Tab
+                            icon={visibilityItem.icon}
+                            label={visibilityItem.name}
+                            active={activeTab === visibilityItem.name}
+                            badge={visibilityItem.badge}
+                            onClick={() => setActiveTab(visibilityItem.name)}
+                        />
+                    </>
+                )}
             </nav>
 
             {/* Bottom Actions */}

@@ -1,26 +1,47 @@
-import React from "react";
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  Award,
+  BarChart,
+  Briefcase,
+  Code,
+  FolderGit2,
+  Globe,
+  PieChart,
+  User,
+  Users,
+} from 'lucide-react';
 import {
   BrowserRouter,
-  Routes,
-  Route,
   Navigate,
+  Route,
+  Routes,
   useLocation,
   useNavigate,
-} from "react-router-dom";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
-import DashboardLayout from "./components/layouts/DashboardLayout";
-import { BasicProfile } from "./features/profile/BasicProfile";
-import { ProjectsList } from "./features/projects/ProjectsList";
-import { SkillsList } from "./features/skills/SkillsList";
-import { AdminSection } from "./features/admin/AdminSection";
-import { User, FolderGit2, Code, Briefcase, BarChart, Users, PieChart, Award } from "lucide-react";
-import type { NavItem } from "./components/navigation/Sidebar";
-import { LoginPage } from "./components/pages/LoginPage";
-import { ExperienceList } from "./features/experience/ExperienceList";
-import { RegisterPage } from "./components/pages/RegisterPage";
-import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
-import { AchievementsList } from "./features/achievements/AchievementsList";
-import { useEffect, useState } from "react";
+} from 'react-router-dom';
+
+import {
+  AuthenticateWithRedirectCallback,
+  SignedIn,
+  SignedOut,
+  useUser,
+} from '@clerk/clerk-react';
+
+import DashboardLayout from './components/layouts/DashboardLayout';
+import type { NavItem } from './components/navigation/Sidebar';
+import { LoginPage } from './components/pages/LoginPage';
+import { RegisterPage } from './components/pages/RegisterPage';
+import { AchievementsList } from './features/achievements/AchievementsList';
+import { AdminSection } from './features/admin/AdminSection';
+import { ExperienceList } from './features/experience/ExperienceList';
+import { PortfolioVisibility } from './features/portfolio/PortfolioVisibility';
+import { PublicPortfolioPage } from './features/portfolio/PublicPortfolioPage';
+import { BasicProfile } from './features/profile/BasicProfile';
+import { ProjectsList } from './features/projects/ProjectsList';
+import { SkillsList } from './features/skills/SkillsList';
 
 const baseNavItems: NavItem[] = [
   { name: "Perfil Básico", icon: User, path: "/profile" },
@@ -28,6 +49,7 @@ const baseNavItems: NavItem[] = [
   { name: "Habilidades", icon: Code, path: "/skills" },
   { name: "Experiencia", icon: Briefcase, path: "/experience" },
   { name: "Logros", icon: Award, path: "/achievements" },
+  { name: "Visibilidad Pública", icon: Globe, path: "/portfolio/visibility" },
 ];
 
 const AppContent: React.FC = () => {
@@ -111,6 +133,7 @@ const AppContent: React.FC = () => {
   return (
     <Routes>
       <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
+      <Route path="/p/:slug" element={<PublicPortfolioPage />} />
       {/* PUBLIC ROUTES (Wrapped in SignedOut) */}
       <Route
         path="/login"
@@ -155,6 +178,7 @@ const AppContent: React.FC = () => {
                         <Route path="/skills" element={<SkillsList />} />
                         <Route path="/experience" element={<ExperienceList />} />
                         <Route path="/achievements" element={<AchievementsList />} />
+                        <Route path="/portfolio/visibility" element={<PortfolioVisibility />} />
                         
                         {/* RUTAS DE ADMIN DENTRO DEL DASHBOARD */}
                         {userRole === 'admin' ? (

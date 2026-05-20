@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Portfolio;
 use App\Models\User;
 use App\Services\PortfolioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class PortfolioController extends Controller
 {
@@ -26,11 +28,7 @@ class PortfolioController extends Controller
             $portfolio = $this->portfolioService->getPortfolioForUser($user);
 
             return response()->json([
-                'data' => [
-                    'id' => $portfolio->id,
-                    'status' => $portfolio->status,
-                    'is_public' => $portfolio->is_public,
-                ]
+                'data' => $this->portfolioPayload($portfolio),
             ]);
         } catch (\Exception $e) {
             Log::error("Error fetching portfolio status: " . $e->getMessage());
@@ -40,36 +38,113 @@ class PortfolioController extends Controller
         }
     }
 
-    /**
-     * POST /api/portfolio/publish
-     *
-     * Publish the authenticated user's portfolio.
+     /**
+     * GET /api/portfolio/preview
+     *develve todos los datos necesarios para armar la vista previa
      */
-    public function publish(Request $request): JsonResponse
+    public function preview(Request $request): JsonResponse
     {
         try {
             $user = $this->resolveUser($request);
-            $portfolio = $this->portfolioService->publish($user);
+
+            $user->load([
+                'socialLinks',
+                'projects.links',
+                'projects.images',
+                'skills',
+                'experiences',
+                'achievements.files',
+                'portfolio',
+            ]);
+
+            $portfolio = $this->portfolioService->getPortfolioForUser($user);
 
             return response()->json([
-                'message' => 'Portafolio publicado exitosamente.',
-                'data' => [
-                    'status' => $portfolio->status,
-                    'is_public' => $portfolio->is_public,
-                ]
+                'portfolio' => $this->portfolioPayload($portfolio),
+                'user' => $user,
             ]);
         } catch (\Exception $e) {
-            Log::error("Error publishing portfolio: " . $e->getMessage());
+            Log::error("Error fetching portfolio preview: " . $e->getMessage());
+
             return response()->json([
-                'message' => 'Error interno al publicar el portafolio.'
+                'message' => 'Error al cargar la vista previa del portafolio.'
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /api/portfolio/draft
+     * guarda plantilla seleccionada y mantiene el portafolio en draft
+     */
+    public function saveDraft(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'template_key' => [
+                'required',
+                Rule::in(PortfolioService::allowedTemplates()),
+            ],
+        ]);
+
+        try {
+            $user = $this->resolveUser($request);
+
+            $portfolio = $this->portfolioService->saveDraft(
+                $user,
+                $validated['template_key']
+            );
+
+            return response()->json([
+                'message' => 'Borrador guardado correctamente.',
+                'data' => $this->portfolioPayload($portfolio),
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error saving portfolio draft: " . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Error al guardar el borrador del portafolio.'
+            ], 500);
+        }
+    }
+
+
+
+    /**
+     * POST /api/portfolio/publish
+     *
+     * envia el portafolio a revision, no lo publica directmente
+     */
+    public function publish(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'template_key' => [
+                'required',
+                Rule::in(PortfolioService::allowedTemplates()),
+            ],
+        ]);
+
+        try {
+            $user = $this->resolveUser($request);
+
+            $portfolio = $this->portfolioService->publish(
+                $user,
+                $validated['template_key']
+            );
+
+            return response()->json([
+                'message' => 'Tu portafolio fue enviado a revisión de los administradores.',
+                'data' => $this->portfolioPayload($portfolio),
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error sending portfolio to review: " . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Error interno al enviar el portafolio a revisión.'
             ], 500);
         }
     }
 
     /**
      * POST /api/portfolio/unpublish
-     *
-     * Unpublish the authenticated user's portfolio.
      */
     public function unpublish(Request $request): JsonResponse
     {
@@ -78,11 +153,8 @@ class PortfolioController extends Controller
             $portfolio = $this->portfolioService->unpublish($user);
 
             return response()->json([
-                'message' => 'Portafolio despublicado exitosamente.',
-                'data' => [
-                    'status' => $portfolio->status,
-                    'is_public' => $portfolio->is_public,
-                ]
+                'message' => 'Portafolio despublicado correctamente. Ahora está en borrador.',
+                'data' => $this->portfolioPayload($portfolio),
             ]);
         } catch (\Exception $e) {
             Log::error("Error unpublishing portfolio: " . $e->getMessage());
@@ -90,6 +162,47 @@ class PortfolioController extends Controller
                 'message' => 'Error interno al despublicar el portafolio.'
             ], 500);
         }
+    }
+
+     /**
+     * GET /api/public/portfolios/{slug}
+     *ruta para que visitantes vean el portafolio aprobado
+     */
+    public function showPublic(string $slug): JsonResponse
+    {
+        $portfolio = Portfolio::query()
+            ->with([
+                'user.socialLinks',
+                'user.projects.links',
+                'user.projects.images',
+                'user.skills',
+                'user.experiences',
+                'user.achievements.files',
+            ])
+            ->where('public_slug', $slug)
+            ->where('status', 'published')
+            ->where('is_public', true)
+            ->firstOrFail();
+
+        return response()->json([
+            'portfolio' => $this->portfolioPayload($portfolio),
+            'user' => $portfolio->user,
+        ]);
+    }
+
+    private function portfolioPayload(Portfolio $portfolio): array
+    {
+        return [
+            'id' => $portfolio->id,
+            'status' => $portfolio->status,
+            'is_public' => $portfolio->is_public,
+            'review_status' => $portfolio->review_status,
+            'review_comment' => $portfolio->review_comment,
+            'reviewed_at' => $portfolio->reviewed_at,
+            'template_key' => $portfolio->template_key ?? PortfolioService::TEMPLATE_CLASSIC,
+            'public_slug' => $portfolio->public_slug,
+            'public_url' => $portfolio->public_slug ? '/p/' . $portfolio->public_slug : null,
+        ];
     }
 
     /**
