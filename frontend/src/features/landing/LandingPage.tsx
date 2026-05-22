@@ -172,14 +172,15 @@ export const LandingPage: React.FC = () => {
 
   // Search input & Suggestions (Navbar)
   const [searchInput, setSearchInput] = useState('');
-  const [suggestions, setSuggestions] = useState<Array<{ label: string; type: 'role' | 'tech' }>>([]);
+  const [suggestions, setSuggestions] = useState<Array<{ label: string; type: 'role' | 'tech' | 'name' }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
 
-  // Filter States
+  // Sidebar filters
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedNames, setSelectedNames] = useState<string[]>([]);
   const [minExperience, setMinExperience] = useState<number>(0);
   const [minProjects, setMinProjects] = useState<number>(0);
 
@@ -229,36 +230,37 @@ export const LandingPage: React.FC = () => {
   }, [portfolios]);
 
   const availableRoles = useMemo(() => {
-    const defaults = [
-      'Frontend Developer',
-      'Backend Developer',
-      'Fullstack Developer',
-      'Mobile Developer',
-      'UI/UX Designer',
-      'DevOps Engineer',
-      'Data Scientist',
-      'QA Engineer'
-    ];
-    const rolesSet = new Set<string>(defaults);
-    portfolios.forEach((p) => {
-      if (p.user?.profession) {
-        const trimmed = p.user.profession.trim();
-        if (trimmed) rolesSet.add(trimmed);
-      }
-    });
-    return Array.from(rolesSet).sort((a, b) => a.localeCompare(b));
-  }, [portfolios]);
+    return [
+      'Frontend Developer', 'Backend Developer', 'Fullstack Developer',
+      'Mobile Developer', 'UI/UX Designer', 'DevOps Engineer',
+      'Data Scientist', 'QA Engineer'
+    ].sort((a, b) => a.localeCompare(b));
+  }, []);
 
   const availableSkills = useMemo(() => {
-    const defaults = [
+    return [
       'React', 'Vue.js', 'Angular', 'Next.js', 'HTML5', 'CSS3', 'Tailwind CSS',
       'TypeScript', 'JavaScript', 'Node.js', 'Express', 'NestJS', 'Python',
       'Django', 'FastAPI', 'PHP', 'Laravel', 'Go', 'Java', 'Spring Boot',
       'Ruby on Rails', 'React Native', 'Flutter', 'PostgreSQL', 'MongoDB',
       'MySQL', 'Docker', 'AWS', 'Firebase', 'Git'
-    ];
-    const skillsSet = new Set<string>(defaults);
+    ].sort((a, b) => a.localeCompare(b));
+  }, []);
+
+  const availableSuggestions = useMemo(() => {
+    const rolesSet = new Set<string>(availableRoles);
+    const skillsSet = new Set<string>(availableSkills);
+    const namesSet = new Set<string>();
+
     portfolios.forEach((p) => {
+      // Usar full_name que es el que viene de la API para portfolios
+      if (p.user?.full_name) {
+        namesSet.add(p.user.full_name.trim());
+      }
+      if (p.user?.profession) {
+        const trimmed = p.user.profession.trim();
+        if (trimmed) rolesSet.add(trimmed);
+      }
       if (p.user?.skills) {
         p.user.skills.forEach((s) => {
           if (s.name) {
@@ -268,15 +270,13 @@ export const LandingPage: React.FC = () => {
         });
       }
     });
-    return Array.from(skillsSet).sort((a, b) => a.localeCompare(b));
-  }, [portfolios]);
 
-  const availableSuggestions = useMemo(() => {
     return [
-      ...availableRoles.map((r) => ({ label: r, type: 'role' as const })),
-      ...availableSkills.map((s) => ({ label: s, type: 'tech' as const })),
-    ];
-  }, [availableRoles, availableSkills]);
+      ...Array.from(rolesSet).map((r) => ({ label: r, type: 'role' as const })),
+      ...Array.from(skillsSet).map((s) => ({ label: s, type: 'tech' as const })),
+      ...Array.from(namesSet).map((n) => ({ label: n, type: 'name' as const })),
+    ].sort((a, b) => a.label.localeCompare(b.label));
+  }, [portfolios, availableRoles, availableSkills]);
 
   // ─── Autocomplete Suggestions Logic ─────────────────────────────────────────
 
@@ -309,6 +309,8 @@ export const LandingPage: React.FC = () => {
     if (s.type === 'tech') {
       setSelectedSkills((prev) => (prev.includes(s.label) ? prev : [...prev, s.label]));
       setActiveTab('skills');
+    } else if (s.type === 'name') {
+      setSelectedNames((prev) => (prev.includes(s.label) ? prev : [...prev, s.label]));
     } else {
       setSelectedRoles((prev) => (prev.includes(s.label) ? prev : [...prev, s.label]));
       setActiveTab('roles');
@@ -343,15 +345,17 @@ export const LandingPage: React.FC = () => {
     setSelectedCity('');
     setSelectedRoles([]);
     setSelectedSkills([]);
+    setSelectedNames([]);
     setMinExperience(0);
     setMinProjects(0);
   };
 
-  const removeChip = (type: 'search' | 'city' | 'role' | 'skill' | 'experience' | 'projects', val: string) => {
+  const removeChip = (type: 'search' | 'city' | 'role' | 'skill' | 'experience' | 'projects' | 'name', val: string) => {
     if (type === 'search') setSearchInput('');
     if (type === 'city') setSelectedCity('');
     if (type === 'role') setSelectedRoles((prev) => prev.filter((r) => r !== val));
     if (type === 'skill') setSelectedSkills((prev) => prev.filter((s) => s !== val));
+    if (type === 'name') setSelectedNames((prev) => prev.filter((n) => n !== val));
     if (type === 'experience') setMinExperience(0);
     if (type === 'projects') setMinProjects(0);
   };
@@ -392,6 +396,13 @@ export const LandingPage: React.FC = () => {
         }
       }
 
+      // Names Checkboxes (OR logic)
+      if (selectedNames.length > 0) {
+        if (!user.full_name || !selectedNames.includes(user.full_name.trim())) {
+          return false;
+        }
+      }
+
       // 3. Roles Checkboxes (OR logic)
       if (selectedRoles.length > 0) {
         if (!user.profession || !selectedRoles.includes(user.profession)) {
@@ -420,7 +431,7 @@ export const LandingPage: React.FC = () => {
 
       return true;
     });
-  }, [portfolios, searchInput, selectedCity, selectedRoles, selectedSkills, minExperience, minProjects]);
+  }, [portfolios, searchInput, selectedCity, selectedRoles, selectedSkills, selectedNames, minExperience, minProjects]);
 
   const activeTabCounts = useMemo(() => {
     return {
@@ -433,14 +444,15 @@ export const LandingPage: React.FC = () => {
   }, [selectedCity, selectedRoles, selectedSkills, minExperience, minProjects]);
 
   const activeChips = useMemo(() => {
-    const chips: Array<{ type: 'search' | 'city' | 'role' | 'skill' | 'experience' | 'projects'; label: string }> = [];
+    const chips: Array<{ type: 'search' | 'city' | 'role' | 'skill' | 'experience' | 'projects' | 'name'; label: string }> = [];
     if (selectedCity) chips.push({ type: 'city', label: selectedCity });
     selectedRoles.forEach((r) => chips.push({ type: 'role', label: r }));
     selectedSkills.forEach((s) => chips.push({ type: 'skill', label: s }));
+    selectedNames.forEach((n) => chips.push({ type: 'name', label: n }));
     if (minExperience > 0) chips.push({ type: 'experience', label: `>= ${minExperience} años exp` });
     if (minProjects > 0) chips.push({ type: 'projects', label: `>= ${minProjects} proyectos` });
     return chips;
-  }, [selectedCity, selectedRoles, selectedSkills, minExperience, minProjects]);
+  }, [selectedCity, selectedRoles, selectedSkills, selectedNames, minExperience, minProjects]);
 
   const hasActiveFilters = activeChips.length > 0 || searchInput.trim().length > 0;
 
@@ -560,26 +572,23 @@ export const LandingPage: React.FC = () => {
 
             {/* Floating Autocomplete Suggestions */}
             {showSuggestions && (
-              <div className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-[#12232e] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200">
+              <div className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white dark:bg-[#12232e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200">
                 {suggestions.map((s, idx) => (
                   <button
                     key={s.label}
                     onClick={() => handleSuggestionSelect(s)}
-                    className={`w-full px-4 py-3 flex items-center gap-3 border-none bg-transparent hover:bg-[#162a37] text-left cursor-pointer transition-colors ${
-                      idx === activeSuggestionIndex ? 'bg-[#162a37]' : ''
+                    className={`w-full px-4 py-3 flex items-center gap-3 border-none bg-transparent hover:bg-slate-50 dark:hover:bg-[#162a37] text-left cursor-pointer transition-colors ${
+                      idx === activeSuggestionIndex ? 'bg-slate-50 dark:bg-[#162a37]' : ''
                     }`}
                   >
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                      s.type === 'role' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                    <span className={`inline-flex items-center justify-center min-w-[50px] px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      s.type === 'role' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' : s.type === 'name' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
                     }`}>
-                      {s.type === 'role' ? 'Cargo' : 'Tech'}
+                      {s.type === 'role' ? 'Cargo' : s.type === 'name' ? 'User' : 'Tech'}
                     </span>
-                    <span className="text-xs font-semibold text-slate-200">{s.label}</span>
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{s.label}</span>
                   </button>
                 ))}
-                <div className="px-4 py-2 bg-[#0d1c25] border-t border-slate-800 text-[9px] font-semibold text-slate-450">
-                  ↵ agregar · ↑↓ navegar · Esc cerrar
-                </div>
               </div>
             )}
           </div>
@@ -1070,18 +1079,21 @@ export const LandingPage: React.FC = () => {
                       onClick={() => removeChip(c.type, c.label)}
                       className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
                         c.type === 'skill'
-                          ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-300 hover:bg-emerald-500/10'
+                          ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/10'
                           : c.type === 'role'
-                          ? 'border-purple-500/20 bg-purple-500/5 text-purple-300 hover:bg-purple-500/10'
+                          ? 'border-purple-500/20 bg-purple-500/5 text-purple-600 dark:text-purple-300 hover:bg-purple-500/10'
+                          : c.type === 'name'
+                          ? 'border-indigo-500/20 bg-indigo-500/5 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-500/10'
                           : c.type === 'city'
-                          ? 'border-blue-500/20 bg-blue-500/5 text-blue-300 hover:bg-blue-500/10'
+                          ? 'border-blue-500/20 bg-blue-500/5 text-blue-600 dark:text-blue-300 hover:bg-blue-500/10'
                           : c.type === 'experience'
-                          ? 'border-amber-500/20 bg-amber-500/5 text-amber-300 hover:bg-amber-500/10'
-                          : 'border-rose-500/20 bg-rose-500/5 text-rose-300 hover:bg-rose-500/10'
+                          ? 'border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-300 hover:bg-amber-500/10'
+                          : 'border-rose-500/20 bg-rose-500/5 text-rose-600 dark:text-rose-300 hover:bg-rose-500/10'
                       }`}
                     >
                       {c.type === 'skill' && <Code2 className="h-3.5 w-3.5" />}
                       {c.type === 'role' && <Briefcase className="h-3.5 w-3.5" />}
+                      {c.type === 'name' && <User className="h-3.5 w-3.5" />}
                       {c.type === 'city' && <MapPin className="h-3.5 w-3.5" />}
                       {c.type === 'experience' && <CalendarRange className="h-3.5 w-3.5" />}
                       {c.type === 'projects' && <Layers className="h-3.5 w-3.5" />}
