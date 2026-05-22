@@ -245,10 +245,28 @@ export const PortfolioVisibility: React.FC = () => {
           </div>
         )}
 
-        {status?.review_status === 'rejected' && status.review_comment && (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
-            <p className="font-semibold">Observación del administrador:</p>
-            <p className="mt-1">{status.review_comment}</p>
+        {status?.review_status === 'rejected' && (
+          <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50/50 p-5 shadow-sm dark:border-rose-900/30 dark:bg-rose-950/20">
+            <div className="flex gap-4">
+              <div className="flex shrink-0 h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400">
+                <XCircle className="h-6 w-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-rose-800 dark:text-rose-300">
+                  Tu portafolio requiere correcciones
+                </h3>
+                <p className="mt-1 text-sm text-rose-700 dark:text-rose-400">
+                  El administrador ha revisado tu portafolio y ha determinado que es necesario realizar algunos ajustes antes de publicarlo.
+                </p>
+                {status.review_comment && (
+                  <div className="mt-3 rounded-xl bg-white/60 p-4 text-sm text-slate-800 dark:bg-black/20 dark:text-slate-300 border border-rose-100 dark:border-rose-900/50">
+                    <p className="font-semibold text-rose-900 dark:text-rose-200 mb-1">Observaciones del administrador:</p>
+                    <p className="whitespace-pre-wrap leading-relaxed">{status.review_comment}</p>
+                  </div>
+                )}
+
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -335,7 +353,9 @@ export const PortfolioVisibility: React.FC = () => {
                     }
                     className="w-full justify-center px-10 py-3 text-base font-semibold lg:min-w-[300px]"
                 >
-                    {actionLoading ? 'Publicando...' : 'Publicar portafolio'}
+                    {actionLoading 
+                        ? 'Enviando...' 
+                        : (status?.review_status === 'rejected' ? 'Volver a solicitar revisión' : 'Publicar portafolio')}
                 </Button>
             </div>
         </div>

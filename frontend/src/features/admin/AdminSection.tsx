@@ -131,6 +131,13 @@ export const AdminSection: React.FC = () => {
     const [selectedPortfolio, setSelectedPortfolio] = useState<PortfolioDetail | null>(null);
     const [reviewLoading, setReviewLoading] = useState<'approve' | 'reject' | null>(null);
     const [reviewToast, setReviewToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+    
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'Todos' | 'Pendiente' | 'Aprobado' | 'Rechazado'>('Todos');
+    
+    const [reviewComment, setReviewComment] = useState('');
+    const [showConfirmModal, setShowConfirmModal] = useState<'approved' | 'rejected' | null>(null);
+
     const { getToken } = useAuth();
 
 
@@ -260,6 +267,33 @@ export const AdminSection: React.FC = () => {
         return { registeredUsers, approvedPortfolios, pendingPortfolios, disabledAccounts };
     }, [users, portfolios]);
 
+    const filteredPortfoliosList = useMemo(() => {
+        let result = portfolios.filter(p => p.status !== 'No publicado' && p.portfolioId !== null);
+        
+        // Filter by Status
+        if (statusFilter !== 'Todos') {
+            result = result.filter(p => p.status === statusFilter);
+        }
+
+        // Filter by Search (name or email)
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(p => 
+                p.nombre.toLowerCase().includes(q) || 
+                p.email.toLowerCase().includes(q)
+            );
+        }
+
+        // Sort by submitted_at (oldest first)
+        result.sort((a, b) => {
+            const dateA = new Date(a.rawUser?.portfolio?.updated_at || 0).getTime();
+            const dateB = new Date(b.rawUser?.portfolio?.updated_at || 0).getTime();
+            return dateA - dateB;
+        });
+
+        return result;
+    }, [portfolios, searchQuery, statusFilter]);
+
     const toggleUserStatus = (userId: string) => {
         setUsers((prev) =>
             prev.map((user) =>
@@ -276,6 +310,8 @@ export const AdminSection: React.FC = () => {
     const closePortfolioModal = () => {
         setSelectedPortfolio(null);
         setReviewLoading(null);
+        setReviewComment('');
+        setShowConfirmModal(null);
     };
 
     const showToast = useCallback((type: 'success' | 'error', msg: string) => {
@@ -294,17 +330,23 @@ export const AdminSection: React.FC = () => {
             const res = await fetch('http://localhost:8000/api/admin/portfolio/review', {
                 method: 'POST',
                 headers: {
+                    'Accept': 'application/json',
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     portfolio_id: selectedPortfolio.portfolioId,
                     status: action,
+                    comment: reviewComment,
                 }),
             });
             if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.message || 'Error al procesar la solicitud');
+                const errorData = await res.json().catch(() => ({}));
+                let errorMsg = errorData.message || 'Error al procesar el portafolio';
+                if (errorData.errors) {
+                    errorMsg = Object.values(errorData.errors).flat().join(' | ');
+                }
+                throw new Error(errorMsg);
             }
             const newStatus = action === 'approved' ? 'Aprobado' : 'Rechazado';
             // Update local state
@@ -398,60 +440,90 @@ export const AdminSection: React.FC = () => {
                 </div>
             )}
             {activeSection === 'users' && (
-                <div className={cardBaseClass}>
-                    <h3 className="mb-6 text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span>Gestionar Usuarios</span>
-                        <span className="text-xs bg-slate-100 dark:bg-[#1e2f38] text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded-full font-semibold">
-                            {users.length} {users.length === 1 ? 'usuario' : 'usuarios'}
-                        </span>
-                    </h3>
+                <div className={`${cardBaseClass} p-0 overflow-hidden`}>
+                    {/* Header and Filters Section */}
+                    <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-[#121c22]/50">
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5">
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <span>Gestión de Portafolios</span>
+                                <span className="text-xs bg-slate-100 dark:bg-[#1e2f38] text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded-full font-semibold">
+                                    {filteredPortfoliosList.length} {filteredPortfoliosList.length === 1 ? 'portafolio' : 'portafolios'}
+                                </span>
+                            </h3>
+                            <div className="flex flex-col sm:flex-row items-center gap-3">
+                                <div className="relative w-full sm:w-72">
+                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <svg className="h-4 w-4 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <input 
+                                        type="text"
+                                        placeholder="Buscar por nombre o correo..."
+                                        className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121c22] py-2 pl-10 pr-3 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                                
+                                <select
+                                    className="block w-full sm:w-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121c22] py-2 pl-3 pr-8 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                                >
+                                    <option value="Todos" className="dark:bg-[#162730]">Todos los estados</option>
+                                    <option value="Pendiente" className="dark:bg-[#162730]">Pendientes</option>
+                                    <option value="Aprobado" className="dark:bg-[#162730]">Aprobados</option>
+                                    <option value="Rechazado" className="dark:bg-[#162730]">Rechazados</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-slate-200 dark:border-slate-700">
-                                    <th className="px-2 py-3 text-left">Usuario</th>
-                                    <th className="px-2 py-3 text-left">Correo</th>
-                                    <th className="px-2 py-3 text-left">Estado</th>
-                                    <th className="px-2 py-3 text-left">Portafolio</th>
-                                    <th className="px-2 py-3 text-left">Registro</th>
-                                    <th className="px-2 py-3 text-left">Acciones</th>
+                            <thead className="bg-slate-50 dark:bg-[#121c22]">
+                                <tr className="border-b border-slate-200 dark:border-slate-800">
+                                    <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-300">Estudiante</th>
+                                    <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-300">Correo Electrónico</th>
+                                    <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-300">Estado</th>
+                                    <th className="px-6 py-4 text-left font-bold text-slate-700 dark:text-slate-300">Solicitud</th>
+                                    <th className="px-6 py-4 text-center font-bold text-slate-700 dark:text-slate-300">Acción</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {users.length === 0 ? (
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                                {filteredPortfoliosList.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="text-center py-12 text-slate-400 dark:text-slate-500">
-                                            No hay usuarios registrados
+                                        <td colSpan={5} className="text-center py-16 text-slate-400 dark:text-slate-500">
+                                            <div className="flex flex-col items-center justify-center space-y-3">
+                                                <FileText className="h-10 w-10 opacity-20" />
+                                                <p className="text-base font-semibold">No se encontraron portafolios</p>
+                                                <p className="text-sm opacity-70">Intenta cambiar los filtros de búsqueda.</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
-                                    users.map((user) => {
-                                        const portfolio = getPortfolioByUserId(user.id);
+                                    filteredPortfoliosList.map((portfolio) => {
+                                        const submittedAt = portfolio.rawUser?.portfolio?.updated_at 
+                                            ? new Date(portfolio.rawUser.portfolio.updated_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
+                                            : 'N/A';
                                         return (
-                                            <tr key={user.id} className="border-b border-slate-100 dark:border-slate-800">
-                                                <td className="px-2 py-3 font-semibold text-slate-900 dark:text-white">{user.name}</td>
-                                                <td className="px-2 py-3">{user.email}</td>
-                                                <td className="px-2 py-3">{getStatusBadge(user.status)}</td>
-                                                <td className="px-2 py-3">
-                                                    {portfolio && portfolio.status !== 'No publicado' ? (
-                                                        <div className="flex items-center gap-2">
-                                                            {getStatusBadge(portfolio.status)}
-                                                            <Button variant="ghost" icon={Eye} onClick={() => openPortfolioModal(user.id)}>
-                                                                Ver
-                                                            </Button>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-slate-400">Sin portafolio</span>
-                                                    )}
+                                            <tr key={portfolio.id} className="hover:bg-slate-50/50 dark:hover:bg-[#121c22]/50 transition-colors">
+                                                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
+                                                    {portfolio.nombre}
                                                 </td>
-                                                <td className="px-2 py-3">{user.registeredAt}</td>
-                                                <td className="px-2 py-3">
-                                                    <Button
-                                                        variant={user.status === 'Activo' ? 'outline' : 'secondary'}
-                                                        onClick={() => toggleUserStatus(user.id)}
-                                                    >
-                                                        {user.status === 'Activo' ? 'Deshabilitar' : 'Habilitar'}
+                                                <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                                                    {portfolio.email}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {getStatusBadge(portfolio.status)}
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-500 dark:text-slate-400 font-medium">
+                                                    {submittedAt}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <Button variant="outline" icon={Eye} onClick={() => openPortfolioModal(portfolio.userId)}>
+                                                        Revisar
                                                     </Button>
                                                 </td>
                                             </tr>
@@ -487,71 +559,133 @@ export const AdminSection: React.FC = () => {
                 </div>
             )}
 
+            {/* Confirm Modal */}
+            {showConfirmModal && selectedPortfolio && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 transition-all duration-300">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowConfirmModal(null)}></div>
+                    <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white dark:bg-[#162730] shadow-2xl ring-1 ring-slate-200/50 dark:ring-slate-700 p-6 animate-in fade-in zoom-in-95">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Confirmar Veredicto</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                            Estás a punto de <strong className={showConfirmModal === 'approved' ? 'text-emerald-500' : 'text-rose-500'}>{showConfirmModal === 'approved' ? 'Aprobar y Publicar' : 'Rechazar'}</strong> el portafolio de <strong>{selectedPortfolio.nombre}</strong>.
+                        </p>
+                        <div className="flex items-center justify-end gap-3">
+                            <Button variant="ghost" onClick={() => setShowConfirmModal(null)}>Cancelar</Button>
+                            <Button 
+                                variant={showConfirmModal === 'approved' ? 'secondary' : 'outline'} 
+                                className={showConfirmModal === 'rejected' ? 'text-rose-500 border-rose-500/30 hover:bg-rose-500 hover:text-white' : ''}
+                                onClick={() => {
+                                    handleReviewPortfolio(showConfirmModal);
+                                    setShowConfirmModal(null);
+                                }}
+                            >
+                                Confirmar {showConfirmModal === 'approved' ? 'Aprobación' : 'Rechazo'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {selectedPortfolio && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closePortfolioModal}></div>
                     
-                    <div className="relative max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-slate-50 dark:bg-[#121c22] shadow-2xl flex flex-col ring-1 ring-slate-200/50 dark:ring-slate-700 animate-in fade-in zoom-in-95 duration-200">
-                        {/* SCROLLABLE AREA */}
-                        <div className="flex-1 overflow-y-auto relative z-0">
+                    <div className="relative h-[95vh] w-full max-w-[1400px] overflow-hidden rounded-3xl bg-slate-50 dark:bg-[#121c22] shadow-2xl flex flex-col lg:flex-row ring-1 ring-slate-200/50 dark:ring-slate-700 animate-in fade-in zoom-in-95 duration-200">
+                        {/* LEFT COLUMN: PORTFOLIO PREVIEW */}
+                        <div className="h-1/2 lg:h-auto lg:flex-1 flex flex-col overflow-y-auto relative z-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800">
                             {/* ADMIN PREVIEW HEADER */}
-                            <div className="sticky top-0 z-30 shrink-0 flex items-center justify-between border-b border-slate-200/80 bg-white/95 backdrop-blur-md dark:border-slate-800 dark:bg-[#121c22]/95 px-6 py-4 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
-                                        <Sparkles className="h-5 w-5" />
+                            <div className="sticky top-0 z-30 shrink-0 flex items-center justify-between border-b border-slate-200/80 bg-white/95 backdrop-blur-md dark:border-slate-800 dark:bg-[#121c22]/95 px-4 sm:px-6 py-3 sm:py-4 shadow-sm">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
+                                        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                                            Modo Moderador — Vista Previa del Estudiante
+                                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                                            Vista Previa del Estudiante
                                         </h3>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            Visualizando plantilla: <span className="font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400">{selectedPortfolio.templateKey}</span>
+                                        <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+                                            Plantilla: <span className="font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400">{selectedPortfolio.templateKey}</span>
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={closePortfolioModal}
-                                    className="rounded-xl border border-slate-200 p-2 text-slate-500 dark:border-slate-800 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#162730] transition-colors"
-                                    title="Cerrar"
+                                    className="lg:hidden rounded-xl border border-slate-200 p-2 text-slate-500 dark:border-slate-800 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#162730] transition-colors"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
                             </div>
 
                             {/* PORTFOLIO CONTENT (DYNAMICAL PLANTILLA) */}
-                            <div className="p-4 sm:p-8 bg-slate-100 dark:bg-[#0b1319] min-h-[50vh]">
+                            <div className="p-3 sm:p-4 md:p-8 bg-slate-100 dark:bg-[#0b1319] flex-1">
                                 <div className="mx-auto max-w-5xl">
                                     {renderPortfolioTemplate(selectedPortfolio.templateKey, selectedPortfolio.rawUser)}
                                 </div>
                             </div>
                         </div>
                         
-                        {/* BOTTOM ACTIONS */}
-                        <div className="shrink-0 border-t border-slate-200/80 dark:border-slate-800 bg-white/60 backdrop-blur-md dark:bg-[#121c22]/80 p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-10 w-full">
-                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-500 dark:text-slate-400 hidden sm:flex">
-                                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                Revisa la información detalladamente antes de aprobar o rechazar el portafolio
-                            </div>
-                            <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-3">
-                                <Button
-                                    variant="outline"
-                                    icon={X}
-                                    onClick={() => handleReviewPortfolio('rejected')}
-                                    disabled={reviewLoading !== null}
-                                    className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl !border !border-rose-400/10 !bg-[#13243a] px-5 py-2.5 text-sm font-bold !text-rose-300 shadow-[inset_0_0_35px_rgba(186,4,4,0.22),0_0_0_1px_rgba(186,4,4,0.30),0_0_10px_rgba(186,4,4,0.15)] transition-all duration-200 hover:!border-[#9C0000] hover:!bg-[#13243a] hover:!text-rose-300 hover:shadow-[inset_0_0_30px_rgba(244,63,94,0.25),0_0_12px_rgba(244,63,94,0.15),0_0_20px_rgba(244,63,94,0.20)] active:!border-[#e11d48] active:!bg-[#13243a] active:!text-rose-300 active:shadow-[inset_0_0_30px_rgba(244,63,94,0.35),0_0_16px_rgba(244,63,94,0.20),0_0_26px_rgba(244,63,94,0.25)] focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        {/* RIGHT COLUMN: REVIEW FORM */}
+                        <div className="h-1/2 lg:h-auto w-full lg:w-[400px] shrink-0 bg-white dark:bg-[#162730] flex flex-col overflow-y-auto">
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+                                <h3 className="font-bold text-slate-900 dark:text-white">Dictamen de Revisión</h3>
+                                <button
+                                    onClick={closePortfolioModal}
+                                    className="hidden lg:block rounded-xl border border-slate-200 p-2 text-slate-500 dark:border-slate-800 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#1f3643] transition-colors"
                                 >
-                                    {reviewLoading === 'reject' ? 'Rechazando…' : 'Rechazar'}
-                                </Button>
-                                
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-900 dark:text-slate-200 mb-2">Estado Actual</label>
+                                    {getStatusBadge(selectedPortfolio.status)}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-900 dark:text-slate-200 mb-2">Estudiante</label>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">{selectedPortfolio.nombre}</p>
+                                    <p className="text-xs text-slate-500">{selectedPortfolio.email}</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-900 dark:text-slate-200 mb-2">
+                                        Comentarios (Obligatorio si se rechaza)
+                                    </label>
+                                    <textarea
+                                        rows={5}
+                                        placeholder="Escribe las razones del rechazo o sugerencias de mejora..."
+                                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0b1319] p-3 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors resize-none"
+                                        value={reviewComment}
+                                        onChange={(e) => setReviewComment(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#121c22] space-y-3">
                                 <Button
                                     variant="secondary"
                                     icon={Check}
-                                    onClick={() => handleReviewPortfolio('approved')}
+                                    onClick={() => setShowConfirmModal('approved')}
                                     disabled={reviewLoading !== null}
-                                    className="flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-emerald-400/25 bg-[#13243a] px-5 py-2.5 text-sm font-bold text-emerald-300 shadow-[inset_0_0_12px_rgba(20,215,163,0.05),0_0_0_1px_rgba(20,215,163,0.06)] transition-all duration-200 hover:border-emerald-500 hover:bg-emerald-500 hover:text-white hover:shadow-[0_0_18px_rgba(20,215,163,0.20)] active:border-emerald-600 active:bg-emerald-600 active:text-white active:shadow-[0_0_20px_rgba(20,215,163,0.24)] focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full justify-center bg-[#10b981] text-white hover:bg-[#059669] border-transparent"
                                 >
-                                    {reviewLoading === 'approve' ? 'Aprobando…' : 'Aprobar Portafolio'}
+                                    Aprobar y Publicar
                                 </Button>
+                                
+                                <Button
+                                    variant="outline"
+                                    icon={X}
+                                    onClick={() => setShowConfirmModal('rejected')}
+                                    disabled={reviewLoading !== null || reviewComment.trim().length === 0}
+                                    className="w-full justify-center text-rose-500 border-rose-500/30 hover:bg-rose-500 hover:text-white"
+                                >
+                                    Rechazar Portafolio
+                                </Button>
+                                {reviewComment.trim().length === 0 && (
+                                    <p className="text-[10px] text-center text-slate-500 mt-1">
+                                        * El botón de rechazar requiere justificación.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
