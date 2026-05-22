@@ -25,6 +25,7 @@ import {
   unpublishPortfolio,
 } from './portfolioService';
 import { renderPortfolioTemplate } from './templates/PortfolioTemplates';
+import { ConfirmModal } from '../projects/components/ConfirmModal';
 
 const templates: Array<{
   key: PortfolioTemplateKey;
@@ -59,6 +60,7 @@ export const PortfolioVisibility: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isUnpublishConfirmOpen, setIsUnpublishConfirmOpen] = useState(false);
 
   const publicUrl = useMemo(() => {
     if (!status?.public_url) return null;
@@ -121,13 +123,12 @@ export const PortfolioVisibility: React.FC = () => {
     }
   };
 
-  const handleUnpublish = async () => {
-    const confirm = window.confirm(
-      '¿Deseas despublicar tu portafolio? Dejará de estar visible para visitantes y reclutadores.'
-    );
+  const handleUnpublish = () => {
+    setIsUnpublishConfirmOpen(true);
+  };
 
-    if (!confirm) return;
-
+  const executeUnpublish = async () => {
+    setIsUnpublishConfirmOpen(false);
     setActionLoading(true);
     setError(null);
     setMessage(null);
@@ -306,6 +307,18 @@ export const PortfolioVisibility: React.FC = () => {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/60 dark:bg-[#17262C]">
+        <div className="mb-5 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            Previsualizacion de tu portafolio 
+          </h3>
+        </div>
+
+        <div className="scale-[0.92] origin-top">
+          {previewUser && renderPortfolioTemplate(selectedTemplate, previewUser)}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/60 dark:bg-[#17262C]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 lg:max-w-2xl">
             Antes de ser publicado y visible para visitantes y reclutadores, tu portafolio será revisado por los administradores para su aprobación o rechazo.
@@ -327,18 +340,6 @@ export const PortfolioVisibility: React.FC = () => {
             </div>
         </div>
       </section>
-        
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/60 dark:bg-[#17262C]">
-        <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-            Previsualizacion de tu portafolio 
-          </h3>
-        </div>
-
-        <div className="scale-[0.92] origin-top">
-          {previewUser && renderPortfolioTemplate(selectedTemplate, previewUser)}
-        </div>
-      </section>
 
       {isPreviewOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
@@ -357,6 +358,19 @@ export const PortfolioVisibility: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Custom system confirm dialog instead of default browser confirm popup */}
+      <ConfirmModal
+        isOpen={isUnpublishConfirmOpen}
+        title="Despublicar portafolio"
+        message="¿Deseas despublicar tu portafolio? Dejará de estar visible para visitantes y reclutadores."
+        confirmText="Despublicar"
+        variant="warning"
+        icon="⚠️"
+        onConfirm={executeUnpublish}
+        onCancel={() => setIsUnpublishConfirmOpen(false)}
+        loading={actionLoading}
+      />
     </div>
   );
 };

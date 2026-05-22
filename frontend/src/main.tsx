@@ -18,6 +18,7 @@ createRoot(document.getElementById('root')!).render(
       signUpUrl="/register"
       signInFallbackRedirectUrl="/profile"
       signUpFallbackRedirectUrl="/profile"
+      afterSignOutUrl="/"
     >
       <App />
     </ClerkProvider>

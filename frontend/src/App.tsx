@@ -42,6 +42,7 @@ import { PublicPortfolioPage } from './features/portfolio/PublicPortfolioPage';
 import { BasicProfile } from './features/profile/BasicProfile';
 import { ProjectsList } from './features/projects/ProjectsList';
 import { SkillsList } from './features/skills/SkillsList';
+import { LandingPage } from './features/landing/LandingPage';
 
 const baseNavItems: NavItem[] = [
   { name: "Perfil Básico", icon: User, path: "/profile" },
@@ -67,8 +68,9 @@ const AppContent: React.FC = () => {
   }, [user, isLoaded]);
 
   React.useEffect(() => {
-    // Si sabemos que es admin y la ruta actual no es del panel de admin ni está procesando SSO
-    if (userRole === 'admin' && !location.pathname.startsWith('/admin') && !location.pathname.includes('sso-callback')) {
+    // Si sabemos que es admin y la ruta actual no es del panel de admin, una ruta pública ni está procesando SSO
+    const isPublicRoute = location.pathname === '/' || location.pathname.startsWith('/p/');
+    if (userRole === 'admin' && !location.pathname.startsWith('/admin') && !isPublicRoute && !location.pathname.includes('sso-callback')) {
       navigate('/admin/metrics', { replace: true });
     }
   }, [userRole, location.pathname, navigate]);
@@ -134,6 +136,8 @@ const AppContent: React.FC = () => {
     <Routes>
       <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
       <Route path="/p/:slug" element={<PublicPortfolioPage />} />
+      {/* PUBLIC LANDING PAGE — no auth required */}
+      <Route path="/" element={<LandingPage />} />
       {/* PUBLIC ROUTES (Wrapped in SignedOut) */}
       <Route
         path="/login"

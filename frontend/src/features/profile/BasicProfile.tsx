@@ -548,7 +548,7 @@ const platformPatterns: Record<string, RegExp> = {
                     : "text-slate-500"
                 }
               >
-                {form.bio.length} / 500 caracteres
+                {form.bio.length}/500
               </span>
             </label>
             <textarea

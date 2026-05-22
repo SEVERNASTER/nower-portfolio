@@ -46,8 +46,8 @@ export const EducationCard: React.FC<EducationCardProps> = ({
         <div className="flex-1 min-w-0 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+              <div className="flex flex-wrap items-center gap-2 max-w-full">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight break-words max-w-full">
                   {edu.role}
                 </h3>
                 <span
@@ -64,10 +64,10 @@ export const EducationCard: React.FC<EducationCardProps> = ({
                 </p>
               ) : null}
 
-              <div className="flex flex-wrap gap-2 pt-1">
-                <span className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200/70 dark:border-teal-800/60 bg-white/70 dark:bg-black/20 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
+              <div className="flex flex-wrap gap-2 pt-1 max-w-full">
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200/70 dark:border-teal-800/60 bg-white/70 dark:bg-black/20 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 break-words max-w-full">
                   <Building2 className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
-                  {edu.company}
+                  <span className="break-words">{edu.company}</span>
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-200/70 dark:border-cyan-900/50 bg-white/70 dark:bg-black/20 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
                   <Calendar className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
@@ -116,7 +116,7 @@ export const EducationCard: React.FC<EducationCardProps> = ({
           </div>
 
           {edu.description?.trim() ? (
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-teal-100 dark:border-teal-900/40 pt-3">
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-teal-100 dark:border-teal-900/40 pt-3 break-words whitespace-pre-wrap">
               {edu.description}
             </p>
           ) : null}

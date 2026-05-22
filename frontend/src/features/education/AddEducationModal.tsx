@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, GraduationCap, Building2, Calendar, AlignLeft } from "lucide-react";
+import { X, GraduationCap, Building2, Calendar, AlignLeft, BookOpen, Bookmark } from "lucide-react";
 import { useAuth } from "@clerk/clerk-react";
 import {
   createEducation,
@@ -107,6 +107,19 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
     return date.slice(0, 7);
   };
 
+  const handleMonthChange = (value: string, setter: (v: string) => void) => {
+    if (!value) {
+      setter("");
+      return;
+    }
+    const [year, month] = value.split("-");
+    if (year && year.length > 4) {
+      setter(`${year.slice(0, 4)}${month ? `-${month}` : ""}`);
+    } else {
+      setter(value);
+    }
+  };
+
   const fillForEdit = (edu: Experience) => {
     setInstitution(edu.company ?? "");
     setTitle(edu.role ?? "");
@@ -170,10 +183,18 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
     if (!inst) errs.institution = "La institución es obligatoria.";
     else if (inst.length < 3)
       errs.institution = "Indica al menos 3 caracteres para la institución.";
+    else if (inst.length > 70)
+      errs.institution = "La institución no puede superar los 70 caracteres.";
 
     if (!tit) errs.title = "El título o grado es obligatorio.";
     else if (tit.length < 2)
       errs.title = "El título debe tener al menos 2 caracteres.";
+    else if (tit.length > 100)
+      errs.title = "El título no puede superar los 100 caracteres.";
+
+    if (description.length > 500) {
+      errs.description = "La descripción no puede superar los 500 caracteres.";
+    }
 
     const dt = resolveDegreeType();
     if (!dt) errs.degree_type = "Selecciona o describe el tipo de grado.";
@@ -341,14 +362,20 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
           <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Institución <span className="text-red-500">*</span>
-                </label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Institución <span className="text-red-500">*</span>
+                  </label>
+                  <span className={`text-xs font-semibold ${institution.length > 60 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+                    {institution.length}/70
+                  </span>
+                </div>
                 <div className="relative">
                   <Building2 className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
                     value={institution}
+                    maxLength={70}
                     onChange={(e) => {
                       setInstitution(e.target.value);
                       clearField("institution");
@@ -365,19 +392,28 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Título / Grado <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    clearField("title");
-                  }}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm outline-none focus:border-teal-500 text-slate-900 dark:text-white"
-                  placeholder="Ej. Ingeniería de Sistemas"
-                />
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Título / Grado <span className="text-red-500">*</span>
+                  </label>
+                  <span className={`text-xs font-semibold ${title.length > 90 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+                    {title.length}/100
+                  </span>
+                </div>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={title}
+                    maxLength={100}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      clearField("title");
+                    }}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm outline-none focus:border-teal-500 text-slate-900 dark:text-white"
+                    placeholder="Ej. Ingeniería de Sistemas"
+                  />
+                </div>
                 {fieldErrors.title ? (
                   <p className="text-xs text-red-600 dark:text-red-400">
                     {fieldErrors.title}
@@ -389,32 +425,39 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Tipo de grado <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={degreePreset}
-                  onChange={(e) => {
-                    setDegreePreset(e.target.value);
-                    clearField("degree_type");
-                  }}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500"
-                >
-                  {DEGREE_PRESETS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                  <option value={OTRO}>{OTRO}</option>
-                </select>
-                {degreePreset === OTRO ? (
-                  <input
-                    type="text"
-                    value={degreeCustom}
+                <div className="relative">
+                  <BookOpen className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                  <select
+                    value={degreePreset}
                     onChange={(e) => {
-                      setDegreeCustom(e.target.value);
+                      setDegreePreset(e.target.value);
                       clearField("degree_type");
                     }}
-                    placeholder="Describe el tipo de grado"
-                    className="mt-2 w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm outline-none focus:border-teal-500 text-slate-900 dark:text-white"
-                  />
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500"
+                  >
+                    {DEGREE_PRESETS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                    <option value={OTRO}>{OTRO}</option>
+                  </select>
+                </div>
+                {degreePreset === OTRO ? (
+                  <div className="relative mt-2">
+                    <BookOpen className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={degreeCustom}
+                      onChange={(e) => {
+                        setDegreeCustom(e.target.value);
+                        clearField("degree_type");
+                      }}
+                      // Let me fix that inline to match the original one exactly to avoid reference error
+                      placeholder="Describe el tipo de grado"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm outline-none focus:border-teal-500 text-slate-900 dark:text-white"
+                    />
+                  </div>
                 ) : null}
                 {fieldErrors.degree_type ? (
                   <p className="text-xs text-red-600 dark:text-red-400">
@@ -427,15 +470,18 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                   Estado <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as EducationStatus)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500"
-                >
-                  <option value="En curso">En curso</option>
-                  <option value="Graduado">Graduado</option>
-                  <option value="Pausado">Pausado</option>
-                </select>
+                <div className="relative">
+                  <Bookmark className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value as EducationStatus)}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500"
+                  >
+                    <option value="En curso">En curso</option>
+                    <option value="Graduado">Graduado</option>
+                    <option value="Pausado">Pausado</option>
+                  </select>
+                </div>
               </div>
 
               <div className="space-y-1.5 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -450,7 +496,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                       value={startMonth}
                       max={currentYearMonth()}
                       onChange={(e) => {
-                        setStartMonth(e.target.value);
+                        handleMonthChange(e.target.value, setStartMonth);
                         clearField("start_month");
                       }}
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500"
@@ -477,7 +523,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                       value={endMonth}
                       max={currentYearMonth()}
                       onChange={(e) => {
-                        setEndMonth(e.target.value);
+                        handleMonthChange(e.target.value, setEndMonth);
                         clearField("end_month");
                       }}
                       disabled={endDisabled}
@@ -503,18 +549,32 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Descripción (opcional)
-              </label>
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Descripción (opcional)
+                </label>
+                <span className={`text-xs font-semibold ${description.length > 450 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+                  {description.length}/500
+                </span>
+              </div>
               <div className="relative">
                 <AlignLeft className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                 <textarea
                   rows={3}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={500}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    clearField("description");
+                  }}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none resize-none focus:border-teal-500"
                 />
               </div>
+              {fieldErrors.description ? (
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  {fieldErrors.description}
+                </p>
+              ) : null}
             </div>
 
             {submitError ? (

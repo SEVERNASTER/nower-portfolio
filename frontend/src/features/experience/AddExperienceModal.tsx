@@ -53,6 +53,19 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
 
   const isEndDateDisabled = isCurrent;
 
+  const handleMonthChange = (value: string, setter: (v: string) => void) => {
+    if (!value) {
+      setter("");
+      return;
+    }
+    const [year, month] = value.split("-");
+    if (year && year.length > 4) {
+      setter(`${year.slice(0, 4)}${month ? `-${month}` : ""}`);
+    } else {
+      setter(value);
+    }
+  };
+
   const dateToMonthInput = (date?: string | null) => {
     if (!date) return "";
     return date.slice(0, 7);
@@ -65,7 +78,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
     setEndMonth(dateToMonthInput(experience.rawEndDate));
     setIsCurrent(experience.current);
     setDescription(experience.description ?? "");
-    setModality("Remoto");
+    setModality(experience.modality ?? "Remoto");
     setLocation(experience.location ?? "");
     setTechInput("");
     setTechnologies(experience.skills ?? []);
@@ -138,6 +151,18 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
 
     if (!t || !inst) {
       setSubmitError("Completa todos los campos obligatorios.");
+      return;
+    }
+    if (t.length > 100) {
+      setSubmitError("El cargo no puede superar los 100 caracteres.");
+      return;
+    }
+    if (inst.length > 70) {
+      setSubmitError("La empresa no puede superar los 70 caracteres.");
+      return;
+    }
+    if (description.length > 500) {
+      setSubmitError("La descripción no puede superar los 500 caracteres.");
       return;
     }
     if (!startMonth) {
@@ -223,14 +248,20 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
             {/* Fila: Rol e Institución */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Rol / Cargo
-                </label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Rol / Cargo <span className="text-red-500">*</span>
+                  </label>
+                  <span className={`text-xs font-semibold ${title.length > 90 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+                    {title.length}/100
+                  </span>
+                </div>
                 <div className="relative">
                   <Briefcase className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
                     value={title}
+                    maxLength={100}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Ej. Frontend Developer"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500"
@@ -239,14 +270,20 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Empresa
-                </label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Empresa <span className="text-red-500">*</span>
+                  </label>
+                  <span className={`text-xs font-semibold ${institution.length > 60 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+                    {institution.length}/70
+                  </span>
+                </div>
                 <div className="relative">
                   <Building2 className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                   <input
                     type="text"
                     value={institution}
+                    maxLength={70}
                     onChange={(e) => setInstitution(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-amber-500"
                   />
@@ -288,13 +325,16 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
             {/* Fila: Fechas */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Fecha de Inicio</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Fecha de Inicio <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
                   <Calendar className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                   <input
                     type="month"
                     value={startMonth}
-                    onChange={(e) => setStartMonth(e.target.value)}
+                    max="9999-12"
+                    onChange={(e) => handleMonthChange(e.target.value, setStartMonth)}
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none"
                   />
                 </div>
@@ -302,7 +342,9 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Fecha de Fin</label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Fecha de Fin{!isEndDateDisabled ? <span className="text-red-500"> *</span> : null}
+                  </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -318,7 +360,8 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                   <input
                     type="month"
                     value={endMonth}
-                    onChange={(e) => setEndMonth(e.target.value)}
+                    max="9999-12"
+                    onChange={(e) => handleMonthChange(e.target.value, setEndMonth)}
                     disabled={isEndDateDisabled}
                     className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-colors ${
                       isEndDateDisabled
@@ -332,12 +375,18 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
 
             {/* Descripción */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Descripción</label>
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Descripción</label>
+                <span className={`text-xs font-semibold ${description.length > 450 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+                  {description.length}/500
+                </span>
+              </div>
               <div className="relative">
                 <AlignLeft className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                 <textarea
                   rows={4}
                   value={description}
+                  maxLength={500}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none resize-none"
                 />

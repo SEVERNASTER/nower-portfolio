@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Award, FileText, Edit3, Trash2 } from 'lucide-react';
+import { Plus, Award, FileText, Pencil, Trash2, MoreVertical } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { Button } from '../../components/ui/Button';
 import { AchievementForm, AchievementFile } from './components/AchievementForm';
@@ -17,6 +17,7 @@ export const AchievementsList: React.FC = () => {
   const [editingAchievement, setEditingAchievement] = useState<Achievement | null>(null);
   const [deletingAchievement, setDeletingAchievement] = useState<Achievement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const { getToken, isLoaded, isSignedIn } = useAuth();
 
   useEffect(() => {
@@ -263,37 +264,64 @@ export const AchievementsList: React.FC = () => {
                 className="bg-white dark:bg-[#17262C] rounded-xl border border-slate-200 dark:border-slate-800/60 p-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-slate-900 dark:text-white mb-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-slate-900 dark:text-white mb-2 break-words">
                       {achievement.title}
                     </h3>
-                    <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-2">
+                    <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-2 break-words">
                       {achievement.institution}
                     </p>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
                       {formatDate(achievement.obtained_at)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="relative">
                     <button
-                      onClick={() => handleEditAchievement(achievement)}
-                      className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      type="button"
+                      onClick={() => setActiveMenuId(activeMenuId === achievement.id ? null : achievement.id)}
+                      className="p-2 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl hover:bg-emerald-500/10 transition-colors"
+                      aria-label="Opciones de logro"
                     >
-                      <Edit3 className="h-4 w-4" />
-                      <span className="sr-only">Editar logro</span>
+                      <MoreVertical className="h-5 w-5" />
                     </button>
-                    <button
-                      onClick={() => handleDeleteClick(achievement)}
-                      className="rounded-2xl border border-rose-200 bg-rose-50 text-rose-600 p-2 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-900"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Eliminar logro</span>
-                    </button>
+
+                    {activeMenuId === achievement.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setActiveMenuId(null)}
+                        />
+                        <div className="absolute right-0 top-11 z-20 w-44 rounded-xl bg-white dark:bg-[#0B1120] border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveMenuId(null);
+                              handleEditAchievement(achievement);
+                            }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveMenuId(null);
+                              handleDeleteClick(achievement);
+                            }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 {achievement.description && (
-                  <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3 break-words whitespace-pre-wrap">
                     {achievement.description}
                   </p>
                 )}

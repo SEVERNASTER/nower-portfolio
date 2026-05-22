@@ -20,7 +20,7 @@ class ExplorePortfolioRequest extends FormRequest
             'skills.*' => 'string|max:50',
             'tags'     => 'nullable|array',
             'tags.*'   => 'string|max:50',
-            'per_page' => 'nullable|integer|min:1|max:50',
+            'per_page' => 'nullable|integer|min:1|max:1000',
         ];
     }
 }

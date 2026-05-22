@@ -83,11 +83,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       ) : null}
 
       {/* Body */}
-      <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors mb-2">
+      <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-500 transition-colors mb-2 break-words">
         {project.title}
       </h3>
 
-      <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 flex-grow line-clamp-3 overflow-hidden">
+      <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 flex-grow line-clamp-3 overflow-hidden break-words whitespace-pre-wrap">
         {project.description}
       </p>
 
@@ -101,7 +101,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           {project.tags.map((tag: string) => (
             <span
               key={tag}
-              className="px-2 py-1 bg-white dark:bg-[#17262C] text-slate-600 dark:text-slate-300 text-[10px] font-semibold rounded-md uppercase tracking-wider border border-slate-200 dark:border-slate-700/50 shadow-sm"
+              className="px-2 py-1 bg-white dark:bg-[#17262C] text-slate-600 dark:text-slate-300 text-[10px] font-semibold rounded-md uppercase tracking-wider border border-slate-200 dark:border-slate-700/50 shadow-sm break-words max-w-full"
             >
               {tag}
             </span>
