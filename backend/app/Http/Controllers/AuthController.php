@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ClerkService;
 use App\Services\PasswordAssignmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -32,7 +34,7 @@ class AuthController extends Controller
         ]);
     }
 
-    public function changePassword(Request $request)
+    public function changePassword(Request $request, ClerkService $clerkService)
     {
         $validated = $request->validate([
             'current_password' => 'required|string',
@@ -68,6 +70,26 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'La contraseña actual es incorrecta.',
             ], 422);
+        }
+
+        if (!$user->clerk_id) {
+            return response()->json([
+                'message' => 'Tu cuenta no está vinculada a Clerk. Contacta al administrador.',
+            ], 422);
+        }
+
+        try {
+            $clerkService->updatePassword($user->clerk_id, $validated['new_password']);
+        } catch (\Throwable $e) {
+            Log::error('changePassword: fallo sync Clerk', [
+                'user_id' => $user->id,
+                'clerk_id' => $user->clerk_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'No se pudo sincronizar la contraseña con el sistema de acceso. Intenta de nuevo.',
+            ], 500);
         }
 
         $user->password = Hash::make($validated['new_password']);

@@ -29,9 +29,9 @@ export const LoginPage: React.FC = () => {
     }
   }, [searchParams]);
 
-  // Initialize Clerk's signIn object
-  const { signIn, isLoaded } = useSignIn();
+  const { signIn, setActive, isLoaded } = useSignIn();
 
+  const goToDashboard = () => navigate("/dashboard", { replace: true });
 
   // Handle Custom Email/Password Login via Clerk
   const handleLogin = async (e: React.FormEvent) => {
@@ -46,7 +46,8 @@ export const LoginPage: React.FC = () => {
       });
 
       if (result.status === "complete") {
-        navigate("/profile");
+        await setActive({ session: result.createdSessionId });
+        goToDashboard();
       } else {
         console.log(result);
         setError("Se requiere un paso adicional para iniciar sesión.");
@@ -74,7 +75,7 @@ export const LoginPage: React.FC = () => {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/profile",
+        redirectUrlComplete: "/dashboard",
       });
     } catch (err) {
       setError("Error en autenticación con Google.");
@@ -90,7 +91,7 @@ export const LoginPage: React.FC = () => {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_microsoft",
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/profile",
+        redirectUrlComplete: "/dashboard",
       });
     } catch (err) {
       setError("Error en autenticación con Microsoft.");

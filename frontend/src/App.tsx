@@ -157,7 +157,16 @@ const AppContent: React.FC = () => {
                       <Routes>
                         <Route
                           path="/"
-                          element={<Navigate to="/profile" replace />}
+                          element={<Navigate to="/dashboard" replace />}
+                        />
+                        <Route
+                          path="/dashboard"
+                          element={
+                            <Navigate
+                              to={userRole === "admin" ? "/admin/metrics" : "/profile"}
+                              replace
+                            />
+                          }
                         />
                         <Route path="/profile" element={<BasicProfile />} />
                         <Route path="/projects" element={<ProjectsList />} />

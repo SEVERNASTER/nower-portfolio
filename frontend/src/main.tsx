@@ -16,8 +16,8 @@ createRoot(document.getElementById('root')!).render(
       publishableKey={PUBLISHABLE_KEY}
       signInUrl="/login"
       signUpUrl="/register"
-      signInFallbackRedirectUrl="/profile"
-      signUpFallbackRedirectUrl="/profile"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
     >
       <App />
     </ClerkProvider>
