@@ -98,7 +98,7 @@ const PortfolioCardItem: React.FC<{ portfolio: PortfolioCard }> = ({ portfolio }
     : '?';
   
   const experienceYears = useMemo(() => {
-    return calculateYearsOfExperience(user.experiences || []);
+    return Math.round(calculateYearsOfExperience(user.experiences || []));
   }, [user.experiences]);
 
   return (
@@ -127,7 +127,7 @@ const PortfolioCardItem: React.FC<{ portfolio: PortfolioCard }> = ({ portfolio }
           {experienceYears > 0 && (
             <span className="lp-meta-item">
               <Briefcase className="lp-meta-icon" />
-              {experienceYears === Math.round(experienceYears) ? Math.round(experienceYears) : experienceYears} {experienceYears === 1 ? 'año' : 'años'}
+              {experienceYears} {experienceYears === 1 ? 'año' : 'años'}
             </span>
           )}
         </div>
@@ -417,9 +417,9 @@ export const LandingPage: React.FC = () => {
         if (!hasAllSkills) return false;
       }
 
-      // 5. Min Experience Range
+      // Filtro de experiencia
       if (minExperience > 0) {
-        const expYears = calculateYearsOfExperience(user.experiences || []);
+        const expYears = Math.round(calculateYearsOfExperience(user.experiences || []));
         if (expYears < minExperience) return false;
       }
 
