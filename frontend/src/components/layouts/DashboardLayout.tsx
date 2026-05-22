@@ -15,9 +15,16 @@ export interface DashboardLayoutProps {
     activeTab: string;
     setActiveTab: (name: string) => void;
     navItems: NavItem[];
+    settingsNavItems: NavItem[];
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab, setActiveTab, navItems }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+    children,
+    activeTab,
+    setActiveTab,
+    navItems,
+    settingsNavItems,
+}) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
     const [isDark, setIsDark] = useState<boolean>(true);
     const location = useLocation();
@@ -46,6 +53,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab, 
                     isDark={isDark}
                     toggleTheme={() => setIsDark(!isDark)}
                     navItems={navItems}
+                    settingsNavItems={settingsNavItems}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
                 />

@@ -13,7 +13,8 @@ import { BasicProfile } from "./features/profile/BasicProfile";
 import { ProjectsList } from "./features/projects/ProjectsList";
 import { SkillsList } from "./features/skills/SkillsList";
 import { AdminSection } from "./features/admin/AdminSection";
-import { User, FolderGit2, Code, Briefcase, BarChart, Users, PieChart, Award } from "lucide-react";
+import { User, FolderGit2, Code, Briefcase, BarChart, Users, PieChart, Award, Lock } from "lucide-react";
+import PasswordSettings from "./features/settings/components/PasswordSettings";
 import type { NavItem } from "./components/navigation/Sidebar";
 import { LoginPage } from "./components/pages/LoginPage";
 import { ExperienceList } from "./features/experience/ExperienceList";
@@ -28,6 +29,10 @@ const baseNavItems: NavItem[] = [
   { name: "Habilidades", icon: Code, path: "/skills" },
   { name: "Experiencia", icon: Briefcase, path: "/experience" },
   { name: "Logros", icon: Award, path: "/achievements" },
+];
+
+const settingsNavItems: NavItem[] = [
+  { name: "Contraseña", icon: Lock, path: "/settings/password" },
 ];
 
 const AppContent: React.FC = () => {
@@ -58,13 +63,16 @@ const AppContent: React.FC = () => {
   ] : [];
 
   const navItems = userRole === 'admin' ? adminNavItems : baseNavItems;
+  const allNavItems = [...navItems, ...settingsNavItems];
 
-  const activeItem = navItems.find((item) => location.pathname.startsWith(item.path!));
-  const activeTab = activeItem ? activeItem.name : "Perfil Básico";
+  const activeItem = allNavItems.find(
+    (item) => item.path && location.pathname.startsWith(item.path)
+  );
+  const activeTab = activeItem?.name ?? (userRole === 'admin' ? "Métricas" : "Perfil Básico");
 
   const handleTabChange = (name: string) => {
-    const item = navItems.find((n) => n.name === name);
-    if (item && item.path) {
+    const item = allNavItems.find((n) => n.name === name);
+    if (item?.path) {
       navigate(item.path);
     }
   };
@@ -144,6 +152,7 @@ const AppContent: React.FC = () => {
                       activeTab={activeTab}
                       setActiveTab={handleTabChange}
                       navItems={navItems}
+                      settingsNavItems={settingsNavItems}
                     >
                       <Routes>
                         <Route
@@ -155,7 +164,8 @@ const AppContent: React.FC = () => {
                         <Route path="/skills" element={<SkillsList />} />
                         <Route path="/experience" element={<ExperienceList />} />
                         <Route path="/achievements" element={<AchievementsList />} />
-                        
+                        <Route path="/settings/password" element={<PasswordSettings />} />
+
                         {/* RUTAS DE ADMIN DENTRO DEL DASHBOARD */}
                         {userRole === 'admin' ? (
                           <Route path="/admin/*" element={<AdminSection />} />
