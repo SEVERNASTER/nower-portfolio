@@ -117,10 +117,13 @@ class UserController extends Controller
             $user->save();
 
             $wasRecentlyCreated = $user->wasRecentlyCreated;
+            $credentialsEmailSent = false;
 
             if ($passwordAssignmentService->shouldAssignPassword($user, $wasRecentlyCreated)) {
                 try {
                     $passwordAssignmentService->assign($user);
+                    $credentialsEmailSent = true;
+                    $user->refresh();
                 } catch (\Throwable $e) {
                     Log::error('No se pudo asignar/enviar contraseña al sincronizar usuario', [
                         'user_id' => $user->id,
@@ -187,7 +190,10 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Usuario sincronizado correctamente',
+                'message' => $credentialsEmailSent
+                    ? 'Usuario sincronizado. La nueva contraseña fue enviada a su bandeja de entrada.'
+                    : 'Usuario sincronizado correctamente',
+                'credentials_email_sent' => $credentialsEmailSent,
                 'user'    => $user->load('socialLinks'),
             ]);
 

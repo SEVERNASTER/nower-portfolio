@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -13,15 +13,38 @@ import { BasicProfile } from "./features/profile/BasicProfile";
 import { ProjectsList } from "./features/projects/ProjectsList";
 import { SkillsList } from "./features/skills/SkillsList";
 import { AdminSection } from "./features/admin/AdminSection";
-import { User, FolderGit2, Code, Briefcase, BarChart, Users, PieChart, Award, Lock } from "lucide-react";
+import {
+  User,
+  FolderGit2,
+  Code,
+  Briefcase,
+  BarChart,
+  Users,
+  PieChart,
+  Award,
+  Lock,
+} from "lucide-react";
 import PasswordSettings from "./features/settings/components/PasswordSettings";
 import type { NavItem } from "./components/navigation/Sidebar";
 import { LoginPage } from "./components/pages/LoginPage";
 import { ExperienceList } from "./features/experience/ExperienceList";
 import { RegisterPage } from "./components/pages/RegisterPage";
-import { AuthenticateWithRedirectCallback, useUser } from "@clerk/clerk-react";
+import {
+  AuthenticateWithRedirectCallback,
+  useUser,
+} from "@clerk/clerk-react";
 import { AchievementsList } from "./features/achievements/AchievementsList";
-import { useEffect, useState } from "react";
+import {
+  notifyCredentialsEmailSent,
+  notifyMandatoryPasswordChange,
+  useNotification,
+} from "./contexts/NotificationContext";
+import { AuthStatusProvider, useAuthStatus } from "./contexts/AuthStatusContext";
+import { ProtectedAppGate } from "./components/auth/ProtectedAppGate";
+import type { SyncUserResponse } from "./lib/apiTypes";
+
+const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api";
+const PASSWORD_SETTINGS_PATH = "/settings/password";
 
 const baseNavItems: NavItem[] = [
   { name: "Perfil Básico", icon: User, path: "/profile" },
@@ -32,43 +55,66 @@ const baseNavItems: NavItem[] = [
 ];
 
 const settingsNavItems: NavItem[] = [
-  { name: "Contraseña", icon: Lock, path: "/settings/password" },
+  { name: "Contraseña", icon: Lock, path: PASSWORD_SETTINGS_PATH },
 ];
 
-const AppContent: React.FC = () => {
+const SignedInApp: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
   const { user, isLoaded } = useUser();
+  const { showNotification } = useNotification();
+  const { mustChangePassword, applyMustChangePassword, refresh } = useAuthStatus();
   const [synced, setSynced] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(localStorage.getItem('userRole'));
+  const [userRole, setUserRole] = useState<string | null>(
+    localStorage.getItem("userRole")
+  );
 
   React.useEffect(() => {
     if (isLoaded && !user) {
-      localStorage.removeItem('userRole');
+      localStorage.removeItem("userRole");
     }
   }, [user, isLoaded]);
 
   React.useEffect(() => {
-    // Si sabemos que es admin y la ruta actual no es del panel de admin ni está procesando SSO
-    if (userRole === 'admin' && !location.pathname.startsWith('/admin') && !location.pathname.includes('sso-callback')) {
-      navigate('/admin/metrics', { replace: true });
+    if (mustChangePassword) return;
+
+    if (
+      userRole === "admin" &&
+      !location.pathname.startsWith("/admin") &&
+      !location.pathname.includes("sso-callback")
+    ) {
+      navigate("/admin/metrics", { replace: true });
     }
-  }, [userRole, location.pathname, navigate]);
+  }, [userRole, mustChangePassword, location.pathname, navigate]);
 
-  const adminNavItems: NavItem[] = userRole === 'admin' ? [
-    { name: "Métricas", icon: BarChart, path: "/admin/metrics" },
-    { name: "Usuarios", icon: Users, path: "/admin/users" },
-    { name: "Reportes", icon: PieChart, path: "/admin/reportes" },
-  ] : [];
+  React.useEffect(() => {
+    if (
+      mustChangePassword &&
+      user &&
+      location.pathname === PASSWORD_SETTINGS_PATH
+    ) {
+      notifyMandatoryPasswordChange(showNotification, user.id);
+    }
+  }, [mustChangePassword, location.pathname, showNotification, user?.id]);
 
-  const navItems = userRole === 'admin' ? adminNavItems : baseNavItems;
+  const adminNavItems: NavItem[] =
+    userRole === "admin"
+      ? [
+          { name: "Métricas", icon: BarChart, path: "/admin/metrics" },
+          { name: "Usuarios", icon: Users, path: "/admin/users" },
+          { name: "Reportes", icon: PieChart, path: "/admin/reportes" },
+        ]
+      : [];
+
+  const navItems = userRole === "admin" ? adminNavItems : baseNavItems;
   const allNavItems = [...navItems, ...settingsNavItems];
 
   const activeItem = allNavItems.find(
     (item) => item.path && location.pathname.startsWith(item.path)
   );
-  const activeTab = activeItem?.name ?? (userRole === 'admin' ? "Métricas" : "Perfil Básico");
+  const activeTab =
+    activeItem?.name ??
+    (mustChangePassword ? "Contraseña" : userRole === "admin" ? "Métricas" : "Perfil Básico");
 
   const handleTabChange = (name: string) => {
     const item = allNavItems.find((n) => n.name === name);
@@ -80,149 +126,165 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (!isLoaded || !user) return;
     if (synced) return;
-
     syncBackendUser(user);
     setSynced(true);
   }, [user, isLoaded, synced]);
 
-  async function syncBackendUser(user: any) {
+  async function syncBackendUser(clerkUser: {
+    id: string;
+    fullName?: string | null;
+    firstName?: string | null;
+    primaryEmailAddress?: { emailAddress?: string };
+  }) {
     try {
-      const email = user.primaryEmailAddress?.emailAddress;
-
+      const email = clerkUser.primaryEmailAddress?.emailAddress;
       if (!email) return;
 
-
-      const res = await fetch("http://127.0.0.1:8000/api/sync-user", {
+      const res = await fetch(`${API_URL}/sync-user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
         body: JSON.stringify({
-          clerk_id: user.id,
-          full_name: user.fullName || user.firstName,
+          clerk_id: clerkUser.id,
+          full_name: clerkUser.fullName || clerkUser.firstName,
           email,
         }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as SyncUserResponse;
+
       if (data.success && data.user) {
-        const role = data.user.role;
-        setUserRole(role);
-        localStorage.setItem('userRole', role);
+        if (data.user.role) {
+          setUserRole(data.user.role);
+          localStorage.setItem("userRole", data.user.role);
+        }
+
+        const mustChange = Boolean(data.user.must_change_password);
+        applyMustChangePassword(mustChange);
+
+        if (data.user.must_change_password === undefined) {
+          await refresh();
+        }
+
+        if (data.credentials_email_sent) {
+          notifyCredentialsEmailSent(showNotification, clerkUser.id, {
+            sent: true,
+            email: data.user.email ?? email,
+          });
+        }
+
+        if (mustChange) {
+          navigate(PASSWORD_SETTINGS_PATH, { replace: true });
+        }
       }
-      console.log(" Guardado en BD:", data);
     } catch (error) {
       console.error("Error sincronizando usuario en backend:", error);
     }
   }
-  return (
-    <Routes>
-      <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
-      {/* PUBLIC ROUTES (Wrapped in SignedOut) */}
-      <Route
-        path="/login"
-        element={
-          <SignedOut>
-            <LoginPage />
-          </SignedOut>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <SignedOut>
-            <RegisterPage />
-          </SignedOut>
-        }
-      />
 
-      {/* PROTECTED ROUTES (Wrapped in SignedIn) */}
-      <Route
-        path="/*"
-        element={
-          <>
-            <SignedIn>
+  return (
+    <ProtectedAppGate>
+      <Routes>
+        <Route
+          path="*"
+          element={
+            <DashboardLayout
+              activeTab={activeTab}
+              setActiveTab={handleTabChange}
+              navItems={navItems}
+              settingsNavItems={settingsNavItems}
+            >
               <Routes>
-                {/* RUTAS CON DASHBOARD */}
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    mustChangePassword ? (
+                      <Navigate to={PASSWORD_SETTINGS_PATH} replace />
+                    ) : (
+                      <Navigate
+                        to={userRole === "admin" ? "/admin/metrics" : "/profile"}
+                        replace
+                      />
+                    )
+                  }
+                />
+                <Route path="/profile" element={<BasicProfile />} />
+                <Route path="/projects" element={<ProjectsList />} />
+                <Route path="/skills" element={<SkillsList />} />
+                <Route path="/experience" element={<ExperienceList />} />
+                <Route path="/achievements" element={<AchievementsList />} />
+                <Route path={PASSWORD_SETTINGS_PATH} element={<PasswordSettings />} />
+
+                {userRole === "admin" ? (
+                  <Route path="/admin/*" element={<AdminSection />} />
+                ) : (
+                  <Route path="/admin/*" element={<Navigate to="/profile" replace />} />
+                )}
+
                 <Route
                   path="*"
                   element={
-                    <DashboardLayout
-                      activeTab={activeTab}
-                      setActiveTab={handleTabChange}
-                      navItems={navItems}
-                      settingsNavItems={settingsNavItems}
-                    >
-                      <Routes>
-                        <Route
-                          path="/"
-                          element={<Navigate to="/dashboard" replace />}
-                        />
-                        <Route
-                          path="/dashboard"
-                          element={
-                            <Navigate
-                              to={userRole === "admin" ? "/admin/metrics" : "/profile"}
-                              replace
-                            />
-                          }
-                        />
-                        <Route path="/profile" element={<BasicProfile />} />
-                        <Route path="/projects" element={<ProjectsList />} />
-                        <Route path="/skills" element={<SkillsList />} />
-                        <Route path="/experience" element={<ExperienceList />} />
-                        <Route path="/achievements" element={<AchievementsList />} />
-                        <Route path="/settings/password" element={<PasswordSettings />} />
-
-                        {/* RUTAS DE ADMIN DENTRO DEL DASHBOARD */}
-                        {userRole === 'admin' ? (
-                          <Route path="/admin/*" element={<AdminSection />} />
-                        ) : (
-                          <Route path="/admin/*" element={<Navigate to="/profile" replace />} />
-                        )}
-
-                        <Route
-                          path="*"
-                          element={
-                            <div className="flex flex-col items-center justify-center p-12 text-center h-full">
-                              <div className="rounded-full bg-slate-100 dark:bg-[#10221C] p-4 mb-4">
-                                <Code className="h-8 w-8 text-emerald-500" />
-                              </div>
-                              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                                Próximamente
-                              </h3>
-                              <p className="text-slate-500 dark:text-slate-400 max-w-sm">
-                                Esta sección está en desarrollo y estará disponible
-                                pronto.
-                              </p>
-                            </div>
-                          }
-                        />
-                      </Routes>
-                    </DashboardLayout>
+                    <div className="flex flex-col items-center justify-center p-12 text-center h-full">
+                      <Code className="h-8 w-8 text-emerald-500 mb-4" />
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                        Próximamente
+                      </h3>
+                    </div>
                   }
                 />
               </Routes>
-            </SignedIn>
-
-            {/* If signed out and trying to access a protected route, redirect to login */}
-            <SignedOut>
-              <Navigate to="/login" replace />
-            </SignedOut>
-          </>
-        }
-      />
-    </Routes>
+            </DashboardLayout>
+          }
+        />
+      </Routes>
+    </ProtectedAppGate>
   );
 };
 
-const App: React.FC = () => {
-  return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
-  );
-};
+const AppContent: React.FC = () => (
+  <Routes>
+    <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
+    <Route
+      path="/login"
+      element={
+        <SignedOut>
+          <LoginPage />
+        </SignedOut>
+      }
+    />
+    <Route
+      path="/register"
+      element={
+        <SignedOut>
+          <RegisterPage />
+        </SignedOut>
+      }
+    />
+    <Route
+      path="/*"
+      element={
+        <>
+          <SignedIn>
+            <AuthStatusProvider>
+              <SignedInApp />
+            </AuthStatusProvider>
+          </SignedIn>
+          <SignedOut>
+            <Navigate to="/login" replace />
+          </SignedOut>
+        </>
+      }
+    />
+  </Routes>
+);
+
+const App: React.FC = () => (
+  <BrowserRouter>
+    <AppContent />
+  </BrowserRouter>
+);
 
 export default App;

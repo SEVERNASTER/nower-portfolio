@@ -31,7 +31,7 @@ export const LoginPage: React.FC = () => {
 
   const { signIn, setActive, isLoaded } = useSignIn();
 
-  const goToDashboard = () => navigate("/dashboard", { replace: true });
+  const goAfterLogin = () => navigate("/dashboard", { replace: true });
 
   // Handle Custom Email/Password Login via Clerk
   const handleLogin = async (e: React.FormEvent) => {
@@ -47,7 +47,7 @@ export const LoginPage: React.FC = () => {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        goToDashboard();
+        goAfterLogin();
       } else {
         console.log(result);
         setError("Se requiere un paso adicional para iniciar sesión.");

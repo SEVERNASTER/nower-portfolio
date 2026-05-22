@@ -11,6 +11,26 @@ use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
+    public function me(Request $request)
+    {
+        $clerkId = $request->attributes->get('clerk_user_id');
+        $user = User::where('clerk_id', $clerkId)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Usuario no encontrado.'], 404);
+        }
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'full_name' => $user->full_name,
+                'role' => $user->role,
+                'must_change_password' => (bool) $user->must_change_password,
+            ],
+        ]);
+    }
+
     public function assignPassword(
         Request $request,
         PasswordAssignmentService $passwordAssignmentService
@@ -98,6 +118,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Contraseña actualizada correctamente.',
+            'must_change_password' => false,
         ]);
     }
 }

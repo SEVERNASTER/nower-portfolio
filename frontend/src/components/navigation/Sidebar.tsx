@@ -5,6 +5,7 @@ import { Tab } from "./Tab";
 import { useUser, useClerk } from "@clerk/clerk-react";
 import { getProfile } from "../../features/profile/profileService";
 import { mockProfile } from "../../data/mockData";
+import { useAuthStatus } from "../../contexts/AuthStatusContext";
 
 // ==========================================
 // SIDEBAR
@@ -38,7 +39,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   setActiveTab,
 }) => {
+  const { mustChangePassword } = useAuthStatus();
+
   const handleNavClick = (name: string) => {
+    if (mustChangePassword && name !== "Contraseña") return;
     setActiveTab(name);
     onClose();
   };
@@ -123,6 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             label={item.name}
             active={activeTab === item.name}
             badge={item.badge}
+            disabled={mustChangePassword}
             onClick={() => handleNavClick(item.name)}
           />
         ))}
@@ -131,13 +136,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         <p className="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
           Configuración
         </p>
-        <Tab icon={Globe} label="Visibilidad Pública" active={false} />
+        <Tab icon={Globe} label="Visibilidad Pública" active={false} disabled={mustChangePassword} />
         {settingsNavItems.map((item) => (
           <Tab
             key={item.name}
             icon={item.icon}
             label={item.name}
             active={activeTab === item.name}
+            disabled={false}
             onClick={() => handleNavClick(item.name)}
           />
         ))}
