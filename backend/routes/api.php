@@ -71,6 +71,8 @@ Route::middleware([ClerkAuth::class])->group(function () {
     Route::get('/portfolio/status', [PortfolioController::class, 'status']);
     Route::post('/portfolio/publish', [PortfolioController::class, 'publish']);
     Route::post('/portfolio/unpublish', [PortfolioController::class, 'unpublish']);
+
+    Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
 });
 
 // ADMIN routes. MUST have Clerk token AND Admin role to enter.

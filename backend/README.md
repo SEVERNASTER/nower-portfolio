@@ -87,6 +87,33 @@ php artisan serve
 
 El backend estará disponible en `http://localhost:8000`.
 
+**Paso 5b: Correo (contraseñas asignadas)**
+
+Al registrarse un usuario nuevo (`sync-user`), se genera una contraseña, se sincroniza con Clerk y se envía por correo.
+
+1. En `.env`, configura SMTP (ejemplo Gmail con [contraseña de aplicación](https://myaccount.google.com/apppasswords)):
+
+```env
+MAIL_MAILER=smtp
+MAIL_SCHEME=tls
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=tu_correo@gmail.com
+MAIL_PASSWORD=xxxx xxxx xxxx xxxx
+MAIL_FROM_ADDRESS="${MAIL_USERNAME}"
+MAIL_FROM_NAME="Nower Portfolio"
+```
+
+2. Reinicia `php artisan serve` tras guardar `.env`.
+
+3. Si el usuario ya existía sin contraseña, envía credenciales manualmente:
+
+```bash
+php artisan password:send usuario@est.umss.edu
+```
+
+Con `MAIL_MAILER=log` (por defecto en desarrollo) el correo no llega al buzón; la contraseña aparece en `storage/logs/laravel.log`.
+
 **Paso 6: Verificación de Funcionamiento**
 
 Para comprobar que el servidor y la base de datos están conectados correctamente, abre tu navegador y visita:
