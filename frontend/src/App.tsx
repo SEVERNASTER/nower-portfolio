@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
 import {
   BrowserRouter,
-  Routes,
-  Route,
   Navigate,
+  Route,
+  Routes,
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
-import DashboardLayout from "./components/layouts/DashboardLayout";
-import { BasicProfile } from "./features/profile/BasicProfile";
-import { ProjectsList } from "./features/projects/ProjectsList";
-import { SkillsList } from "./features/skills/SkillsList";
-import { AdminSection } from "./features/admin/AdminSection";
+import {
+  AuthenticateWithRedirectCallback,
+  SignedIn,
+  SignedOut,
+  useUser,
+} from "@clerk/clerk-react";
 import {
   User,
   FolderGit2,
@@ -23,24 +23,29 @@ import {
   PieChart,
   Award,
   Lock,
+  Globe,
 } from "lucide-react";
-import PasswordSettings from "./features/settings/components/PasswordSettings";
+import DashboardLayout from "./components/layouts/DashboardLayout";
+import { ProtectedAppGate } from "./components/auth/ProtectedAppGate";
 import type { NavItem } from "./components/navigation/Sidebar";
 import { LoginPage } from "./components/pages/LoginPage";
-import { ExperienceList } from "./features/experience/ExperienceList";
 import { RegisterPage } from "./components/pages/RegisterPage";
-import {
-  AuthenticateWithRedirectCallback,
-  useUser,
-} from "@clerk/clerk-react";
+import { BasicProfile } from "./features/profile/BasicProfile";
+import { ProjectsList } from "./features/projects/ProjectsList";
+import { SkillsList } from "./features/skills/SkillsList";
+import { AdminSection } from "./features/admin/AdminSection";
+import { ExperienceList } from "./features/experience/ExperienceList";
 import { AchievementsList } from "./features/achievements/AchievementsList";
+import { PortfolioVisibility } from "./features/portfolio/PortfolioVisibility";
+import { PublicPortfolioPage } from "./features/portfolio/PublicPortfolioPage";
+import { LandingPage } from "./features/landing/LandingPage";
+import PasswordSettings from "./features/settings/components/PasswordSettings";
 import {
   notifyCredentialsEmailSent,
   notifyMandatoryPasswordChange,
   useNotification,
 } from "./contexts/NotificationContext";
 import { AuthStatusProvider, useAuthStatus } from "./contexts/AuthStatusContext";
-import { ProtectedAppGate } from "./components/auth/ProtectedAppGate";
 import type { SyncUserResponse } from "./lib/apiTypes";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api";
@@ -52,6 +57,7 @@ const baseNavItems: NavItem[] = [
   { name: "Habilidades", icon: Code, path: "/skills" },
   { name: "Experiencia", icon: Briefcase, path: "/experience" },
   { name: "Logros", icon: Award, path: "/achievements" },
+  { name: "Visibilidad Pública", icon: Globe, path: "/portfolio/visibility" },
 ];
 
 const settingsNavItems: NavItem[] = [
@@ -66,7 +72,7 @@ const SignedInApp: React.FC = () => {
   const { mustChangePassword, applyMustChangePassword, refresh } = useAuthStatus();
   const [synced, setSynced] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(
-    localStorage.getItem("userRole")
+    localStorage.getItem("userRole"),
   );
 
   React.useEffect(() => {
@@ -78,9 +84,12 @@ const SignedInApp: React.FC = () => {
   React.useEffect(() => {
     if (mustChangePassword) return;
 
+    const isPublicRoute =
+      location.pathname === "/" || location.pathname.startsWith("/p/");
     if (
       userRole === "admin" &&
       !location.pathname.startsWith("/admin") &&
+      !isPublicRoute &&
       !location.pathname.includes("sso-callback")
     ) {
       navigate("/admin/metrics", { replace: true });
@@ -110,11 +119,15 @@ const SignedInApp: React.FC = () => {
   const allNavItems = [...navItems, ...settingsNavItems];
 
   const activeItem = allNavItems.find(
-    (item) => item.path && location.pathname.startsWith(item.path)
+    (item) => item.path && location.pathname.startsWith(item.path),
   );
   const activeTab =
     activeItem?.name ??
-    (mustChangePassword ? "Contraseña" : userRole === "admin" ? "Métricas" : "Perfil Básico");
+    (mustChangePassword
+      ? "Contraseña"
+      : userRole === "admin"
+        ? "Métricas"
+        : "Perfil Básico");
 
   const handleTabChange = (name: string) => {
     const item = allNavItems.find((n) => n.name === name);
@@ -216,7 +229,14 @@ const SignedInApp: React.FC = () => {
                 <Route path="/skills" element={<SkillsList />} />
                 <Route path="/experience" element={<ExperienceList />} />
                 <Route path="/achievements" element={<AchievementsList />} />
-                <Route path={PASSWORD_SETTINGS_PATH} element={<PasswordSettings />} />
+                <Route
+                  path="/portfolio/visibility"
+                  element={<PortfolioVisibility />}
+                />
+                <Route
+                  path={PASSWORD_SETTINGS_PATH}
+                  element={<PasswordSettings />}
+                />
 
                 {userRole === "admin" ? (
                   <Route path="/admin/*" element={<AdminSection />} />
@@ -228,10 +248,16 @@ const SignedInApp: React.FC = () => {
                   path="*"
                   element={
                     <div className="flex flex-col items-center justify-center p-12 text-center h-full">
-                      <Code className="h-8 w-8 text-emerald-500 mb-4" />
+                      <div className="rounded-full bg-slate-100 dark:bg-[#10221C] p-4 mb-4">
+                        <Code className="h-8 w-8 text-emerald-500" />
+                      </div>
                       <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                         Próximamente
                       </h3>
+                      <p className="text-slate-500 dark:text-slate-400 max-w-sm">
+                        Esta sección está en desarrollo y estará disponible
+                        pronto.
+                      </p>
                     </div>
                   }
                 />
@@ -247,6 +273,8 @@ const SignedInApp: React.FC = () => {
 const AppContent: React.FC = () => (
   <Routes>
     <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
+    <Route path="/p/:slug" element={<PublicPortfolioPage />} />
+    <Route path="/" element={<LandingPage />} />
     <Route
       path="/login"
       element={

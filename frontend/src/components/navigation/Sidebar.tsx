@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Moon, Sun, LogOut, Globe, User } from "lucide-react";
+import { X, Moon, Sun, LogOut, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Tab } from "./Tab";
 import { useUser, useClerk } from "@clerk/clerk-react";
@@ -90,6 +90,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const userName = backendName || user?.fullName || mockProfile.fullName;
   const avatarUrl = userImage || user?.imageUrl || undefined;
+  const portfolioItems = navItems.filter(
+    (item) => item.name !== "Visibilidad Pública",
+  );
+  const visibilityItem = navItems.find(
+    (item) => item.name === "Visibilidad Pública",
+  );
 
   return (
     <aside
@@ -105,7 +111,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           <h1 className="text-2xl font-black tracking-tight text-[#0f224a] dark:text-white leading-none">
             NOWER
           </h1>
-          {/* Changed mt-0.5 to -mt-1 to pull the text up tightly against the H1 */}
           <p className="-mt-6 text-[9px] sm:text-[10px] md:block hidden font-semibold text-slate-500 tracking-widest uppercase">
             Efficient Web Performance
           </p>
@@ -115,12 +120,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* Navigation Links */}
       <nav className="flex-1 space-y-1 px-4 py-6 overflow-y-auto">
         <p className="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
           Gestión de Portafolio
         </p>
-        {navItems.map((item) => (
+        {portfolioItems.map((item) => (
           <Tab
             key={item.name}
             icon={item.icon}
@@ -132,24 +136,47 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
         ))}
 
-        <div className="mt-8 mb-4 border-t border-slate-200 dark:border-slate-800/60" />
-        <p className="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-          Configuración
-        </p>
-        <Tab icon={Globe} label="Visibilidad Pública" active={false} disabled={mustChangePassword} />
-        {settingsNavItems.map((item) => (
-          <Tab
-            key={item.name}
-            icon={item.icon}
-            label={item.name}
-            active={activeTab === item.name}
-            disabled={false}
-            onClick={() => handleNavClick(item.name)}
-          />
-        ))}
+        {visibilityItem && (
+          <>
+            <div className="mt-8 mb-4 border-t border-slate-200 dark:border-slate-800/60" />
+            <p className="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+              Configuración
+            </p>
+            <Tab
+              icon={visibilityItem.icon}
+              label={visibilityItem.name}
+              active={activeTab === visibilityItem.name}
+              badge={visibilityItem.badge}
+              disabled={mustChangePassword}
+              onClick={() => handleNavClick(visibilityItem.name)}
+            />
+          </>
+        )}
+
+        {settingsNavItems.length > 0 && (
+          <>
+            {!visibilityItem && (
+              <>
+                <div className="mt-8 mb-4 border-t border-slate-200 dark:border-slate-800/60" />
+                <p className="px-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+                  Configuración
+                </p>
+              </>
+            )}
+            {settingsNavItems.map((item) => (
+              <Tab
+                key={item.name}
+                icon={item.icon}
+                label={item.name}
+                active={activeTab === item.name}
+                disabled={false}
+                onClick={() => handleNavClick(item.name)}
+              />
+            ))}
+          </>
+        )}
       </nav>
 
-      {/* Bottom Actions */}
       <div className="border-t border-slate-200 dark:border-slate-800/60 p-4">
         <div className="mb-4 flex items-center justify-between px-2">
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">

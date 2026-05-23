@@ -23,6 +23,7 @@ Route::get('/health', function () {
 
 // Explore Portfolios (Public Route)
 Route::get('/explore/portfolios', [ExploreController::class, 'index']);
+Route::get('/public/portfolios/{slug}', [PortfolioController::class, 'showPublic']);
 
 // PROTECTED routes. MUST have a Clerk token to enter.
 Route::post('/sync-user', [UserController::class, 'sync']);
@@ -74,6 +75,7 @@ Route::middleware([ClerkAuth::class, \App\Http\Middleware\EnsurePasswordChanged:
 
     // Portfolio Publish/Unpublish
     Route::get('/portfolio/status', [PortfolioController::class, 'status']);
+    Route::get('/portfolio/preview', [PortfolioController::class, 'preview']);
     Route::post('/portfolio/publish', [PortfolioController::class, 'publish']);
     Route::post('/portfolio/unpublish', [PortfolioController::class, 'unpublish']);
 });

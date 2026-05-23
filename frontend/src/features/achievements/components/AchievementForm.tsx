@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { X, Upload, FileText } from "lucide-react";
+import { X, Upload, FileText, Award, Building2, Calendar, AlignLeft } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 
 export interface AchievementFile {
@@ -58,7 +58,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  const maxSize = 2 * 1024 * 1024; // 2MB — mismo límite que foto de perfil
 
   useEffect(() => {
     setExistingFiles(initialFiles);
@@ -132,7 +132,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         return;
       }
       if (file.size > maxSize) {
-        errors.push(`El archivo ${file.name} excede el tamaño máximo de 5 MB.`);
+        errors.push(`El archivo ${file.name} excede el tamaño máximo de 2 MB.`);
         return;
       }
 
@@ -193,9 +193,11 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     const newErrors: any = {};
 
     if (!title.trim()) newErrors.title = 'El título es obligatorio';
+    else if (title.length > 100) newErrors.title = 'El título no puede exceder 100 caracteres';
     if (!institution.trim()) newErrors.institution = 'La institución es obligatoria';
+    else if (institution.length > 70) newErrors.institution = 'La institución no puede exceder 70 caracteres';
     if (!obtainedAt) newErrors.obtainedAt = 'La fecha de obtención es obligatoria';
-    if (description.length > 1000) newErrors.description = 'La descripción no puede exceder 1000 caracteres';
+    if (description.length > 500) newErrors.description = 'La descripción no puede exceder 500 caracteres';
     if (existingFiles.length + selectedFiles.length === 0) newErrors.evidence = 'Debes agregar al menos un archivo de evidencia';
 
     if (Object.keys(newErrors).length > 0) {
@@ -212,8 +214,8 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
       if (description.trim()) {
         formData.append('description', description.trim());
       }
-      selectedFiles.forEach((file, index) => {
-        formData.append(`evidence[${index}]`, file.file);
+      selectedFiles.forEach((fileEntry) => {
+        formData.append('evidence[]', fileEntry.file);
       });
       removedFileIds.forEach((id) => {
         formData.append('remove_file_ids[]', id);
@@ -236,70 +238,101 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
       className="space-y-6 bg-white dark:bg-[#17262C] p-6 rounded-2xl border border-slate-200 dark:border-slate-800/60 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300"
     >
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Título del Logro <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className={`w-full p-2.5 rounded-xl border ${errors.title ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
-          placeholder="Ej: Certificación en Desarrollo Web"
-        />
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+            Título del Logro <span className="text-red-500">*</span>
+          </label>
+          <span className={`text-xs font-semibold ${title.length > 90 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+            {title.length}/100
+          </span>
+        </div>
+        <div className="relative">
+          <Award className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={title}
+            maxLength={100}
+            onChange={(e) => setTitle(e.target.value)}
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${errors.title ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
+            placeholder="Ej: Certificación en Desarrollo Web"
+          />
+        </div>
         {errors.title && (
           <p className="text-xs text-red-500">{errors.title}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Institución <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          value={institution}
-          onChange={(e) => setInstitution(e.target.value)}
-          className={`w-full p-2.5 rounded-xl border ${errors.institution ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
-          placeholder="Ej: Universidad Nacional, Google, etc."
-        />
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+            Institución <span className="text-red-500">*</span>
+          </label>
+          <span className={`text-xs font-semibold ${institution.length > 60 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+            {institution.length}/70
+          </span>
+        </div>
+        <div className="relative">
+          <Building2 className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={institution}
+            maxLength={70}
+            onChange={(e) => setInstitution(e.target.value)}
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${errors.institution ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
+            placeholder="Ej: Universidad Nacional, Google, etc."
+          />
+        </div>
         {errors.institution && (
           <p className="text-xs text-red-500">{errors.institution}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
           Fecha de Obtención <span className="text-red-500">*</span>
         </label>
-        <input
-          type="date"
-          value={obtainedAt}
-          onChange={(e) => setObtainedAt(e.target.value)}
-          className={`w-full p-2.5 rounded-xl border ${errors.obtainedAt ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
-        />
+        <div className="relative">
+          <Calendar className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          <input
+            type="date"
+            value={obtainedAt}
+            max="9999-12-31"
+            onChange={(e) => setObtainedAt(e.target.value)}
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${errors.obtainedAt ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
+          />
+        </div>
         {errors.obtainedAt && (
           <p className="text-xs text-red-500">{errors.obtainedAt}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Descripción <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={4}
-          className={`w-full p-2.5 rounded-xl border ${errors.description ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
-          placeholder="Describe brevemente el logro..."
-        />
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+            Descripción <span className="text-red-500">*</span>
+          </label>
+          <span className={`text-xs font-semibold ${description.length > 450 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+            {description.length}/500
+          </span>
+        </div>
+        <div className="relative">
+          <AlignLeft className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            maxLength={500}
+            rows={4}
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${errors.description ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors resize-none`}
+            placeholder="Describe brevemente el logro..."
+          />
+        </div>
         {errors.description && (
           <p className="text-xs text-red-500">{errors.description}</p>
         )}
       </div>
 
       <div className="space-y-3">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
           Evidencia (Certificado o Imagen) <span className="text-red-500">*</span>
         </label>
 
@@ -328,7 +361,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
             </div>
             <span className="mt-4 text-sm font-semibold">Agregar más evidencia</span>
             <span className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-              JPG, PNG, PDF • Máx 5 MB por archivo
+              JPG, PNG, PDF • Máx 2 MB por archivo
             </span>
           </button>
 

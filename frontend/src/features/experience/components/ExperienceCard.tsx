@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MoreVertical, Calendar, MapPin, Building2, Terminal, Pencil, Trash2 } from 'lucide-react';
+import { MoreVertical, Calendar, MapPin, Building2, Terminal, Pencil, Trash2, Laptop } from 'lucide-react';
 import { TechBadge } from './TechBadge';
 
 export interface Experience {
@@ -7,6 +7,7 @@ export interface Experience {
     role: string;
     company: string;
     location: string;
+    modality?: string;
     startDate: string;
     endDate: string;
     current: boolean;
@@ -43,7 +44,7 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp, onEdit, onD
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-5">
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 flex-wrap">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">{exp.role}</h3>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white break-words">{exp.role}</h3>
                             {exp.experienceType === 'academic' && (
                                 <span className="px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400 rounded-full border border-violet-200 dark:border-violet-500/20">
                                     Académica
@@ -65,9 +66,9 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp, onEdit, onD
                         {/* COLORFUL Metadata Badges */}
                         <div className="flex flex-wrap items-center gap-2 mt-2">
                             {/* AMBER: Company */}
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/5 text-xs font-bold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/10">
-                                <Building2 className="h-3.5 w-3.5" />
-                                {exp.company}
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/5 text-xs font-bold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/10 break-words max-w-full">
+                                <Building2 className="h-3.5 w-3.5 shrink-0" />
+                                <span className="break-words">{exp.company}</span>
                             </div>
 
                             {/* INDIGO: Date */}
@@ -75,6 +76,14 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp, onEdit, onD
                                 <Calendar className="h-3.5 w-3.5" />
                                 {exp.startDate} — {exp.endDate}
                             </div>
+
+                            {/* Modalidad */}
+                            {exp.modality && (
+                                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/30 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600/30">
+                                    <Laptop className="h-3.5 w-3.5 shrink-0" />
+                                    <span>{exp.modality}</span>
+                                </div>
+                            )}
 
                             {/* ROSE: Location */}
                             {exp.location.trim() !== '' && (
@@ -128,7 +137,7 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({ exp, onEdit, onD
                    
 </div>                
 
-                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6 break-words whitespace-pre-wrap">
                     {exp.description}
                 </p>
 

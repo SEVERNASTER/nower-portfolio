@@ -47,28 +47,46 @@ function formatMonthYear(iso: string | null): string {
     return `${MONTHS_SHORT[mi]} ${y}`;
 }
 
-/** Separa tecnologías guardadas como bloque final `Tecnologías: …` dentro de `description`. */
-function splitDescriptionAndTechnologies(raw: string | null): { text: string; skills: string[] } {
+/** Separa tecnologías, modalidad y ubicación guardadas como bloques dentro de `description`. */
+function parseDescription(raw: string | null): { text: string; skills: string[]; modality?: string; location?: string } {
     if (!raw) return { text: '', skills: [] };
-    const idx = raw.search(/\n\nTecnologías:\s*/i);
-    if (idx === -1) return { text: raw.trim(), skills: [] };
-    const text = raw.slice(0, idx).trim();
-    const rest = raw.slice(idx).replace(/\n\nTecnologías:\s*/i, '');
-    const skills = rest
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-    return { text, skills };
+
+    let modality: string | undefined;
+    let location: string | undefined;
+    const cleanLines: string[] = [];
+
+    raw.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('Modalidad:')) {
+            modality = trimmed.replace('Modalidad:', '').trim();
+        } else if (trimmed.startsWith('Ubicación:')) {
+            location = trimmed.replace('Ubicación:', '').trim();
+        } else if (/^Tecnologías:\s*/i.test(trimmed)) {
+            // handled below
+        } else {
+            cleanLines.push(trimmed);
+        }
+    });
+
+    // Extract skills from last Tecnologías block (may also appear as \n\nTecnologías:)
+    const techMatch = raw.match(/\n\nTecnologías:\s*(.+)/i);
+    const skills = techMatch
+        ? techMatch[1].split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+
+    const text = cleanLines.filter(Boolean).join('\n').trim();
+    return { text, skills, modality, location };
 }
 
 export function mapApiExperienceToCard(row: ApiExperienceRow): Experience {
     const current = row.end_date == null;
-    const { text, skills } = splitDescriptionAndTechnologies(row.description);
+    const { text, skills, modality, location } = parseDescription(row.description);
 return {
     id: String(row.id),
     role: row.title,
     company: row.institution,
-    location: '',
+    location: location ?? '',
+    modality,
     startDate: row.start_date ? formatMonthYear(row.start_date) : '—',
     endDate: current ? 'Actual' : formatMonthYear(row.end_date),
     current,
@@ -81,6 +99,7 @@ return {
     rawEndDate: row.end_date,
 };
 }
+
 
 export function parseExperienceListPayload(data: unknown): ApiExperienceRow[] {
     if (Array.isArray(data)) {

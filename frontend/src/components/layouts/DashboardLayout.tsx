@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  Eye,
+  Menu,
+} from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { Menu, Eye } from 'lucide-react';
+
 import { ErrorBoundary } from '../core/ErrorBoundary';
-import { Sidebar } from '../navigation/Sidebar';
 import type { NavItem } from '../navigation/Sidebar';
+import { Sidebar } from '../navigation/Sidebar';
 import { Button } from '../ui/Button';
 
 // ==========================================
@@ -28,7 +36,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
     const [isDark, setIsDark] = useState<boolean>(true);
     const location = useLocation();
-
     useEffect(() => {
         if (isDark) {
             document.documentElement.classList.add('dark');
@@ -73,7 +80,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
                         {!location.pathname.startsWith('/admin') && (
                             <Button variant="secondary" icon={Eye} className="hidden sm:flex">
-                                Preview Público
+                                    Preview Público
                             </Button>
                         )}
                     </header>

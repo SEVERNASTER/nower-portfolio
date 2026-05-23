@@ -17,9 +17,11 @@ class ExploreService
                 'user:id,full_name,profession,city,imagen_profile,bio',
                 'user.skills:id,user_id,name,type',
                 'user.projects:id,user_id,title,tags',
+                'user.experiences:id,user_id,type,title,institution,start_date,end_date,description',
             ])
             ->where('status', 'published')
-            ->where('is_public', true);
+            ->where('is_public', true)
+            ->where('review_status', 'approved');
 
         // Filter by user attributes (search, city)
         if (!empty($filters['search']) || !empty($filters['city'])) {

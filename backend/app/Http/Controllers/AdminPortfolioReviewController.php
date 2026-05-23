@@ -14,7 +14,7 @@ class AdminPortfolioReviewController extends Controller
         $request->validate([
             'portfolio_id' => 'required|exists:portfolios,id',
             'status' => 'required|in:approved,rejected',
-            'comment' => 'nullable|string',
+            'comment' => 'required_if:status,rejected|nullable|string',
         ]);
 
         $portfolio = Portfolio::with('user')
@@ -36,23 +36,31 @@ class AdminPortfolioReviewController extends Controller
         // Si se rechaza → ocultar
         if ($request->status === 'rejected') {
 
-            $portfolio->status = 'draft';
+            $portfolio->status = 'unpublished';
 
             $portfolio->is_public = false;
         }
 
         $portfolio->save();
 
-        // Enviar correo automático
-        Mail::to($portfolio->user->email)
-            ->send(new PortfolioReviewMail(
-                $portfolio->user,
-                $request->status,
-                $request->comment
-            ));
+        // Enviar correo automático solo si se aprueba
+        if ($request->status === 'approved') {
+            try {
+                Mail::to($portfolio->user->email)
+                    ->send(new PortfolioReviewMail(
+                        $portfolio->user,
+                        $request->status,
+                        $request->comment
+                    ));
+            } catch (\Exception $e) {
+                // Registrar el error pero no detener la ejecución si falla el correo
+                \Log::error('Error al enviar correo de aprobación: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'message' => 'Portfolio reviewed successfully',
+            'portfolio' => $portfolio,
         ]);
     }
 }

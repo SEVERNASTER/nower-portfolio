@@ -31,12 +31,15 @@ function authHeaders(token: string | null): HeadersInit {
 
 function handleError(res: Response, json: unknown): never {
   const err = json as { message?: string; errors?: Record<string, string[]>; error?: string };
-  const parts = [
-    err.message,
-    err.error,
-    err.errors ? JSON.stringify(err.errors) : undefined,
-  ].filter(Boolean);
-  throw new Error(parts.join(' ') || `HTTP ${res.status}`);
+
+  if (err.errors) {
+    const fieldMessages = Object.values(err.errors).flat().filter(Boolean);
+    if (fieldMessages.length > 0) {
+      throw new Error(fieldMessages.join(' '));
+    }
+  }
+
+  throw new Error(err.message || err.error || `HTTP ${res.status}`);
 }
 
 export async function fetchAchievements(token: string | null): Promise<Achievement[]> {

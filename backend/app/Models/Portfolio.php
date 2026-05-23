@@ -18,10 +18,14 @@ class Portfolio extends Model
         'review_status',
         'review_comment',
         'reviewed_at',
+
+        'template_key',
+        'public_slug',
     ];
 
     protected $casts = [
         'is_public' => 'boolean',
+        'reviewed_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

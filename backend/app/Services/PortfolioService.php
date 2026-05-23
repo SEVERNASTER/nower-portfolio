@@ -5,9 +5,27 @@ namespace App\Services;
 use App\Models\Portfolio;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class PortfolioService
 {
+    public const STATUS_UNPUBLISHED = 'unpublished';
+    public const STATUS_PENDING_REVIEW = 'pending_review';
+    public const STATUS_PUBLISHED = 'published';
+
+    public const TEMPLATE_CLASSIC = 'classic';
+    public const TEMPLATE_MODERN = 'modern';
+    public const TEMPLATE_CREATIVE = 'creative';
+
+    public static function allowedTemplates(): array
+    {
+        return [
+            self::TEMPLATE_CLASSIC,
+            self::TEMPLATE_MODERN,
+            self::TEMPLATE_CREATIVE,
+        ];
+    }
+
     /**
      * Get or create the user's portfolio.
      */
@@ -15,57 +33,77 @@ class PortfolioService
     {
         return $user->portfolio()->firstOrCreate(
             ['user_id' => $user->id],
-            ['status' => 'draft', 'is_public' => false]
+            [
+                'status' => self::STATUS_UNPUBLISHED,
+                'is_public' => false,
+                'review_status' => null,
+                'review_comment' => null,
+                'reviewed_at' => null,
+                'template_key' => self::TEMPLATE_CLASSIC,
+                'public_slug' => $this->generateUniqueSlug($user),
+            ]
         );
     }
 
     /**
-     * Publish the user's portfolio.
+     * envia el portafolio a revision del admin,no se publica directamente
      */
-    public function publish(User $user): Portfolio
+    public function publish(User $user, string $templateKey): Portfolio
     {
         try {
             $portfolio = $this->getPortfolioForUser($user);
-            
-            // Domain rule: Prevent unneeded updates if already published
-            if ($portfolio->status === 'published' && $portfolio->is_public === true) {
-                return $portfolio;
-            }
 
             $portfolio->update([
-                'status' => 'published',
-                'is_public' => true,
+                'status' => self::STATUS_PENDING_REVIEW,
+                'is_public' => false,
+                'review_status' => 'pending',
+                'review_comment' => null,
+                'reviewed_at' => null,
+                'template_key' => $templateKey,
+                'public_slug' => $portfolio->public_slug ?: $this->generateUniqueSlug($user),
             ]);
 
-            return $portfolio;
+            return $portfolio->fresh();
         } catch (\Exception $e) {
-            Log::error("Failed to publish portfolio for user {$user->id}: {$e->getMessage()}");
+            Log::error("Failed to send portfolio to review for user {$user->id}: {$e->getMessage()}");
             throw $e;
         }
     }
 
     /**
-     * Unpublish the user's portfolio.
+     * despublica portafolio, ya no queda publico ni pendiente de revision
      */
     public function unpublish(User $user): Portfolio
     {
         try {
             $portfolio = $this->getPortfolioForUser($user);
 
-            // Domain rule: Prevent unneeded updates if already unpublished
-            if ($portfolio->status === 'draft' && $portfolio->is_public === false) {
-                return $portfolio;
-            }
-
             $portfolio->update([
-                'status' => 'draft',
+                'status' => self::STATUS_UNPUBLISHED,
                 'is_public' => false,
+                'review_status' => null,
+                'review_comment' => null,
+                'reviewed_at' => null,
             ]);
 
-            return $portfolio;
+            return $portfolio->fresh();
         } catch (\Exception $e) {
             Log::error("Failed to unpublish portfolio for user {$user->id}: {$e->getMessage()}");
             throw $e;
         }
+    }
+
+    private function generateUniqueSlug(User $user): string
+    {
+        $base = Str::slug($user->full_name ?: 'usuario') ?: 'usuario';
+        $slug = $base;
+        $counter = 1;
+
+        while (Portfolio::where('public_slug', $slug)->exists()) {
+            $slug = $base . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }

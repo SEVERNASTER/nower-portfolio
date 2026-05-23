@@ -19,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
       signUpUrl="/register"
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/dashboard"
+      afterSignOutUrl="/"
     >
       <NotificationProvider>
         <App />

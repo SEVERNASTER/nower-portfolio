@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Plus, ChevronDown } from "lucide-react";
+import { X, Plus, ChevronDown, Folder, AlignLeft, Terminal, Link } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Skill, Project } from "../../../data/mockData";
 import { PlatformIcon, PREDEFINED_PLATFORMS } from "./PlatformIcon";
@@ -208,10 +208,17 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     e.preventDefault();
     const newErrors: any = {};
 
-    if (!title.trim()) newErrors.title = "El título es requerido";
-    if (description.length < 20)
-      newErrors.description =
-        "La descripción debe tener al menos 20 caracteres";
+    if (!title.trim()) {
+      newErrors.title = "El título es requerido";
+    } else if (title.length > 100) {
+      newErrors.title = "El título no puede superar los 100 caracteres";
+    }
+
+    if (description.length < 20) {
+      newErrors.description = "La descripción debe tener al menos 20 caracteres";
+    } else if (description.length > 500) {
+      newErrors.description = "La descripción no puede superar los 500 caracteres";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -240,37 +247,55 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       className="space-y-6 bg-white dark:bg-[#17262C] p-6 rounded-2xl border border-slate-200 dark:border-slate-800/60 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300"
     >
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Título del Proyecto *
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className={`w-full p-2.5 rounded-xl border ${errors.title ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
-          placeholder="Ej: E-commerce Platform"
-        />
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+            Título del Proyecto <span className="text-red-500">*</span>
+          </label>
+          <span className={`text-xs font-semibold ${title.length > 90 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+            {title.length}/100
+          </span>
+        </div>
+        <div className="relative">
+          <Folder className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={title}
+            maxLength={100}
+            onChange={(e) => setTitle(e.target.value)}
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${errors.title ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
+            placeholder="Ej: E-commerce Platform"
+          />
+        </div>
         {errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Descripción *
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={4}
-          className={`w-full p-2.5 rounded-xl border ${errors.description ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
-          placeholder="Describe los retos y soluciones del proyecto..."
-        />
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+            Descripción <span className="text-red-500">*</span>
+          </label>
+          <span className={`text-xs font-semibold ${description.length > 450 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+            {description.length}/500
+          </span>
+        </div>
+        <div className="relative">
+          <AlignLeft className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          <textarea
+            value={description}
+            maxLength={500}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${errors.description ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors resize-none`}
+            placeholder="Describe los retos y soluciones del proyecto..."
+          />
+        </div>
         {errors.description && (
           <p className="text-xs text-red-500">{errors.description}</p>
         )}
       </div>
 
       <div className="space-y-3">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
           Tecnologías del Proyecto (Selecciona de tus Skills)
         </label>
 
@@ -299,19 +324,22 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
         {/* Input opcional por si quieres añadir algo que NO esté en tus skills generales */}
         <div className="flex gap-2 mt-4">
-          <input
-            type="text"
-            value={techInput}
-            onChange={(e) => setTechInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addTag();
-              }
-            }}
-            placeholder="Otra tecnología (Ej: AWS, Docker...)"
-            className="flex-1 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700"
-          />
+          <div className="relative flex-1">
+            <Terminal className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={techInput}
+              onChange={(e) => setTechInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addTag();
+                }
+              }}
+              placeholder="Otra tecnología (Ej: AWS, Docker...)"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors"
+            />
+          </div>
 
           <Button type="button" onClick={addTag} variant="secondary">
             <Plus className="h-5 w-5" />
@@ -347,7 +375,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       </div>
 
       <div className="space-y-3">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
           Enlaces de Referencia
         </label>
 
@@ -407,23 +435,26 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           )}
 
           <div className="flex-1 flex flex-col gap-1">
-            <input
-              type="text"
-              value={currentUrl}
-              onChange={(e) => handleUrlChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addLink();
-                }
-              }}
-              placeholder="https://..."
-              className={`w-full p-2.5 rounded-xl border bg-transparent dark:text-white outline-none transition-colors ${
-                urlError 
-                  ? "border-red-500 focus:border-red-600" 
-                  : "border-slate-200 dark:border-slate-700 focus:border-emerald-500"
-              }`}
-            />
+            <div className="relative">
+              <Link className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={currentUrl}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addLink();
+                  }
+                }}
+                placeholder="https://..."
+                className={`w-full pl-10 pr-4 py-2.5 rounded-xl border bg-transparent dark:text-white outline-none transition-colors ${
+                  urlError 
+                    ? "border-red-500 focus:border-red-600" 
+                    : "border-slate-200 dark:border-slate-700 focus:border-emerald-500"
+                }`}
+              />
+            </div>
             {urlError && (
               <span className="text-[10px] font-medium text-red-500 ml-1">
                 {urlError}
