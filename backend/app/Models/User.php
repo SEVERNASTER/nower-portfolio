@@ -42,6 +42,13 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'must_change_password' => 'boolean',
+        ];
+    }
+
     /**
      * Get the projects for the user.
      */

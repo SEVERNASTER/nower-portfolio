@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\CloudinaryService;
+use App\Services\PasswordAssignmentService;
 use App\Services\SocialLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +19,7 @@ class UserController extends Controller
         $this->socialLinkService = $socialLinkService;
     }
 
-    public function sync(Request $request)
+    public function sync(Request $request, PasswordAssignmentService $passwordAssignmentService)
     {
         try {
             if ($request->input('social_links') === '') {
@@ -115,6 +116,22 @@ class UserController extends Controller
 
             $user->save();
 
+            $wasRecentlyCreated = $user->wasRecentlyCreated;
+            $credentialsEmailSent = false;
+
+            if ($passwordAssignmentService->shouldAssignPassword($user, $wasRecentlyCreated)) {
+                try {
+                    $passwordAssignmentService->assign($user);
+                    $credentialsEmailSent = true;
+                    $user->refresh();
+                } catch (\Throwable $e) {
+                    Log::error('No se pudo asignar/enviar contraseña al sincronizar usuario', [
+                        'user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             if ($request->exists('social_links')) {
                 $links = $request->input('social_links') ?? [];
 
@@ -173,7 +190,10 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Usuario sincronizado correctamente',
+                'message' => $credentialsEmailSent
+                    ? 'Usuario sincronizado. La nueva contraseña fue enviada a su bandeja de entrada.'
+                    : 'Usuario sincronizado correctamente',
+                'credentials_email_sent' => $credentialsEmailSent,
                 'user'    => $user->load('socialLinks'),
             ]);
 

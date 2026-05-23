@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import {
   Briefcase,
   Code2,
@@ -51,7 +52,7 @@ interface PortfolioCard {
   updated_at: string;
 }
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api';
 
 // ─── Helper: Cumulative Work Experience Year Calculator ────────────────────────
 
@@ -148,6 +149,12 @@ const PortfolioCardItem: React.FC<{ portfolio: PortfolioCard }> = ({ portfolio }
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isLoaded, isSignedIn } = useAuth();
+
+  const handleAuthClick = () => {
+    if (!isLoaded) return;
+    navigate(isSignedIn ? '/dashboard' : '/login');
+  };
 
   // Dark Mode State
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -199,7 +206,11 @@ export const LandingPage: React.FC = () => {
         const res = await fetch(`${API_BASE}/explore/portfolios?per_page=1000`);
         if (!res.ok) throw new Error('Error al cargar portafolios');
         const data = await res.json();
-        setPortfolios(data.data || []);
+        setPortfolios(
+          (data.data || []).filter(
+            (p: PortfolioCard) => Boolean(p.public_slug),
+          ),
+        );
       } catch (err) {
         showToast('error', 'Error al cargar los perfiles de talentos.');
       } finally {
@@ -604,11 +615,13 @@ export const LandingPage: React.FC = () => {
               {isDark ? <Moon className="absolute left-1.5 h-3.5 w-3.5 text-slate-400" /> : <Sun className="absolute right-1.5 h-3.5 w-3.5 text-amber-500" />}
             </button>
             <button
-              onClick={() => navigate('/login')}
-              className="flex items-center gap-2 px-6 py-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-[#10B981] text-[#34d399] hover:text-white text-xs font-black uppercase tracking-wider shadow-[0_2px_10px_rgba(16,185,129,0.05)] hover:shadow-[0_4px_18px_rgba(16,185,129,0.25)] transition-all duration-300 active:scale-[0.98] cursor-pointer group"
+              type="button"
+              onClick={handleAuthClick}
+              disabled={!isLoaded}
+              className="flex items-center gap-2 px-6 py-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-[#10B981] text-[#34d399] hover:text-white text-xs font-black uppercase tracking-wider shadow-[0_2px_10px_rgba(16,185,129,0.05)] hover:shadow-[0_4px_18px_rgba(16,185,129,0.25)] transition-all duration-300 active:scale-[0.98] cursor-pointer group disabled:opacity-50 disabled:cursor-wait"
             >
               <LogIn className="h-4 w-4 text-[#34d399] group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-              <span>Iniciar sesión</span>
+              <span>{isSignedIn ? 'Ir al panel' : 'Iniciar sesión'}</span>
             </button>
           </div>
         </div>

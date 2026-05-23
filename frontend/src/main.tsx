@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ClerkProvider } from '@clerk/clerk-react'
+import { NotificationProvider } from './contexts/NotificationContext'
 import './index.css'
 import App from './App'
 
@@ -16,11 +17,13 @@ createRoot(document.getElementById('root')!).render(
       publishableKey={PUBLISHABLE_KEY}
       signInUrl="/login"
       signUpUrl="/register"
-      signInFallbackRedirectUrl="/profile"
-      signUpFallbackRedirectUrl="/profile"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
       afterSignOutUrl="/"
     >
-      <App />
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
     </ClerkProvider>
   </StrictMode>,
 )

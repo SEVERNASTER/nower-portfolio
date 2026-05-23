@@ -86,7 +86,7 @@ export const RegisterPage: React.FC = () => {
       // 2. If successful, set the session active and redirect
       if (completeSignUp.status === "complete") {
         await setActive({ session: completeSignUp.createdSessionId });
-        navigate("/profile");
+        navigate("/dashboard", { replace: true });
       } else {
         console.error(JSON.stringify(completeSignUp, null, 2));
         setError("La verificación no está completa. Intenta de nuevo.");

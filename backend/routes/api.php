@@ -25,6 +25,9 @@ Route::get('/health', function () {
 Route::get('/explore/portfolios', [ExploreController::class, 'index']);
 Route::get('/public/portfolios/{slug}', [PortfolioController::class, 'showPublic']);
 
+// Login con email/contraseña (validación local + token Clerk)
+Route::post('/auth/login', [AuthController::class, 'login']);
+
 // PROTECTED routes. MUST have a Clerk token to enter.
 Route::post('/sync-user', [UserController::class, 'sync']);
 
@@ -33,6 +36,11 @@ Route::put('/profile', [ProfileController::class, 'updateProfile']);
 Route::put('/profile/contact', [ContactController::class, 'updateContact']);
 
 Route::middleware([ClerkAuth::class])->group(function () {
+    Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+});
+
+Route::middleware([ClerkAuth::class, \App\Http\Middleware\EnsurePasswordChanged::class])->group(function () {
 
     Route::get('/perfil', function (Request $request) {
         $clerkId = $request->attributes->get('clerk_user_id');
@@ -76,7 +84,11 @@ Route::middleware([ClerkAuth::class])->group(function () {
 });
 
 // ADMIN routes. MUST have Clerk token AND Admin role to enter.
-Route::middleware([\App\Http\Middleware\ClerkAuth::class, \App\Http\Middleware\AdminAuth::class])->group(function () {
+Route::middleware([
+    ClerkAuth::class,
+    \App\Http\Middleware\EnsurePasswordChanged::class,
+    \App\Http\Middleware\AdminAuth::class,
+])->group(function () {
 
     Route::get('/admin/users-with-projects', [AdminDashboardController::class, 'getUsersWithProjects']);    
     // Endpoint para frontend de verificación si el AdminAuth es exitoso

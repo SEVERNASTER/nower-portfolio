@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Lock, Layers, ShieldCheck } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useSignIn  } from "@clerk/clerk-react";
+import { useSignIn } from "@clerk/clerk-react";
+import { loginWithPassword } from "../../features/auth/authApi";
 
 
 export const LoginPage: React.FC = () => {
@@ -10,6 +11,7 @@ export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleAuthLoading, setIsGoogleAuthLoading] = useState(false);
   const [isMicrosoftAuthLoading, setIsMicrosoftAuthLoading] = useState(false);
   const navigate = useNavigate();
@@ -29,40 +31,79 @@ export const LoginPage: React.FC = () => {
     }
   }, [searchParams]);
 
-  // Initialize Clerk's signIn object
-  const { signIn, isLoaded } = useSignIn();
+  const { signIn, setActive, isLoaded } = useSignIn();
 
+  const goAfterLogin = () => navigate("/dashboard", { replace: true });
 
-  // Handle Custom Email/Password Login via Clerk
+  const getClerkError = (err: unknown) => {
+    const clerkErr = err as {
+      errors?: Array<{ code?: string; message?: string; longMessage?: string }>;
+    };
+    return clerkErr.errors?.[0];
+  };
+
+  const finishSignIn = async (
+    result: { status: string | null; createdSessionId: string | null },
+  ) => {
+    if (result.status === "complete" && result.createdSessionId) {
+      await setActive({ session: result.createdSessionId });
+      goAfterLogin();
+      return true;
+    }
+    if (result.status === "needs_second_factor") {
+      setError("Revisa tu correo para completar la verificación de seguridad.");
+      return true;
+    }
+    return false;
+  };
+
+  // Email/password: validar en backend (BD local) y abrir sesión Clerk con token ticket
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded) return;
+    if (!isLoaded || !signIn) return;
     setError("");
+    setIsSubmitting(true);
+
+    const trimmedEmail = email.trim();
 
     try {
-      const result = await signIn.create({
-        identifier: email,
+      const { sign_in_token, role } = await loginWithPassword(
+        trimmedEmail,
         password,
+      );
+
+      if (role) {
+        localStorage.setItem("userRole", role);
+      }
+
+      const signInAttempt = await signIn.create({
+        strategy: "ticket",
+        ticket: sign_in_token,
       });
 
-      if (result.status === "complete") {
-        navigate("/profile");
-      } else {
-        console.log(result);
+      if (!(await finishSignIn(signInAttempt))) {
         setError("Se requiere un paso adicional para iniciar sesión.");
       }
-    } catch (err: any) {
-      // Check for Clerk's domain related error or any other authentication error
-      const firstError = err.errors?.[0];
-      const errorMessage = firstError?.message || "";
-
-      if (firstError?.code === "form_identifier_not_allowed" || errorMessage.includes("domain")) {
-        setError(`Este correo no tiene permisos para iniciar sesión.`);
-      } else if (errorMessage.toLowerCase().includes("strategy")) {
-        setError("Tu cuenta está vinculada a Google o Microsoft. Por favor, usa el botón correspondiente para entrar.");
-      } else {
-        setError(firstError?.message || "Credenciales inválidas. Intente de nuevo.");
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message) {
+        setError(err.message);
+        return;
       }
+
+      const firstError = getClerkError(err);
+      const errorMessage =
+        firstError?.longMessage || firstError?.message || "";
+
+      if (
+        firstError?.code === "form_identifier_not_allowed" ||
+        errorMessage.includes("domain")
+      ) {
+        setError("Este correo no tiene permisos para iniciar sesión.");
+      } else {
+        setError(errorMessage || "Credenciales inválidas. Intente de nuevo.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -74,7 +115,7 @@ export const LoginPage: React.FC = () => {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/profile",
+        redirectUrlComplete: "/dashboard",
       });
     } catch (err) {
       setError("Error en autenticación con Google.");
@@ -90,7 +131,7 @@ export const LoginPage: React.FC = () => {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_microsoft",
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/profile",
+        redirectUrlComplete: "/dashboard",
       });
     } catch (err) {
       setError("Error en autenticación con Microsoft.");
@@ -260,9 +301,10 @@ export const LoginPage: React.FC = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3.5 transition-all shadow-md shadow-purple-900/10 hover:shadow-purple-900/30 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-[#0B1120]"
+                disabled={isSubmitting || !isLoaded}
+                className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3.5 transition-all shadow-md shadow-purple-900/10 hover:shadow-purple-900/30 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-[#0B1120] disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Iniciar Sesión
+                {isSubmitting ? "Iniciando sesión..." : "Iniciar Sesión"}
               </button>
               <p className="text-sm text-center mt-6">
                 ¿No tienes cuenta?{" "}
