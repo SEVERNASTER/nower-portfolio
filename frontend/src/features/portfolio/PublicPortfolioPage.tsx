@@ -15,7 +15,11 @@ export const PublicPortfolioPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug) {
+      setError('Este portafolio no está disponible públicamente.');
+      setLoading(false);
+      return;
+    }
 
     const load = async () => {
       setLoading(true);

@@ -11,6 +11,64 @@ use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
+    /**
+     * Valida email/contraseña en la BD local y devuelve un token Clerk (estrategia ticket).
+     */
+    public function login(Request $request, ClerkService $clerkService)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('email', $validated['email'])->first();
+
+        if (!$user || !$user->password || !Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'message' => 'Credenciales inválidas.',
+            ], 401);
+        }
+
+        if (!$user->clerk_id) {
+            return response()->json([
+                'message' => 'Tu cuenta no está vinculada. Inicia sesión con Google o contacta al administrador.',
+            ], 422);
+        }
+
+        if (!config('services.clerk.secret_key')) {
+            Log::error('login: CLERK_SECRET_KEY ausente en backend/.env');
+
+            return response()->json([
+                'message' => 'El servidor no tiene configurada CLERK_SECRET_KEY. Añádela en backend/.env y reinicia php artisan serve.',
+            ], 503);
+        }
+
+        try {
+            $signInToken = $clerkService->createSignInToken($user->clerk_id);
+        } catch (\Throwable $e) {
+            Log::error('login: fallo token Clerk', [
+                'user_id' => $user->id,
+                'clerk_id' => $user->clerk_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $message = 'No se pudo completar el inicio de sesión. Intenta de nuevo.';
+            if (app()->environment('local')) {
+                $message = $e->getMessage();
+            }
+
+            return response()->json([
+                'message' => $message,
+            ], 500);
+        }
+
+        return response()->json([
+            'sign_in_token' => $signInToken,
+            'must_change_password' => (bool) $user->must_change_password,
+            'role' => $user->role,
+        ]);
+    }
+
     public function me(Request $request)
     {
         $clerkId = $request->attributes->get('clerk_user_id');

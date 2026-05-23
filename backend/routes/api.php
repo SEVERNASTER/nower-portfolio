@@ -25,6 +25,9 @@ Route::get('/health', function () {
 Route::get('/explore/portfolios', [ExploreController::class, 'index']);
 Route::get('/public/portfolios/{slug}', [PortfolioController::class, 'showPublic']);
 
+// Login con email/contraseña (validación local + token Clerk)
+Route::post('/auth/login', [AuthController::class, 'login']);
+
 // PROTECTED routes. MUST have a Clerk token to enter.
 Route::post('/sync-user', [UserController::class, 'sync']);
 

@@ -11,6 +11,7 @@ import {
   AuthenticateWithRedirectCallback,
   SignedIn,
   SignedOut,
+  useAuth,
   useUser,
 } from "@clerk/clerk-react";
 import {
@@ -63,6 +64,27 @@ const baseNavItems: NavItem[] = [
 const settingsNavItems: NavItem[] = [
   { name: "Contraseña", icon: Lock, path: PASSWORD_SETTINGS_PATH },
 ];
+
+/** Rutas de login/registro: redirige si ya hay sesión; evita pantalla en blanco con SignedOut. */
+const GuestOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isLoaded, isSignedIn } = useAuth();
+
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-[#0B1120]">
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+          Cargando...
+        </p>
+      </div>
+    );
+  }
+
+  if (isSignedIn) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 const SignedInApp: React.FC = () => {
   const location = useLocation();
@@ -143,12 +165,7 @@ const SignedInApp: React.FC = () => {
     setSynced(true);
   }, [user, isLoaded, synced]);
 
-  async function syncBackendUser(clerkUser: {
-    id: string;
-    fullName?: string | null;
-    firstName?: string | null;
-    primaryEmailAddress?: { emailAddress?: string };
-  }) {
+  async function syncBackendUser(clerkUser: NonNullable<ReturnType<typeof useUser>["user"]>) {
     try {
       const email = clerkUser.primaryEmailAddress?.emailAddress;
       if (!email) return;
@@ -278,17 +295,17 @@ const AppContent: React.FC = () => (
     <Route
       path="/login"
       element={
-        <SignedOut>
+        <GuestOnlyRoute>
           <LoginPage />
-        </SignedOut>
+        </GuestOnlyRoute>
       }
     />
     <Route
       path="/register"
       element={
-        <SignedOut>
+        <GuestOnlyRoute>
           <RegisterPage />
-        </SignedOut>
+        </GuestOnlyRoute>
       }
     />
     <Route
