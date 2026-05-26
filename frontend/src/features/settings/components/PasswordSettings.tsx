@@ -74,20 +74,20 @@ export default function PasswordSettings() {
     const errors: FieldErrors = {};
 
     if (!currentPassword.trim()) {
-      errors.currentPassword = "La contraseña actual es obligatoria.";
+      errors.currentPassword = "La contraseña actual es obligatoria*.";
     }
 
     if (!newPassword.trim()) {
-      errors.newPassword = "La nueva contraseña es obligatoria.";
+      errors.newPassword = "La nueva contraseña es obligatoria*.";
     } else if (!isNewPasswordValid(newPassword)) {
       errors.newPassword =
-        "Debe tener al menos 8 caracteres, mayúscula, minúscula, número y carácter especial.";
+        "Debe tener al menos 8 caracteres, mayúscula, minúscula, número y carácter especial.*";
     }
 
     if (!confirmPassword.trim()) {
-      errors.confirmPassword = "Debes confirmar la nueva contraseña.";
+      errors.confirmPassword = "Debes confirmar la nueva contraseña.*";
     } else if (newPassword !== confirmPassword) {
-      errors.confirmPassword = "Las contraseñas no coinciden.";
+      errors.confirmPassword = "Las contraseñas no coinciden.*";
     }
 
     setFieldErrors(errors);

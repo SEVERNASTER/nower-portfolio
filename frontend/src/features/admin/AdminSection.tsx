@@ -337,7 +337,7 @@ export const AdminSection: React.FC = () => {
                 body: JSON.stringify({
                     portfolio_id: selectedPortfolio.portfolioId,
                     status: action,
-                    comment: reviewComment,
+                    comment: action === 'rejected' ? reviewComment.trim() : (reviewComment.trim() || null),
                 }),
             });
             if (!res.ok) {
@@ -364,7 +364,7 @@ export const AdminSection: React.FC = () => {
         } finally {
             setReviewLoading(null);
         }
-    }, [selectedPortfolio, getToken, showToast]);
+    }, [selectedPortfolio, reviewComment, getToken, showToast]);
 
     const getPortfolioByUserId = (userId: string): PortfolioDetail | undefined => {
         return portfolios.find((p) => p.userId === userId);
