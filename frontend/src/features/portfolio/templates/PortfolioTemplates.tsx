@@ -260,6 +260,12 @@ const PortfolioContentSections: React.FC<PortfolioTemplateProps> = ({ user }) =>
                 {achievement.institution}
               </p>
 
+              {achievement.hours != null && achievement.hours > 0 && (
+                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mt-1">
+                  {achievement.hours} horas
+                </p>
+              )}
+
               {achievement.description && (
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   {achievement.description}
@@ -546,6 +552,9 @@ export const ClassicPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ use
                 <div key={a.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex flex-col items-start bg-slate-50 dark:bg-[#1e2e35] transition-all hover:border-emerald-300 dark:hover:border-emerald-300/30">
                   <h4 className="font-bold text-slate-900 dark:text-white text-base break-words w-full">{a.title}</h4>
                   <p className="text-sm text-slate-500 mt-1 break-words w-full">{a.institution}</p>
+                  {a.hours != null && a.hours > 0 && (
+                    <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mt-1">{a.hours} horas</p>
+                  )}
                   {a.description && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 break-words w-full">{a.description}</p>}
                   
                   {files.length > 0 && (
@@ -733,6 +742,9 @@ export const ModernPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ user
                       <div key={a.id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 flex flex-col items-start">
                         <p className="font-bold text-slate-900 dark:text-white text-sm break-words w-full">{a.title}</p>
                         <p className="text-xs text-slate-500 mt-0.5 break-words w-full">{a.institution}</p>
+                        {a.hours != null && a.hours > 0 && (
+                          <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-0.5">{a.hours} horas</p>
+                        )}
                         {a.description && <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 break-words w-full">{a.description}</p>}
                         
                         {files.length > 0 && (
@@ -1321,6 +1333,9 @@ export const CreativePortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ us
                     <div>
                       <h4 className="font-bold text-zinc-900 dark:text-white text-base break-words w-full">{a.title}</h4>
                       <p className="text-sm text-purple-600 dark:text-purple-400 mt-1 break-words w-full">{a.institution}</p>
+                      {a.hours != null && a.hours > 0 && (
+                        <p className="text-sm font-medium text-purple-500 dark:text-purple-300 mt-1">{a.hours} horas</p>
+                      )}
                       {a.description && <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400 break-words w-full leading-relaxed">{a.description}</p>}
                     </div>
                     

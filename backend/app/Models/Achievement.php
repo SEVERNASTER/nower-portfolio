@@ -13,6 +13,7 @@ class Achievement extends Model
         'title',
         'institution',
         'obtained_at',
+        'hours',
         'description',
         'file_url',
         'file_public_id',
@@ -20,6 +21,7 @@ class Achievement extends Model
 
     protected $casts = [
         'obtained_at' => 'date',
+        'hours' => 'integer',
     ];
 
     public function user(): BelongsTo

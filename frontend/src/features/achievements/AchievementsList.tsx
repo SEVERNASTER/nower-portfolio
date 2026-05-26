@@ -9,6 +9,7 @@ import {
   deleteAchievement,
   fetchAchievements,
   updateAchievement,
+  formatAchievementHours,
 } from './achievementsService';
 
 export const AchievementsList: React.FC = () => {
@@ -194,6 +195,7 @@ export const AchievementsList: React.FC = () => {
                   title: editingAchievement.title,
                   institution: editingAchievement.institution,
                   obtained_at: editingAchievement.obtained_at,
+                  hours: editingAchievement.hours,
                   description: editingAchievement.description,
                 } : undefined}
               />
@@ -258,6 +260,7 @@ export const AchievementsList: React.FC = () => {
             {achievements.map((achievement) => {
             const preview = getAchievementPreview(achievement);
             const totalFiles = achievement.files?.length ?? (achievement.file_url ? 1 : 0);
+            const hoursLabel = formatAchievementHours(achievement.hours);
             return (
               <div
                 key={achievement.id}
@@ -271,9 +274,16 @@ export const AchievementsList: React.FC = () => {
                     <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-2 break-words">
                       {achievement.institution}
                     </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">
                       {formatDate(achievement.obtained_at)}
                     </p>
+                    {hoursLabel ? (
+                      <p className="text-sm text-slate-600 dark:text-slate-300 font-medium mb-3">
+                        {hoursLabel}
+                      </p>
+                    ) : (
+                      <div className="mb-3" />
+                    )}
                   </div>
                   <div className="relative">
                     <button

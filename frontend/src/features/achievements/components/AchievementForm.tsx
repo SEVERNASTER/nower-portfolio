@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { X, Upload, FileText, Award, Building2, Calendar, AlignLeft } from "lucide-react";
+import { X, Upload, FileText, Award, Building2, Calendar, AlignLeft, Clock } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 
 export interface AchievementFile {
@@ -12,6 +12,7 @@ interface AchievementFormValues {
   title?: string;
   institution?: string;
   obtained_at?: string;
+  hours?: number | null;
   description?: string;
 }
 
@@ -39,6 +40,9 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
   const [title, setTitle] = useState(defaultValues?.title ?? "");
   const [institution, setInstitution] = useState(defaultValues?.institution ?? "");
   const [obtainedAt, setObtainedAt] = useState(defaultValues?.obtained_at ?? "");
+  const [hours, setHours] = useState(
+    defaultValues?.hours != null && defaultValues.hours > 0 ? String(defaultValues.hours) : ""
+  );
   const [description, setDescription] = useState(defaultValues?.description ?? "");
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [existingFiles, setExistingFiles] = useState<AchievementFile[]>(initialFiles);
@@ -52,6 +56,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     title?: string;
     institution?: string;
     obtainedAt?: string;
+    hours?: string;
     description?: string;
     evidence?: string;
   }>({});
@@ -68,6 +73,9 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     setTitle(defaultValues?.title ?? "");
     setInstitution(defaultValues?.institution ?? "");
     setObtainedAt(defaultValues?.obtained_at ?? "");
+    setHours(
+      defaultValues?.hours != null && defaultValues.hours > 0 ? String(defaultValues.hours) : ""
+    );
     setDescription(defaultValues?.description ?? "");
     setSelectedFiles([]);
     setRemovedFileIds([]);
@@ -197,6 +205,12 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     if (!institution.trim()) newErrors.institution = 'La institución es obligatoria';
     else if (institution.length > 70) newErrors.institution = 'La institución no puede exceder 70 caracteres';
     if (!obtainedAt) newErrors.obtainedAt = 'La fecha de obtención es obligatoria';
+    if (hours.trim()) {
+      const parsedHours = Number(hours);
+      if (!Number.isInteger(parsedHours) || parsedHours < 1 || parsedHours > 9999) {
+        newErrors.hours = 'Ingresa un número entero entre 1 y 9999 horas';
+      }
+    }
     if (description.length > 500) newErrors.description = 'La descripción no puede exceder 500 caracteres';
     if (existingFiles.length + selectedFiles.length === 0) newErrors.evidence = 'Debes agregar al menos un archivo de evidencia';
 
@@ -211,6 +225,11 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
       formData.append('title', title.trim());
       formData.append('institution', institution.trim());
       formData.append('obtained_at', obtainedAt);
+      if (hours.trim()) {
+        formData.append('hours', hours.trim());
+      } else if (achievementId) {
+        formData.append('hours', '');
+      }
       if (description.trim()) {
         formData.append('description', description.trim());
       }
@@ -303,6 +322,31 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         </div>
         {errors.obtainedAt && (
           <p className="text-xs text-red-500">{errors.obtainedAt}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+          Duración del curso (horas)
+        </label>
+        <div className="relative">
+          <Clock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          <input
+            type="number"
+            min={1}
+            max={9999}
+            step={1}
+            value={hours}
+            onChange={(e) => setHours(e.target.value.replace(/\D/g, '').slice(0, 4))}
+            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${errors.hours ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
+            placeholder="Ej: 120"
+          />
+        </div>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          Opcional. Ejemplo: 120 horas de duración del curso o certificación.
+        </p>
+        {errors.hours && (
+          <p className="text-xs text-red-500">{errors.hours}</p>
         )}
       </div>
 

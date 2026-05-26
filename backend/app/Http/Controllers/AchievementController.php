@@ -65,6 +65,7 @@ class AchievementController extends Controller
                     'title' => $validated['title'],
                     'institution' => $validated['institution'],
                     'obtained_at' => $validated['obtained_at'],
+                    'hours' => $validated['hours'] ?? null,
                     'description' => $validated['description'],
                     'file_url' => null,
                     'file_public_id' => null,
@@ -142,6 +143,7 @@ class AchievementController extends Controller
                     'title' => $validated['title'],
                     'institution' => $validated['institution'],
                     'obtained_at' => $validated['obtained_at'],
+                    'hours' => $validated['hours'] ?? null,
                     'description' => $validated['description'],
                 ]);
 
@@ -236,10 +238,15 @@ class AchievementController extends Controller
      */
     private function validateAchievementFields(Request $request, bool $requireEvidence = false): array
     {
+        if ($request->has('hours') && $request->input('hours') === '') {
+            $request->merge(['hours' => null]);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:150',
             'institution' => 'required|string|max:150',
             'obtained_at' => 'required|date',
+            'hours' => 'nullable|integer|min:1|max:9999',
             'description' => 'nullable|string|max:1000',
             'remove_file_ids' => 'nullable|array',
             'remove_file_ids.*' => 'integer|exists:achievement_files,id',

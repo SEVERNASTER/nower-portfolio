@@ -6,11 +6,17 @@ export interface AchievementFile {
   mime_type?: string;
 }
 
+export function formatAchievementHours(hours?: number | null): string | null {
+  if (hours == null || hours <= 0) return null;
+  return `${hours} horas`;
+}
+
 export interface Achievement {
   id: string;
   title: string;
   institution: string;
   obtained_at: string;
+  hours?: number | null;
   description?: string;
   file_url?: string;
   file_public_id?: string;
