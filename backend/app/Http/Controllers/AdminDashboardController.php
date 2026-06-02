@@ -10,18 +10,14 @@ class AdminDashboardController extends Controller
     /**
      * Get all users that have created at least one project, along with their projects and skills.
      */
-    public function getUsersWithProjects(Request $request)
+    public function getUsersData(Request $request)
     {
-        $users = User::where('role', 'user')
-            ->has('projects')
-            ->with([
+        $users = User::with([
                 'projects.links',
                 'projects.images',
                 'skills',
                 'experiences',
-                'portfolio' => function ($query) {
-                    $query->whereIn('status', ['pending_review', 'published']);
-                },
+                'portfolio',
                 'socialLinks',
                 'achievements.files'
             ])

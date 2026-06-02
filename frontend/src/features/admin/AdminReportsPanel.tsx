@@ -137,26 +137,30 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
   );
 
   const metrics = useMemo(() => {
+    const commonUsers = users.filter((user) => normalizeRole(user.role) !== "admin");
+
+    const reportablePortfolios = portfolios.filter(
+      (item) => normalizeRole(item.rawUser?.role) !== "admin",
+    );
+
     return {
       usersRegistered: users.length,
-      usersAdmins: users.filter((user) => normalizeRole(user.role) === "admin")
-        .length,
-      usersCommon: users.filter((user) => normalizeRole(user.role) !== "admin")
-        .length,
+      usersAdmins: users.filter((user) => normalizeRole(user.role) === "admin").length,
+      usersCommon: commonUsers.length,
       usersPasswordPending: users.filter((user) =>
         Boolean(user.mustChangePassword),
       ).length,
 
-      portfoliosUnpublished: portfolios.filter(
+      portfoliosUnpublished: reportablePortfolios.filter(
         (item) => item.status === "No publicado",
       ).length,
-      portfoliosPending: portfolios.filter(
+      portfoliosPending: reportablePortfolios.filter(
         (item) => item.status === "Pendiente",
       ).length,
-      portfoliosApproved: portfolios.filter(
+      portfoliosApproved: reportablePortfolios.filter(
         (item) => item.status === "Aprobado",
       ).length,
-      portfoliosRejected: portfolios.filter(
+      portfoliosRejected: reportablePortfolios.filter(
         (item) => item.status === "Rechazado",
       ).length,
     };
@@ -231,7 +235,9 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
   };
 
   const buildPortfoliosReport = (): GeneratedReport => {
-    let filteredPortfolios = [...portfolios];
+    let filteredPortfolios = portfolios.filter(
+      (item) => normalizeRole(item.rawUser?.role) !== "admin",
+    );
 
     if (filterStatus === "unpublished") {
       filteredPortfolios = filteredPortfolios.filter(

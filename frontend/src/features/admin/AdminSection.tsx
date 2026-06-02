@@ -24,6 +24,7 @@ import { Button } from '../../components/ui/Button';
 import {
   renderPortfolioTemplate,
 } from '../portfolio/templates/PortfolioTemplates';
+import { API_URL } from '../profile/profileService';
 import { AdminReportsPanel } from './AdminReportsPanel';
 
 type AdminSectionKey =
@@ -158,9 +159,10 @@ export const AdminSection: React.FC = () => {
                 const token = await getToken();
                 if (!token) return;
 
-                const response = await fetch('http://localhost:8000/api/admin/users-with-projects', {
+                const response = await fetch(`${API_URL}/admin/users-data`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
                     }
                 });
 
@@ -281,8 +283,11 @@ export const AdminSection: React.FC = () => {
     }, [users, portfolios]);
 
     const filteredPortfoliosList = useMemo(() => {
-        let result = portfolios.filter(p => p.status !== 'No publicado' && p.portfolioId !== null);
-        
+        let result = portfolios.filter((p) =>
+            p.status !== 'No publicado' &&
+            p.portfolioId !== null &&
+            p.rawUser?.role !== 'admin'
+        );
         // Filter by Status
         if (statusFilter !== 'Todos') {
             result = result.filter(p => p.status === statusFilter);

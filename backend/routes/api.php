@@ -90,7 +90,7 @@ Route::middleware([
     \App\Http\Middleware\AdminAuth::class,
 ])->group(function () {
 
-    Route::get('/admin/users-with-projects', [AdminDashboardController::class, 'getUsersWithProjects']);    
+    Route::get('/admin/users-data', [AdminDashboardController::class, 'getUsersData']);    
     // Endpoint para frontend de verificación si el AdminAuth es exitoso
     Route::get('/admin/validate', function (Request $request) {
         $user = $request->attributes->get('auth_user');
