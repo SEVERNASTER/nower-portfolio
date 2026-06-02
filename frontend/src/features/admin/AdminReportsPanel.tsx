@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -48,7 +49,7 @@ const reportTypeLabels: Record<ReportType, string> = {
 const filterLabels: Record<string, string> = {
   all: "Todos",
   admin: "Administradores",
-  user: "Usuarios comunes",
+  user: "Usuarios normales",
   password_pending: "Contraseña pendiente",
   unpublished: "No publicados",
   pending_review: "Pendientes de revisión",
@@ -68,7 +69,7 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
   const [reportLoading, setReportLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
 
     try {
@@ -82,18 +83,18 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, [getToken]);
 
   useEffect(() => {
     void loadHistory();
-  }, []);
+  }, [loadHistory]);
 
   const availableFilters = useMemo(() => {
     if (reportType === "users") {
       return [
         { value: "all", label: "Todos" },
         { value: "admin", label: "Administradores" },
-        { value: "user", label: "Usuarios comunes" },
+        { value: "user", label: "Usuarios normales" },
         { value: "password_pending", label: "Contraseña pendiente" },
       ];
     }

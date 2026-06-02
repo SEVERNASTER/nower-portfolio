@@ -74,7 +74,9 @@ class AdminReportController extends Controller
                     'id' => $item->id,
                     'report_type' => $item->report_type,
                     'filter_status' => $item->filter_status,
-                    'generated_at' => optional($item->generated_at)->toDateTimeString(),
+                    'generated_at' => optional($item->generated_at)
+                        ?->timezone('America/La_Paz')
+                        ->format('d/m/Y H:i'),
                     'admin' => [
                         'id' => $item->admin?->id,
                         'full_name' => $item->admin?->full_name,
@@ -112,7 +114,7 @@ class AdminReportController extends Controller
             'title' => 'Reporte de usuarios',
             'type' => 'users',
             'filter' => $status,
-            'generatedAt' => now()->format('d/m/Y H:i'),
+            'generatedAt' => now('America/La_Paz')->format('d/m/Y H:i'),
             'columns' => [
                 'ID',
                 'Nombre',
@@ -164,7 +166,7 @@ class AdminReportController extends Controller
             'title' => 'Reporte de portafolios',
             'type' => 'portfolios',
             'filter' => $status,
-            'generatedAt' => now()->format('d/m/Y H:i'),
+            'generatedAt' => now('America/La_Paz')->format('d/m/Y H:i'),
             'columns' => [
                 'ID',
                 'Usuario',
@@ -194,7 +196,7 @@ class AdminReportController extends Controller
             'title' => 'Resumen general del sistema',
             'type' => 'summary',
             'filter' => 'all',
-            'generatedAt' => now()->format('d/m/Y H:i'),
+            'generatedAt' => now('America/La_Paz')->format('d/m/Y H:i'),
             'columns' => [
                 'Métrica',
                 'Valor',
@@ -202,7 +204,7 @@ class AdminReportController extends Controller
             'rows' => [
                 ['Usuarios registrados', User::count()],
                 ['Usuarios administradores', User::where('role', 'admin')->count()],
-                ['Usuarios comunes', User::where('role', 'user')->count()],
+                ['Usuarios normales', User::where('role', 'user')->count()],
                 ['Usuarios con contraseña pendiente', User::where('must_change_password', true)->count()],
                 ['Portafolios no publicados', Portfolio::where('status', 'unpublished')->count()],
                 ['Portafolios pendientes de revisión', Portfolio::where('status', 'pending_review')->count()],
@@ -214,7 +216,7 @@ class AdminReportController extends Controller
 
     private function formatUserRole(?string $role): string
     {
-        return $role === 'admin' ? 'Administrador' : 'Usuario común';
+        return $role === 'admin' ? 'Administrador' : 'Usuario';
     }
 
     private function formatTemplate(?string $template): string
