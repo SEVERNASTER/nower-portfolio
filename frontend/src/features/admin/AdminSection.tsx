@@ -1,8 +1,8 @@
 import React, {
+  useCallback,
   useEffect,
   useMemo,
   useState,
-  useCallback,
 } from 'react';
 
 import {
@@ -12,16 +12,19 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import {
-  useLocation
-} from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
-import { useAuth } from '@clerk/clerk-react';
+import {
+  useAuth,
+  useUser,
+} from '@clerk/clerk-react';
 
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import { PlatformIcon, PREDEFINED_PLATFORMS } from '../projects/components/PlatformIcon';
-import { renderPortfolioTemplate } from '../portfolio/templates/PortfolioTemplates';
+import {
+  renderPortfolioTemplate,
+} from '../portfolio/templates/PortfolioTemplates';
+import { AdminReportsPanel } from './AdminReportsPanel';
 
 type AdminSectionKey =
     | 'metrics'
@@ -34,6 +37,8 @@ interface AdminUser {
     email: string;
     status: 'Activo' | 'Inactivo';
     registeredAt: string;
+    role?: string;
+    mustChangePassword?: boolean;
 }
 
 interface AdminProfile {
@@ -139,6 +144,12 @@ export const AdminSection: React.FC = () => {
     const [showConfirmModal, setShowConfirmModal] = useState<'approved' | 'rejected' | null>(null);
 
     const { getToken } = useAuth();
+    const { user: clerkUser } = useUser();
+
+    const currentAdminName =
+        clerkUser?.fullName ||
+        clerkUser?.primaryEmailAddress?.emailAddress ||
+        'Administrador';
 
 
     useEffect(() => {
@@ -162,7 +173,9 @@ export const AdminSection: React.FC = () => {
                     name: u.full_name || 'Sin nombre',
                     email: u.email,
                     status: 'Activo',
-                    registeredAt: new Date(u.created_at).toISOString().split('T')[0]
+                    registeredAt: new Date(u.created_at).toISOString().split('T')[0],
+                    role: u.role || 'user',
+                    mustChangePassword: Boolean(u.must_change_password),
                 }));
 
                 const adminPortfolios: PortfolioDetail[] = data.map((u: any) => ({
@@ -370,25 +383,6 @@ export const AdminSection: React.FC = () => {
         return portfolios.find((p) => p.userId === userId);
     };
 
-    const exportReports = () => {
-        const rows = [
-            ['metric', 'value'],
-            ['usuarios_registrados', String(metrics.registeredUsers)],
-            ['portafolios_aprobados', String(metrics.approvedPortfolios)],
-            ['portafolios_pendientes', String(metrics.pendingPortfolios)],
-            ['cuentas_deshabilitadas', String(metrics.disabledAccounts)]
-        ];
-        const csv = rows.map((row) => row.join(',')).join('\n');
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `reporte_admin_${new Date().toISOString().slice(0, 10)}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
-    };
-
     return (
         <section className="space-y-6">
             {/* Toast notification */}
@@ -416,8 +410,6 @@ export const AdminSection: React.FC = () => {
                 <h2 className="mb-1 text-2xl font-bold text-slate-900 dark:text-white">Panel Administrador</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">Módulo exclusivo para gestión de usuarios, perfiles, publicaciones y reportes.</p>
             </div>
-
-
 
             {activeSection === 'metrics' && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -538,25 +530,12 @@ export const AdminSection: React.FC = () => {
 
 
             {activeSection === 'reports' && (
-                <div className={`${cardBaseClass} space-y-4`}>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Generar Reportes</h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">Exporta métricas del sistema en formato CSV.</p>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#10221C]">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Usuarios</p>
-                            <p className="mt-1 text-sm">Registrados: {metrics.registeredUsers}</p>
-                            <p className="text-sm">Inactivos: {metrics.disabledAccounts}</p>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-4 dark:bg-[#10221C]">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Portafolios</p>
-                            <p className="mt-1 text-sm">Aprobados: {metrics.approvedPortfolios}</p>
-                            <p className="text-sm">Pendientes: {metrics.pendingPortfolios}</p>
-                        </div>
-                    </div>
-                    <Button icon={FileText} onClick={exportReports}>
-                        Exportar CSV
-                    </Button>
-                </div>
+                <AdminReportsPanel
+                    users={users}
+                    portfolios={portfolios}
+                    cardBaseClass={cardBaseClass}
+                    currentAdminName={currentAdminName}
+                />
             )}
 
             {/* Confirm Modal */}
