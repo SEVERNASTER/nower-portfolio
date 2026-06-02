@@ -14,10 +14,7 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
-import {
-  useAuth,
-  useUser,
-} from '@clerk/clerk-react';
+import { useAuth } from '@clerk/clerk-react';
 
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -145,13 +142,6 @@ export const AdminSection: React.FC = () => {
     const [showConfirmModal, setShowConfirmModal] = useState<'approved' | 'rejected' | null>(null);
 
     const { getToken } = useAuth();
-    const { user: clerkUser } = useUser();
-
-    const currentAdminName =
-        clerkUser?.fullName ||
-        clerkUser?.primaryEmailAddress?.emailAddress ||
-        'Administrador';
-
 
     useEffect(() => {
         const fetchAdminData = async () => {
@@ -536,10 +526,8 @@ export const AdminSection: React.FC = () => {
 
             {activeSection === 'reports' && (
                 <AdminReportsPanel
-                    users={users}
-                    portfolios={portfolios}
                     cardBaseClass={cardBaseClass}
-                    currentAdminName={currentAdminName}
+                    getToken={getToken}
                 />
             )}
 

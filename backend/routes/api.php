@@ -10,6 +10,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminReportController;
 use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ExploreController;
@@ -91,6 +92,8 @@ Route::middleware([
 ])->group(function () {
 
     Route::get('/admin/users-data', [AdminDashboardController::class, 'getUsersData']);    
+    Route::get('/admin/reports/generate', [AdminReportController::class, 'generate']);
+    Route::get('/admin/reports/history', [AdminReportController::class, 'history']);
     // Endpoint para frontend de verificación si el AdminAuth es exitoso
     Route::get('/admin/validate', function (Request $request) {
         $user = $request->attributes->get('auth_user');

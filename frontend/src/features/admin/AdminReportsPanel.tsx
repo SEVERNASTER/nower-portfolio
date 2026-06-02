@@ -1,4 +1,5 @@
 import React, {
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -16,30 +17,13 @@ import {
 import * as XLSX from 'xlsx';
 
 import { Button } from '../../components/ui/Button';
+import {
+  fetchReportHistory,
+  generateAdminReport,
+  ReportHistoryItem as BackendReportHistoryItem,
+} from './adminReportsService';
 
 type ReportType = "summary" | "users" | "portfolios";
-
-interface AdminUserReportData {
-  id: string;
-  name: string;
-  email: string;
-  status?: string;
-  registeredAt: string;
-  role?: string;
-  mustChangePassword?: boolean;
-}
-
-interface PortfolioReportData {
-  id: string;
-  portfolioId: number | null;
-  nombre: string;
-  rol: string;
-  ciudad: string;
-  email: string;
-  status: "Pendiente" | "Aprobado" | "Rechazado" | "No publicado";
-  templateKey?: "classic" | "modern" | "creative";
-  rawUser?: any;
-}
 
 interface GeneratedReport {
   title: string;
@@ -50,23 +34,10 @@ interface GeneratedReport {
   rows: Array<Array<string | number | null>>;
 }
 
-interface ReportHistoryItem {
-  id: string;
-  type: ReportType;
-  filter: string;
-  generatedAt: string;
-  adminName: string;
-}
-
 interface AdminReportsPanelProps {
-  users: AdminUserReportData[];
-  portfolios: PortfolioReportData[];
   cardBaseClass: string;
-  currentAdminName: string;
+  getToken: () => Promise<string | null>;
 }
-
-const REPORT_HISTORY_KEY = "nower_admin_report_history_preview";
-const MAX_HISTORY_ITEMS = 10;
 
 const reportTypeLabels: Record<ReportType, string> = {
   summary: "Resumen general",
@@ -85,86 +56,37 @@ const filterLabels: Record<string, string> = {
   rejected: "Rechazados",
 };
 
-function getCurrentDateTime() {
-  return new Date().toLocaleString("es-BO", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function normalizeRole(role?: string) {
-  return role || "user";
-}
-
-function getRoleLabel(role?: string) {
-  return normalizeRole(role) === "admin" ? "Administrador" : "Usuario común";
-}
-
-function getTemplateLabel(template?: string) {
-  if (template === "modern") return "Moderna";
-  if (template === "creative") return "Creativa";
-  return "Clásica";
-}
-
-function loadInitialHistory(storageKey: string): ReportHistoryItem[] {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw) as ReportHistoryItem[];
-
-    return parsed.slice(0, MAX_HISTORY_ITEMS);
-  } catch {
-    return [];
-  }
-}
-
 export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
-  users,
-  portfolios,
   cardBaseClass,
-  currentAdminName,
+  getToken,
 }) => {
   const [reportType, setReportType] = useState<ReportType>("summary");
   const [filterStatus, setFilterStatus] = useState("all");
   const [generatedReport, setGeneratedReport] =
     useState<GeneratedReport | null>(null);
-  const [history, setHistory] = useState<ReportHistoryItem[]>(() =>
-    loadInitialHistory(REPORT_HISTORY_KEY),
-  );
+  const [history, setHistory] = useState<BackendReportHistoryItem[]>([]);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const loadHistory = async () => {
+    setHistoryLoading(true);
 
-  const metrics = useMemo(() => {
-    const commonUsers = users.filter((user) => normalizeRole(user.role) !== "admin");
+    try {
+      const token = await getToken();
+      if (!token) return;
 
-    const reportablePortfolios = portfolios.filter(
-      (item) => normalizeRole(item.rawUser?.role) !== "admin",
-    );
+      const data = await fetchReportHistory(token);
+      setHistory(data);
+    } catch (error) {
+      console.error('Error cargando historial:', error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
-    return {
-      usersRegistered: users.length,
-      usersAdmins: users.filter((user) => normalizeRole(user.role) === "admin").length,
-      usersCommon: commonUsers.length,
-      usersPasswordPending: users.filter((user) =>
-        Boolean(user.mustChangePassword),
-      ).length,
-
-      portfoliosUnpublished: reportablePortfolios.filter(
-        (item) => item.status === "No publicado",
-      ).length,
-      portfoliosPending: reportablePortfolios.filter(
-        (item) => item.status === "Pendiente",
-      ).length,
-      portfoliosApproved: reportablePortfolios.filter(
-        (item) => item.status === "Aprobado",
-      ).length,
-      portfoliosRejected: reportablePortfolios.filter(
-        (item) => item.status === "Rechazado",
-      ).length,
-    };
-  }, [users, portfolios]);
+  useEffect(() => {
+    void loadHistory();
+  }, []);
 
   const availableFilters = useMemo(() => {
     if (reportType === "users") {
@@ -189,154 +111,23 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
     return [{ value: "all", label: "Todos" }];
   }, [reportType]);
 
-  const buildUsersReport = (): GeneratedReport => {
-    let filteredUsers = [...users];
+  const handleGenerateReport = async () => {
+    setReportLoading(true);
+    setReportError(null);
 
-    if (filterStatus === "admin") {
-      filteredUsers = filteredUsers.filter(
-        (user) => normalizeRole(user.role) === "admin",
-      );
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const report = await generateAdminReport(token, reportType, filterStatus);
+      setGeneratedReport(report);
+
+      await loadHistory();
+    } catch (error) {
+      setReportError(error instanceof Error ? error.message : 'Error generando reporte');
+    } finally {
+      setReportLoading(false);
     }
-
-    if (filterStatus === "user") {
-      filteredUsers = filteredUsers.filter(
-        (user) => normalizeRole(user.role) !== "admin",
-      );
-    }
-
-    if (filterStatus === "password_pending") {
-      filteredUsers = filteredUsers.filter((user) =>
-        Boolean(user.mustChangePassword),
-      );
-    }
-
-    return {
-      title: "Reporte de usuarios",
-      type: "users",
-      filter: filterStatus,
-      generatedAt: getCurrentDateTime(),
-      columns: [
-        "ID",
-        "Nombre",
-        "Correo",
-        "Rol",
-        "Contraseña pendiente",
-        "Fecha de registro",
-      ],
-      rows: filteredUsers.map((user) => [
-        user.id,
-        user.name,
-        user.email,
-        getRoleLabel(user.role),
-        user.mustChangePassword ? "Sí" : "No",
-        user.registeredAt,
-      ]),
-    };
-  };
-
-  const buildPortfoliosReport = (): GeneratedReport => {
-    let filteredPortfolios = portfolios.filter(
-      (item) => normalizeRole(item.rawUser?.role) !== "admin",
-    );
-
-    if (filterStatus === "unpublished") {
-      filteredPortfolios = filteredPortfolios.filter(
-        (item) => item.status === "No publicado",
-      );
-    }
-
-    if (filterStatus === "pending_review") {
-      filteredPortfolios = filteredPortfolios.filter(
-        (item) => item.status === "Pendiente",
-      );
-    }
-
-    if (filterStatus === "published") {
-      filteredPortfolios = filteredPortfolios.filter(
-        (item) => item.status === "Aprobado",
-      );
-    }
-
-    if (filterStatus === "rejected") {
-      filteredPortfolios = filteredPortfolios.filter(
-        (item) => item.status === "Rechazado",
-      );
-    }
-
-    return {
-      title: "Reporte de portafolios",
-      type: "portfolios",
-      filter: filterStatus,
-      generatedAt: getCurrentDateTime(),
-      columns: [
-        "ID",
-        "Usuario",
-        "Correo",
-        "Profesión",
-        "Ciudad",
-        "Estado",
-        "Plantilla",
-      ],
-      rows: filteredPortfolios.map((portfolio) => [
-        portfolio.portfolioId ?? portfolio.id,
-        portfolio.nombre,
-        portfolio.email,
-        portfolio.rol,
-        portfolio.ciudad,
-        portfolio.status,
-        getTemplateLabel(portfolio.templateKey),
-      ]),
-    };
-  };
-
-  const buildSummaryReport = (): GeneratedReport => {
-    return {
-      title: "Resumen general del sistema",
-      type: "summary",
-      filter: "all",
-      generatedAt: getCurrentDateTime(),
-      columns: ["Métrica", "Valor"],
-      rows: [
-        ["Usuarios registrados", metrics.usersRegistered],
-        ["Usuarios administradores", metrics.usersAdmins],
-        ["Usuarios comunes", metrics.usersCommon],
-        ["Usuarios con contraseña pendiente", metrics.usersPasswordPending],
-        ["Portafolios no publicados", metrics.portfoliosUnpublished],
-        ["Portafolios pendientes de revisión", metrics.portfoliosPending],
-        ["Portafolios publicados/aprobados", metrics.portfoliosApproved],
-        ["Portafolios rechazados", metrics.portfoliosRejected],
-      ],
-    };
-  };
-
-  const buildReport = (): GeneratedReport => {
-    if (reportType === "users") return buildUsersReport();
-    if (reportType === "portfolios") return buildPortfoliosReport();
-    return buildSummaryReport();
-  };
-
-  const saveHistoryItem = (report: GeneratedReport) => {
-    const item: ReportHistoryItem = {
-      id:
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random()}`,
-      type: report.type,
-      filter: report.filter,
-      generatedAt: getCurrentDateTime(),
-      adminName: currentAdminName,
-    };
-
-    const updatedHistory = [item, ...history].slice(0, MAX_HISTORY_ITEMS);
-
-    setHistory(updatedHistory);
-    localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify(updatedHistory));
-  };
-
-  const handleGenerateReport = () => {
-    const report = buildReport();
-    setGeneratedReport(report);
-    saveHistoryItem(report);
   };
 
   const handleExportExcel = () => {
@@ -469,12 +260,19 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
           <div className="flex items-end">
             <Button
               onClick={handleGenerateReport}
+              disabled={reportLoading}
               className="w-full justify-center"
             >
-              Generar reporte
+              {reportLoading ? 'Generando...' : 'Generar reporte'}
             </Button>
           </div>
         </div>
+
+        {reportError && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+            {reportError}
+          </div>
+        )}
       </div>
 
       {generatedReport ? (
@@ -573,7 +371,12 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
           </h3>
         </div>
 
-        {history.length === 0 ? (
+        {historyLoading ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Cargando historial...
+          </p>
+
+        ) : history.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Todavía no se generaron reportes.
           </p>
@@ -598,19 +401,19 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
               </thead>
 
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                {history.slice(0, MAX_HISTORY_ITEMS).map((item) => (
+                {history.map((item) => (
                   <tr key={item.id}>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {item.generatedAt}
+                      {item.generated_at}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {reportTypeLabels[item.type]}
+                      {reportTypeLabels[item.report_type]}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {filterLabels[item.filter] || item.filter}
+                      {filterLabels[item.filter_status] || item.filter_status}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {item.adminName}
+                      {item.admin?.full_name || item.admin?.email || 'Administrador'}
                     </td>
                   </tr>
                 ))}
