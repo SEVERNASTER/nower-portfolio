@@ -385,6 +385,7 @@ const platformPatterns: Record<string, RegExp> = {
         city: form.city,
         social_links: form.socialLinks,
         image: selectedImage ?? null,
+        imagen_profile: user.imageUrl,
       });
 
       if (data.user) {

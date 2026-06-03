@@ -34,6 +34,7 @@ export interface SyncPayload {
   phone?:      string;
   city?:       string;
   image?:      File | null;
+  imagen_profile?: string | null;
   social_links?: {
     platform_name: string;
     url: string;
@@ -69,6 +70,7 @@ export async function syncUser(payload: SyncPayload) {
   if (payload.bio)        form.append('bio',        payload.bio);
   if (payload.phone)      form.append('phone',      payload.phone);
   if (payload.city)       form.append('city',       payload.city);
+  if (payload.imagen_profile) form.append('imagen_profile', payload.imagen_profile);
   if (payload.social_links?.length) {
     payload.social_links.forEach((link, index) => {
       form.append(`social_links[${index}][platform_name]`, link.platform_name);

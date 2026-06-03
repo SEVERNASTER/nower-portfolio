@@ -180,6 +180,7 @@ const SignedInApp: React.FC = () => {
           clerk_id: clerkUser.id,
           full_name: clerkUser.fullName || clerkUser.firstName,
           email,
+          imagen_profile: clerkUser.imageUrl,
         }),
       });
 

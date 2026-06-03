@@ -104,11 +104,11 @@ const PortfolioCardItem: React.FC<{ portfolio: PortfolioCard }> = ({ portfolio }
 
   return (
     <a href={`/p/${public_slug}`} target="_blank" rel="noopener noreferrer" className="lp-card group">
-      <div className="lp-card-avatar-wrap">
+      <div className="lp-card-avatar-wrap relative z-10 flex items-center justify-center">
+        <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[#10b981] to-[#6ee7b7] opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
         {user.imagen_profile
           ? <img src={user.imagen_profile} alt={user.full_name} className="lp-card-avatar" />
           : <div className="lp-card-avatar lp-card-avatar-fallback"><span>{initials}</span></div>}
-        <div className="lp-card-avatar-ring" />
       </div>
       <div className="lp-card-body">
         <h3 className="lp-card-name">{user.full_name}</h3>

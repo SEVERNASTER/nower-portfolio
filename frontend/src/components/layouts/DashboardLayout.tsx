@@ -34,8 +34,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     settingsNavItems,
 }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-    const [isDark, setIsDark] = useState<boolean>(true);
+    const [isDark, setIsDark] = useState<boolean>(() => {
+        const stored = localStorage.getItem('theme');
+        if (stored !== null) return stored === 'dark';
+        return document.documentElement.classList.contains('dark') || true;
+    });
     const location = useLocation();
+
     useEffect(() => {
         if (isDark) {
             document.documentElement.classList.add('dark');
@@ -43,6 +48,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             document.documentElement.classList.remove('dark');
         }
     }, [isDark]);
+
+    useEffect(() => {
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === 'theme') {
+                setIsDark(e.newValue === 'dark');
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
+
+    const toggleTheme = () => {
+        const next = !isDark;
+        setIsDark(next);
+        localStorage.setItem('theme', next ? 'dark' : 'light');
+    };
 
     return (
         <ErrorBoundary>
@@ -58,7 +79,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     isOpen={isSidebarOpen}
                     onClose={() => setIsSidebarOpen(false)}
                     isDark={isDark}
-                    toggleTheme={() => setIsDark(!isDark)}
+                    toggleTheme={toggleTheme}
                     navItems={navItems}
                     settingsNavItems={settingsNavItems}
                     activeTab={activeTab}
