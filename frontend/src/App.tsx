@@ -1,4 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  Award,
+  BarChart3,
+  Briefcase,
+  ClipboardList,
+  Code,
+  FolderGit2,
+  Globe,
+  Lock,
+  User,
+  Users,
+} from 'lucide-react';
 import {
   BrowserRouter,
   Navigate,
@@ -6,48 +22,41 @@ import {
   Routes,
   useLocation,
   useNavigate,
-} from "react-router-dom";
+} from 'react-router-dom';
+
 import {
   AuthenticateWithRedirectCallback,
   SignedIn,
   SignedOut,
   useAuth,
   useUser,
-} from "@clerk/clerk-react";
+} from '@clerk/clerk-react';
+
+import { ProtectedAppGate } from './components/auth/ProtectedAppGate';
+import DashboardLayout from './components/layouts/DashboardLayout';
+import type { NavItem } from './components/navigation/Sidebar';
+import { LoginPage } from './components/pages/LoginPage';
+import { RegisterPage } from './components/pages/RegisterPage';
 import {
-  User,
-  FolderGit2,
-  Code,
-  Briefcase,
-  BarChart,
-  Users,
-  PieChart,
-  Award,
-  Lock,
-  Globe,
-} from "lucide-react";
-import DashboardLayout from "./components/layouts/DashboardLayout";
-import { ProtectedAppGate } from "./components/auth/ProtectedAppGate";
-import type { NavItem } from "./components/navigation/Sidebar";
-import { LoginPage } from "./components/pages/LoginPage";
-import { RegisterPage } from "./components/pages/RegisterPage";
-import { BasicProfile } from "./features/profile/BasicProfile";
-import { ProjectsList } from "./features/projects/ProjectsList";
-import { SkillsList } from "./features/skills/SkillsList";
-import { AdminSection } from "./features/admin/AdminSection";
-import { ExperienceList } from "./features/experience/ExperienceList";
-import { AchievementsList } from "./features/achievements/AchievementsList";
-import { PortfolioVisibility } from "./features/portfolio/PortfolioVisibility";
-import { PublicPortfolioPage } from "./features/portfolio/PublicPortfolioPage";
-import { LandingPage } from "./features/landing/LandingPage";
-import PasswordSettings from "./features/settings/components/PasswordSettings";
+  AuthStatusProvider,
+  useAuthStatus,
+} from './contexts/AuthStatusContext';
 import {
   notifyCredentialsEmailSent,
   notifyMandatoryPasswordChange,
   useNotification,
-} from "./contexts/NotificationContext";
-import { AuthStatusProvider, useAuthStatus } from "./contexts/AuthStatusContext";
-import type { SyncUserResponse } from "./lib/apiTypes";
+} from './contexts/NotificationContext';
+import { AchievementsList } from './features/achievements/AchievementsList';
+import { AdminSection } from './features/admin/AdminSection';
+import { ExperienceList } from './features/experience/ExperienceList';
+import { LandingPage } from './features/landing/LandingPage';
+import { PortfolioVisibility } from './features/portfolio/PortfolioVisibility';
+import { PublicPortfolioPage } from './features/portfolio/PublicPortfolioPage';
+import { BasicProfile } from './features/profile/BasicProfile';
+import { ProjectsList } from './features/projects/ProjectsList';
+import PasswordSettings from './features/settings/components/PasswordSettings';
+import { SkillsList } from './features/skills/SkillsList';
+import type { SyncUserResponse } from './lib/apiTypes';
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api";
 const PASSWORD_SETTINGS_PATH = "/settings/password";
@@ -131,9 +140,9 @@ const SignedInApp: React.FC = () => {
   const adminNavItems: NavItem[] =
     userRole === "admin"
       ? [
-          { name: "Métricas", icon: BarChart, path: "/admin/metrics" },
+          { name: "Métricas", icon: BarChart3, path: "/admin/metrics" },
           { name: "Usuarios", icon: Users, path: "/admin/users" },
-          { name: "Reportes", icon: PieChart, path: "/admin/reportes" },
+          { name: "Reportes", icon: ClipboardList, path: "/admin/reportes" },
         ]
       : [];
 

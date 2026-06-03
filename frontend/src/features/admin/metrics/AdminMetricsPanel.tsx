@@ -5,6 +5,7 @@ import React, {
 } from 'react';
 
 import {
+  BarChart3,
   CheckCircle2,
   Clock3,
   ShieldCheck,
@@ -94,14 +95,14 @@ export const AdminMetricsPanel: React.FC<AdminMetricsPanelProps> = ({
       const token = await getToken();
 
       if (!token) {
-        setError('No se pudo obtener el token de autenticación.');
+        setError("No se pudo obtener el token de autenticación.");
         return;
       }
 
       const data = await fetchAdminMetrics(token);
       setMetrics(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error cargando métricas');
+      setError(err instanceof Error ? err.message : "Error cargando métricas");
     } finally {
       setLoading(false);
     }
@@ -134,13 +135,22 @@ export const AdminMetricsPanel: React.FC<AdminMetricsPanelProps> = ({
   return (
     <div className="space-y-6">
       <div className={cardBaseClass}>
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-          Métricas del sistema
-        </h3>
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shadow-inner dark:bg-[#10221C] dark:text-emerald-400">
+            <BarChart3 className="h-6 w-6" />
+          </div>
 
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Visualiza la cantidad de usuarios registrados y el estado actual de los portafolios.
-        </p>
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              Métricas del sistema
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Visualiza la cantidad de usuarios registrados y el estado actual
+              de los portafolios.
+            </p>
+          </div>
+        </div>
       </div>
 
       <section className="space-y-4">

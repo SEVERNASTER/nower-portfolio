@@ -1,4 +1,4 @@
-import { API_URL } from '../profile/profileService';
+import { API_URL } from '../../profile/profileService';
 
 export type ReportType = 'summary' | 'users' | 'portfolios';
 

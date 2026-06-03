@@ -22,8 +22,8 @@ import {
   renderPortfolioTemplate,
 } from '../portfolio/templates/PortfolioTemplates';
 import { API_URL } from '../profile/profileService';
-import { AdminMetricsPanel } from './AdminMetricsPanel';
-import { AdminReportsPanel } from './AdminReportsPanel';
+import { AdminMetricsPanel } from './metrics';
+import { AdminReportsPanel } from './reports';
 
 type AdminSectionKey =
     | 'metrics'

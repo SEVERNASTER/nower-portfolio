@@ -8,7 +8,7 @@ import React, {
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
-  BarChart3,
+  ClipboardList,
   FileSpreadsheet,
   FileText,
   Filter,
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-import { Button } from '../../components/ui/Button';
+import { Button } from '../../../components/ui/Button';
 import {
   fetchReportHistory,
   generateAdminReport,
@@ -198,7 +198,7 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
       <div className={cardBaseClass}>
         <div className="mb-6 flex items-start gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shadow-inner dark:bg-[#10221C] dark:text-emerald-400">
-            <BarChart3 className="h-6 w-6" />
+            <ClipboardList className="h-6 w-6" />
           </div>
 
           <div>
