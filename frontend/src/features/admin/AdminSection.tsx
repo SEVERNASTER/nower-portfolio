@@ -22,39 +22,13 @@ import {
   renderPortfolioTemplate,
 } from '../portfolio/templates/PortfolioTemplates';
 import { API_URL } from '../profile/profileService';
+import { AdminMetricsPanel } from './AdminMetricsPanel';
 import { AdminReportsPanel } from './AdminReportsPanel';
 
 type AdminSectionKey =
     | 'metrics'
     | 'users'
     | 'reports';
-
-interface AdminUser {
-    id: string;
-    name: string;
-    email: string;
-    status: 'Activo' | 'Inactivo';
-    registeredAt: string;
-    role?: string;
-    mustChangePassword?: boolean;
-}
-
-interface AdminProfile {
-    id: string;
-    owner: string;
-    role: string;
-    city: string;
-    portfolioUrl: string;
-    updatedAt: string;
-}
-
-interface ModerationProject {
-    id: string;
-    title: string;
-    owner: string;
-    status: 'En revision' | 'Aprobado' | 'Rechazado';
-    submittedAt: string;
-}
 
 interface PortfolioDetail {
     id: string;
@@ -129,7 +103,6 @@ const ensureValidUrl = (url?: string): string => {
 
 export const AdminSection: React.FC = () => {
     const location = useLocation();
-    const [users, setUsers] = useState<AdminUser[]>([]);
     const [portfolios, setPortfolios] = useState<PortfolioDetail[]>([]);
     const [selectedPortfolio, setSelectedPortfolio] = useState<PortfolioDetail | null>(null);
     const [reviewLoading, setReviewLoading] = useState<'approve' | 'reject' | null>(null);
@@ -159,16 +132,6 @@ export const AdminSection: React.FC = () => {
                 if (!response.ok) throw new Error('Error al obtener datos');
 
                 const data = await response.json();
-
-                const adminUsers: AdminUser[] = data.map((u: any) => ({
-                    id: u.id.toString(),
-                    name: u.full_name || 'Sin nombre',
-                    email: u.email,
-                    status: 'Activo',
-                    registeredAt: new Date(u.created_at).toISOString().split('T')[0],
-                    role: u.role || 'user',
-                    mustChangePassword: Boolean(u.must_change_password),
-                }));
 
                 const adminPortfolios: PortfolioDetail[] = data.map((u: any) => ({
                     id: `PRT-${u.id}`,
@@ -245,7 +208,6 @@ export const AdminSection: React.FC = () => {
                     rawUser: u
                 }));
 
-                setUsers(adminUsers);
                 setPortfolios(adminPortfolios);
             } catch (error) {
                 console.error("Failed to load admin dashboard data:", error);
@@ -262,16 +224,6 @@ export const AdminSection: React.FC = () => {
     };
 
     const activeSection = sectionByPath[location.pathname] ?? 'metrics';
-
-    const metrics = useMemo(() => {
-        const registeredUsers = users.length;
-        const approvedPortfolios = portfolios.filter((p) => p.status === 'Aprobado').length;
-        const pendingPortfolios = portfolios.filter((p) => p.status === 'Pendiente').length;
-        const disabledAccounts = users.filter((user) => user.status === 'Inactivo').length;
-
-        return { registeredUsers, approvedPortfolios, pendingPortfolios, disabledAccounts };
-    }, [users, portfolios]);
-
     const filteredPortfoliosList = useMemo(() => {
         let result = portfolios.filter((p) =>
             p.status !== 'No publicado' &&
@@ -302,14 +254,6 @@ export const AdminSection: React.FC = () => {
         return result;
     }, [portfolios, searchQuery, statusFilter]);
 
-    const toggleUserStatus = (userId: string) => {
-        setUsers((prev) =>
-            prev.map((user) =>
-                user.id === userId ? { ...user, status: user.status === 'Activo' ? 'Inactivo' : 'Activo' } : user
-            )
-        );
-    };
-
     const openPortfolioModal = (userId: string) => {
         const portfolio = portfolios.find((p) => p.userId === userId);
         setSelectedPortfolio(portfolio || null);
@@ -335,7 +279,7 @@ export const AdminSection: React.FC = () => {
         setReviewLoading(action === 'approved' ? 'approve' : 'reject');
         try {
             const token = await getToken();
-            const res = await fetch('http://localhost:8000/api/admin/portfolio/review', {
+            const res = await fetch(`${API_URL}/admin/portfolio/review`, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -374,10 +318,6 @@ export const AdminSection: React.FC = () => {
         }
     }, [selectedPortfolio, reviewComment, getToken, showToast]);
 
-    const getPortfolioByUserId = (userId: string): PortfolioDetail | undefined => {
-        return portfolios.find((p) => p.userId === userId);
-    };
-
     return (
         <section className="space-y-6">
             {/* Toast notification */}
@@ -407,24 +347,10 @@ export const AdminSection: React.FC = () => {
             </div>
 
             {activeSection === 'metrics' && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className={cardBaseClass}>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Usuarios registrados</p>
-                        <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{metrics.registeredUsers}</p>
-                    </div>
-                    <div className={cardBaseClass}>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Portafolios aprobados</p>
-                        <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{metrics.approvedPortfolios}</p>
-                    </div>
-                    <div className={cardBaseClass}>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Portafolios pendientes</p>
-                        <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{metrics.pendingPortfolios}</p>
-                    </div>
-                    <div className={cardBaseClass}>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Cuentas deshabilitadas</p>
-                        <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{metrics.disabledAccounts}</p>
-                    </div>
-                </div>
+                <AdminMetricsPanel
+                    cardBaseClass={cardBaseClass}
+                    getToken={getToken}
+                />
             )}
             {activeSection === 'users' && (
                 <div className={`${cardBaseClass} p-0 overflow-hidden`}>

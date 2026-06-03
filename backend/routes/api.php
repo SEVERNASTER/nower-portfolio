@@ -91,7 +91,8 @@ Route::middleware([
     \App\Http\Middleware\AdminAuth::class,
 ])->group(function () {
 
-    Route::get('/admin/users-data', [AdminDashboardController::class, 'getUsersData']);    
+    Route::get('/admin/users-data', [AdminDashboardController::class, 'getUsersData']);
+    Route::get('/admin/metrics', [AdminDashboardController::class, 'getSystemMetrics']);    
     Route::get('/admin/reports/generate', [AdminReportController::class, 'generate']);
     Route::get('/admin/reports/history', [AdminReportController::class, 'history']);
     // Endpoint para frontend de verificación si el AdminAuth es exitoso
