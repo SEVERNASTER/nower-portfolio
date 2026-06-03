@@ -6,8 +6,9 @@ import React, {
 import {
   Eye,
   Menu,
+  Home,
 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { ErrorBoundary } from '../core/ErrorBoundary';
 import type { NavItem } from '../navigation/Sidebar';
@@ -40,6 +41,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         return document.documentElement.classList.contains('dark') || true;
     });
     const location = useLocation();
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (isDark) {
@@ -99,11 +101,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                             </div>
                         </div>
 
-                        {!location.pathname.startsWith('/admin') && (
-                            <Button variant="secondary" icon={Eye} className="hidden sm:flex">
-                                    Preview Público
-                            </Button>
-                        )}
+                        <Button 
+                            variant="secondary" 
+                            icon={Home} 
+                            className="hidden sm:flex"
+                            onClick={() => navigate('/')}
+                        >
+                            Ir a Inicio
+                        </Button>
                     </header>
 
                     <div className="flex-1 overflow-y-auto p-4 sm:p-8">
