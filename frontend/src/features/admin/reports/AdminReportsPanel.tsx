@@ -53,7 +53,7 @@ const filterLabels: Record<string, string> = {
   password_pending: "Contraseña pendiente",
   unpublished: "No publicados",
   pending_review: "Pendientes de revisión",
-  published: "Publicados",
+  published: "Publicados/Aprobados",
   rejected: "Rechazados",
 };
 
@@ -69,6 +69,9 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
   const [reportLoading, setReportLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
+  const canExportReport = Boolean(
+    generatedReport && generatedReport.rows.length > 0
+  );
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
 
@@ -104,7 +107,7 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
         { value: "all", label: "Todos" },
         { value: "unpublished", label: "No publicados" },
         { value: "pending_review", label: "Pendientes de revisión" },
-        { value: "published", label: "Publicados" },
+        { value: "published", label: "Publicados/Aprobados" },
         { value: "rejected", label: "Rechazados" },
       ];
     }
@@ -132,7 +135,7 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
   };
 
   const handleExportExcel = () => {
-    if (!generatedReport) return;
+    if (!generatedReport || generatedReport.rows.length === 0) return;
 
     const worksheetData = [
       [generatedReport.title],
@@ -158,7 +161,7 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
   };
 
   const handleExportPdf = () => {
-    if (!generatedReport) return;
+    if (!generatedReport || generatedReport.rows.length === 0) return;
 
     const doc = new jsPDF({
       orientation: "landscape",
@@ -294,16 +297,30 @@ export const AdminReportsPanel: React.FC<AdminReportsPanelProps> = ({
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button variant="secondary" onClick={handleExportExcel}>
+              <Button
+                variant="secondary"
+                onClick={handleExportExcel}
+                disabled={!canExportReport}
+              >
                 <FileSpreadsheet className="h-4 w-4" />
                 Exportar Excel
               </Button>
 
-              <Button variant="secondary" onClick={handleExportPdf}>
+              <Button
+                variant="secondary"
+                onClick={handleExportPdf}
+                disabled={!canExportReport}
+              >
                 <FileText className="h-4 w-4" />
                 Exportar PDF
               </Button>
             </div>
+
+            {!canExportReport && (
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                La exportación estará disponible cuando el reporte contenga registros.
+              </p>
+            )}
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
