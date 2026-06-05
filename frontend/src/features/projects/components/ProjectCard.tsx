@@ -116,7 +116,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <ExternalLink className="h-3 w-3" />
             <span className="text-[10px] font-bold uppercase tracking-wider">Enlaces de referencia</span>
           </div>
-          <div className="flex flex-nowrap overflow-x-auto pb-2 gap-3 custom-scrollbar-horizontal p-2 bg-slate-100/50 dark:bg-[#10221C]/30 rounded-xl border border-slate-200/60 dark:border-slate-800/40">
+          <div className="flex flex-wrap gap-2 sm:gap-3 p-2 bg-slate-100/50 dark:bg-[#10221C]/30 rounded-xl border border-slate-200/60 dark:border-slate-800/40">
             {project.links.map((link, idx) => {
               const isCustom = !PREDEFINED_PLATFORMS.includes(link.platform_name);
               return (

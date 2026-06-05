@@ -141,8 +141,8 @@ export default function PasswordSettings() {
   };
 
   return (
-    <div className="w-full p-6">
-      <div className="mx-auto max-w-3xl">
+    <div className="w-full p-3 sm:p-6">
+      <div className="mx-auto w-full max-w-3xl">
         {mustChangePassword && (
           <div className="mb-6 space-y-4">
             <div className="rounded-2xl border border-amber-300 bg-amber-50 p-5 dark:border-amber-700/50 dark:bg-amber-950/30">
@@ -179,7 +179,7 @@ export default function PasswordSettings() {
               <Lock className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-slate-900 dark:text-white">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">
                 {mustChangePassword ? "Configuración de contraseña" : "Seguridad de Cuenta"}
               </h1>
               <p className="mt-1 text-slate-500 dark:text-slate-400">
@@ -191,7 +191,7 @@ export default function PasswordSettings() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-[#17262C]">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 lg:p-8 shadow-sm dark:border-slate-700 dark:bg-[#17262C]">
           {formError && (
             <p className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
               {formError}

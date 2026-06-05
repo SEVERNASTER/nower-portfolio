@@ -466,11 +466,11 @@ export const AdminSection: React.FC = () => {
                         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
                             Estás a punto de <strong className={showConfirmModal === 'approved' ? 'text-emerald-500' : 'text-rose-500'}>{showConfirmModal === 'approved' ? 'Aprobar y Publicar' : 'Rechazar'}</strong> el portafolio de <strong>{selectedPortfolio.nombre}</strong>.
                         </p>
-                        <div className="flex items-center justify-end gap-3">
-                            <Button variant="ghost" onClick={() => setShowConfirmModal(null)}>Cancelar</Button>
+                        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3">
+                            <Button variant="ghost" onClick={() => setShowConfirmModal(null)} className="w-full sm:w-auto justify-center">Cancelar</Button>
                             <Button 
                                 variant={showConfirmModal === 'approved' ? 'secondary' : 'outline'} 
-                                className={showConfirmModal === 'rejected' ? 'text-rose-500 border-rose-500/30 hover:bg-rose-500 hover:text-white' : ''}
+                                className={`w-full sm:w-auto justify-center ${showConfirmModal === 'rejected' ? 'text-rose-500 border-rose-500/30 hover:bg-rose-500 hover:text-white' : ''}`}
                                 onClick={() => {
                                     handleReviewPortfolio(showConfirmModal);
                                     setShowConfirmModal(null);
@@ -487,7 +487,7 @@ export const AdminSection: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closePortfolioModal}></div>
                     
-                    <div className="relative h-[95vh] w-full max-w-[1400px] overflow-hidden rounded-3xl bg-slate-50 dark:bg-[#121c22] shadow-2xl flex flex-col lg:flex-row ring-1 ring-slate-200/50 dark:ring-slate-700 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="relative h-[95dvh] w-full max-w-[1400px] overflow-hidden rounded-2xl sm:rounded-3xl bg-slate-50 dark:bg-[#121c22] shadow-2xl flex flex-col lg:flex-row ring-1 ring-slate-200/50 dark:ring-slate-700 animate-in fade-in zoom-in-95 duration-200">
                         {/* LEFT COLUMN: PORTFOLIO PREVIEW */}
                         <div className="h-1/2 lg:h-auto lg:flex-1 flex flex-col overflow-y-auto relative z-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800">
                             {/* ADMIN PREVIEW HEADER */}

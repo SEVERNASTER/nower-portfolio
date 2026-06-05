@@ -362,19 +362,21 @@ export const PortfolioVisibility: React.FC = () => {
       </section>
 
       {isPreviewOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-4">
-          <div className="mx-auto my-8 max-w-6xl">
-            <div className="mb-4 flex justify-end">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 p-2 sm:p-4">
+          <div className="mx-auto my-2 sm:my-8 w-full max-w-6xl">
+            <div className="mb-3 sm:mb-4 flex justify-end sticky top-0 z-10 pt-2">
               <button
                 type="button"
                 onClick={() => setIsPreviewOpen(false)}
-                className="rounded-xl bg-white px-4 py-2 font-semibold text-slate-800 shadow hover:bg-slate-100"
+                className="rounded-xl bg-white px-3 sm:px-4 py-2 text-sm font-semibold text-slate-800 shadow hover:bg-slate-100"
               >
                 Cerrar preview
               </button>
             </div>
 
-            {previewUser && renderPortfolioTemplate(selectedTemplate, previewUser)}
+            <div className="overflow-x-hidden rounded-xl">
+              {previewUser && renderPortfolioTemplate(selectedTemplate, previewUser)}
+            </div>
           </div>
         </div>
       )}

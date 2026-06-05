@@ -254,7 +254,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 bg-white dark:bg-[#17262C] p-6 rounded-2xl border border-slate-200 dark:border-slate-800/60 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300"
+      className="space-y-6 bg-white dark:bg-[#17262C] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800/60 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-300"
     >
       <div className="space-y-2">
         <div className="flex justify-between items-center">
@@ -306,6 +306,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         )}
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
       <div className="space-y-2">
         <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
           Fecha de Obtención <span className="text-red-500">*</span>
@@ -348,6 +349,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         {errors.hours && (
           <p className="text-xs text-red-500">{errors.hours}</p>
         )}
+      </div>
       </div>
 
       <div className="space-y-2">
@@ -487,7 +489,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
         <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
           Cancelar
         </Button>

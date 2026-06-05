@@ -624,7 +624,7 @@ const platformPatterns: Record<string, RegExp> = {
 
               <div className="flex flex-col sm:flex-row sm:items-start gap-2">
                 {/* Selector de plataforma */}
-                <div className="relative sm:w-1/4" ref={socialDropdownRef}>
+                <div className="relative w-full sm:w-1/3 md:w-1/4" ref={socialDropdownRef}>
                   <button
                     type="button"
                     onClick={() => setIsSocialDropdownOpen(!isSocialDropdownOpen)}

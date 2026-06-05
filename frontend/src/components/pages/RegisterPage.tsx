@@ -85,6 +85,10 @@ export const RegisterPage: React.FC = () => {
 
       // 2. If successful, set the session active and redirect
       if (completeSignUp.status === "complete") {
+        if (!setActive || !completeSignUp.createdSessionId) {
+          setError("No se pudo activar la sesión. Intenta de nuevo.");
+          return;
+        }
         await setActive({ session: completeSignUp.createdSessionId });
         navigate("/dashboard", { replace: true });
       } else {
@@ -99,10 +103,10 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-200">
-      <div className="grid grid-cols-1 md:grid-cols-2 w-[900px] rounded-2xl overflow-hidden shadow-lg">
-        {/* LEFT SIDE (Unchanged Branding) */}
-        <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] text-white p-10 flex flex-col justify-between">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-slate-200 p-4 sm:p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 w-full max-w-[900px] rounded-2xl overflow-hidden shadow-lg">
+        {/* LEFT SIDE (Branding — oculto en móvil) */}
+        <div className="hidden md:flex bg-gradient-to-br from-[#1e293b] to-[#0f172a] text-white p-8 lg:p-10 flex-col justify-between">
           {/* ... Your exact same left-side branding code here ... */}
           <div>
             <div className="flex items-center gap-4 mb-12">
@@ -132,7 +136,14 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         {/* RIGHT SIDE (Dynamic Form) */}
-        <div className="bg-white p-10 flex flex-col justify-center">
+        <div className="bg-white p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
+          <div className="flex md:hidden items-center gap-3 mb-6">
+            <img src="/nowerLogo.png" alt="NOWER Logo" className="h-12 w-auto object-contain" />
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">NOWER</h1>
+              <p className="text-[9px] font-semibold text-slate-500 tracking-widest uppercase">Efficient Web Performance</p>
+            </div>
+          </div>
           {/* INLINE ERROR STATE (Replaces `alert()`) */}
           {error && (
             <div className="mb-4 p-3 text-sm text-red-500 bg-red-100/50 border border-red-200 rounded-lg">

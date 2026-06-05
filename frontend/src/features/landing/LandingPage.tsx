@@ -193,10 +193,36 @@ export const LandingPage: React.FC = () => {
 
   // Sidebar Layout States
   const [activeTab, setActiveTab] = useState<'skills' | 'roles' | 'city' | 'experience' | 'projects' | null>('skills');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : false,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleChange = (event: MediaQueryListEvent) => {
+      setSidebarOpen(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const [navHeight, setNavHeight] = useState(64);
+
+  useEffect(() => {
+    const updateNavHeight = () => {
+      if (navRef.current) {
+        setNavHeight(navRef.current.offsetHeight);
+      }
+    };
+
+    updateNavHeight();
+    window.addEventListener('resize', updateNavHeight);
+    return () => window.removeEventListener('resize', updateNavHeight);
+  }, [searchInput, sidebarOpen]);
 
   // Load approved portfolios on mount
   useEffect(() => {
@@ -493,7 +519,7 @@ export const LandingPage: React.FC = () => {
       
       {/* ── TOP TOASTS ── */}
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-xl font-bold transition-all duration-300 ${
+        <div className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-sm z-50 px-5 py-3 rounded-2xl shadow-xl font-bold transition-all duration-300 ${
           toast.type === 'error' ? 'bg-rose-900/90 text-rose-200 border border-rose-700/50' : 'bg-emerald-900/90 text-emerald-200 border border-emerald-700/50'
         }`}>
           {toast.msg}
@@ -501,12 +527,11 @@ export const LandingPage: React.FC = () => {
       )}
 
       {/* ── NAVBAR ── */}
-      <nav className="lp-nav sticky top-0 z-50 w-full bg-white/90 dark:bg-[#0c1825]/90 border-b border-slate-200 dark:border-slate-800/80 backdrop-blur-md shadow-lg transition-colors">
-        <div className="w-full mx-auto px-4 h-16 flex items-center justify-between gap-4">
+      <nav ref={navRef} className="lp-nav sticky top-0 z-50 w-full bg-white/90 dark:bg-[#0c1825]/90 border-b border-slate-200 dark:border-slate-800/80 backdrop-blur-md shadow-lg transition-colors">
+        <div className="w-full mx-auto px-3 sm:px-4 py-2 sm:py-0 sm:h-16 flex flex-wrap lg:flex-nowrap items-center justify-between gap-x-3 gap-y-2">
           
           {/* Left Block: Hamburger Button + Logo */}
-          <div className="flex items-center gap-3">
-            {/* Hamburger Button aligned to the slim vertical sidebar dock */}
+          <div className="flex items-center gap-2 sm:gap-3 order-1 min-w-0">
             <button
               onClick={() => {
                 if (sidebarOpen) {
@@ -518,27 +543,48 @@ export const LandingPage: React.FC = () => {
                   }
                 }
               }}
-              className="flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#102030] hover:bg-slate-100 dark:hover:bg-[#162730] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm dark:shadow-md cursor-pointer"
+              className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#102030] hover:bg-slate-100 dark:hover:bg-[#162730] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm dark:shadow-md cursor-pointer shrink-0"
               title={sidebarOpen ? 'Cerrar panel' : 'Abrir panel'}
             >
               <Menu className="h-5 w-5" />
             </button>
             
-            <a href="/" className="lp-logo flex items-center gap-2 text-decoration-none group">
-              <img src="/nowerLogo.png" alt="NOWER" className="h-9 w-auto object-contain transition-transform group-hover:scale-105" />
-              <div className="hidden sm:block">
-                <span className="lp-logo-name block text-lg font-black text-slate-900 dark:text-white leading-none">NOWER</span>
-                <span className="lp-logo-tagline block text-[9px] font-black tracking-widest text-slate-400 uppercase mt-0.5">
+            <a href="/" className="lp-logo flex items-center gap-2 text-decoration-none group min-w-0">
+              <img src="/nowerLogo.png" alt="NOWER" className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105 shrink-0" />
+              <div className="hidden sm:block min-w-0">
+                <span className="lp-logo-name block text-base sm:text-lg font-black text-slate-900 dark:text-white leading-none">NOWER</span>
+                <span className="lp-logo-tagline block text-[8px] sm:text-[9px] font-black tracking-widest text-slate-400 uppercase mt-0.5 truncate">
                   Efficient Web Performance
                 </span>
               </div>
             </a>
           </div>
 
-          {/* Center Block: High-Fidelity Autocomplete Search Bar */}
-          <div className="flex-1 max-w-xl relative" ref={searchRef}>
+          {/* Right Block: Theme + Auth */}
+          <div className="flex items-center gap-2 sm:gap-4 order-2 lg:order-3 shrink-0">
+            <button
+              onClick={() => setIsDark(!isDark)}
+              className="relative inline-flex h-7 w-12 items-center rounded-full bg-slate-200 dark:bg-[#102030] transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 border border-slate-300 dark:border-slate-800 shrink-0"
+              title="Alternar modo claro/oscuro"
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${isDark ? 'translate-x-6' : 'translate-x-1'}`} />
+              {isDark ? <Moon className="absolute left-1.5 h-3.5 w-3.5 text-slate-400" /> : <Sun className="absolute right-1.5 h-3.5 w-3.5 text-amber-500" />}
+            </button>
+            <button
+              type="button"
+              onClick={handleAuthClick}
+              disabled={!isLoaded}
+              className="flex items-center gap-2 px-3 sm:px-6 py-2 sm:py-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-[#10B981] text-[#34d399] hover:text-white text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-[0_2px_10px_rgba(16,185,129,0.05)] hover:shadow-[0_4px_18px_rgba(16,185,129,0.25)] transition-all duration-300 active:scale-[0.98] cursor-pointer group disabled:opacity-50 disabled:cursor-wait"
+            >
+              <LogIn className="h-4 w-4 text-[#34d399] group-hover:text-white group-hover:translate-x-0.5 transition-all shrink-0" />
+              <span className="hidden sm:inline">{isSignedIn ? 'Ir al panel' : 'Iniciar sesión'}</span>
+            </button>
+          </div>
+
+          {/* Center Block: Search Bar (full width on mobile, inline on desktop) */}
+          <div className="order-3 w-full lg:order-2 lg:w-auto lg:flex-1 lg:max-w-xl relative min-w-0" ref={searchRef}>
             <div className="flex items-center gap-2 w-full">
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-0">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                   <Search className="h-4 w-4" />
                 </span>
@@ -549,8 +595,8 @@ export const LandingPage: React.FC = () => {
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   onFocus={() => searchInput.length > 0 && suggestions.length > 0 && setShowSuggestions(true)}
-                  placeholder="Buscar candidatos por cargo, habilidades, nombre..."
-                  className="w-full pl-10 pr-9 py-2.5 rounded-2xl text-xs font-semibold bg-white dark:bg-[#102030] text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none border border-slate-200 dark:border-slate-800 focus:border-emerald-500/50 focus:bg-slate-50 dark:focus:bg-[#0e1e2a] focus:ring-2 focus:ring-emerald-500/10 transition-all shadow-inner"
+                  placeholder="Buscar por cargo, habilidades, nombre..."
+                  className="w-full pl-10 pr-9 py-2 sm:py-2.5 rounded-2xl text-xs font-semibold bg-white dark:bg-[#102030] text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 outline-none border border-slate-200 dark:border-slate-800 focus:border-emerald-500/50 focus:bg-slate-50 dark:focus:bg-[#0e1e2a] focus:ring-2 focus:ring-emerald-500/10 transition-all shadow-inner"
                   autoComplete="off"
                 />
                 {searchInput && (
@@ -568,22 +614,21 @@ export const LandingPage: React.FC = () => {
                 )}
               </div>
               
-              {/* Indigo/Purple Gradient Search Button */}
               <button
                 onClick={() => {
                   if (inputRef.current) inputRef.current.focus();
                   showToast('success', 'Búsqueda aplicada en tiempo real.');
                 }}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-black uppercase tracking-wider shadow-[0_4px_14px_rgba(99,102,241,0.25)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.35)] transition-all transform active:scale-[0.98] cursor-pointer group"
+                className="hidden sm:flex items-center gap-2 px-4 lg:px-6 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-black uppercase tracking-wider shadow-[0_4px_14px_rgba(99,102,241,0.25)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.35)] transition-all transform active:scale-[0.98] cursor-pointer group shrink-0"
               >
                 <Search className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-                <span>Buscar</span>
+                <span className="hidden md:inline">Buscar</span>
               </button>
             </div>
 
             {/* Floating Autocomplete Suggestions */}
             {showSuggestions && (
-              <div className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white dark:bg-[#12232e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200">
+              <div className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-white dark:bg-[#12232e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-200 max-h-64 overflow-y-auto">
                 {suggestions.map((s, idx) => (
                   <button
                     key={s.label}
@@ -592,7 +637,7 @@ export const LandingPage: React.FC = () => {
                       idx === activeSuggestionIndex ? 'bg-slate-50 dark:bg-[#162a37]' : ''
                     }`}
                   >
-                    <span className={`inline-flex items-center justify-center min-w-[50px] px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                    <span className={`inline-flex items-center justify-center min-w-[50px] px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0 ${
                       s.type === 'role' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' : s.type === 'name' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
                     }`}>
                       {s.type === 'role' ? 'Cargo' : s.type === 'name' ? 'User' : 'Tech'}
@@ -603,38 +648,34 @@ export const LandingPage: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* Right Block: Auth Login CTA */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsDark(!isDark)}
-              className="relative inline-flex h-7 w-12 items-center rounded-full bg-slate-200 dark:bg-[#102030] transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 border border-slate-300 dark:border-slate-800"
-              title="Alternar modo claro/oscuro"
-            >
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${isDark ? 'translate-x-6' : 'translate-x-1'}`} />
-              {isDark ? <Moon className="absolute left-1.5 h-3.5 w-3.5 text-slate-400" /> : <Sun className="absolute right-1.5 h-3.5 w-3.5 text-amber-500" />}
-            </button>
-            <button
-              type="button"
-              onClick={handleAuthClick}
-              disabled={!isLoaded}
-              className="flex items-center gap-2 px-6 py-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-[#10B981] text-[#34d399] hover:text-white text-xs font-black uppercase tracking-wider shadow-[0_2px_10px_rgba(16,185,129,0.05)] hover:shadow-[0_4px_18px_rgba(16,185,129,0.25)] transition-all duration-300 active:scale-[0.98] cursor-pointer group disabled:opacity-50 disabled:cursor-wait"
-            >
-              <LogIn className="h-4 w-4 text-[#34d399] group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-              <span>{isSignedIn ? 'Ir al panel' : 'Iniciar sesión'}</span>
-            </button>
-          </div>
         </div>
       </nav>
 
       {/* ── TWO-COLUMN DYNAMIC EXPLORER LAYOUT ── */}
-      <main className="flex-1 flex w-full relative">
+      <main className="flex-1 flex w-full relative min-h-0">
+
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-x-0 bottom-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+            style={{ top: navHeight }}
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
 
         {/* ── LEFT COLUMN: Unified Collapsible Accordion Sidebar ── */}
         <aside
-          className={`h-[calc(100vh-64px)] bg-slate-50 dark:bg-[#0c1825] border-r border-slate-200 dark:border-slate-800/80 flex flex-col select-none transition-all duration-300 ease-in-out shrink-0 z-40 sticky top-16 ${
-            sidebarOpen ? 'w-[260px]' : 'w-16'
-          }`}
+          className={`bg-slate-50 dark:bg-[#0c1825] border-r border-slate-200 dark:border-slate-800/80 flex flex-col select-none transition-all duration-300 ease-in-out z-50
+            fixed left-0 lg:relative lg:top-0 lg:h-[calc(100vh-64px)] lg:sticky lg:shrink-0
+            ${sidebarOpen
+              ? 'translate-x-0 w-[min(280px,85vw)] lg:w-[260px]'
+              : '-translate-x-full w-[min(280px,85vw)] lg:translate-x-0 lg:w-16'
+            }`}
+          style={{
+            top: navHeight,
+            height: `calc(100dvh - ${navHeight}px)`,
+          }}
         >
           <div className="flex-1 overflow-y-auto overflow-x-hidden py-6 flex flex-col gap-4 custom-scrollbar-thin">
             
@@ -989,39 +1030,42 @@ export const LandingPage: React.FC = () => {
         </aside>
 
         {/* ── RIGHT COLUMN: Main Content Area (Hero + Cards Grid) ── */}
-        <div className="flex-1 min-w-0 bg-slate-50 dark:bg-[#0c1825] px-6 md:px-8 py-8 overflow-y-auto max-h-[calc(100vh-64px)] custom-scrollbar-thin z-30">
-          <div className="max-w-6xl mx-auto space-y-8">
+        <div
+          className="flex-1 min-w-0 bg-slate-50 dark:bg-[#0c1825] px-3 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 overflow-y-auto custom-scrollbar-thin z-30"
+          style={{ maxHeight: `calc(100dvh - ${navHeight}px)` }}
+        >
+          <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
             
             {/* HERO SECTION - Styled dynamically to look extremely premium */}
-            <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-white dark:from-[#12232e] to-slate-50 dark:to-[#0c1825] border border-slate-200 dark:border-slate-800/80 p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
+            <section className="relative overflow-hidden rounded-2xl sm:rounded-[28px] bg-gradient-to-br from-white dark:from-[#12232e] to-slate-50 dark:to-[#0c1825] border border-slate-200 dark:border-slate-800/80 p-5 sm:p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
               {/* Background luminous blobs */}
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-[-100px] left-[-100px] w-80 h-80 bg-purple-500 rounded-full blur-[90px] opacity-10" />
                 <div className="absolute bottom-[-100px] right-[-50px] w-72 h-72 bg-emerald-500 rounded-full blur-[80px] opacity-10" />
               </div>
 
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="max-w-2xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/25 text-emerald-500 dark:text-emerald-400 mb-6">
+              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div className="max-w-2xl w-full">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/25 text-emerald-500 dark:text-emerald-400 mb-4 sm:mb-6">
                     <TrendingUp className="h-3.5 w-3.5" />
                     Talento tecnológico verificado
                   </div>
                   
-                  <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-4">
-                    Descubre el mejor <br />
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-3 sm:mb-4">
+                    Descubre el mejor{' '}
                     <span className="bg-gradient-to-r from-purple-500 via-indigo-500 to-emerald-500 dark:from-purple-400 dark:via-indigo-300 dark:to-emerald-400 bg-clip-text text-transparent">
                       talento tech
                     </span>
                   </h1>
                   
-                  <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base font-semibold leading-relaxed mb-8 max-w-lg">
+                  <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base font-semibold leading-relaxed mb-6 sm:mb-8 max-w-lg">
                     Explora portafolios aprobados de desarrolladores, diseñadores y científicos de datos bolivianos listos para integrarse a tu equipo.
                   </p>
 
-                  <div className="flex flex-wrap gap-4">
+                  <div className="flex flex-wrap gap-3 sm:gap-4">
                     <button
                       onClick={() => navigate('/register')}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-transparent hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 text-slate-700 dark:text-slate-200 text-xs font-black uppercase tracking-wider transition-all shadow-sm dark:shadow-md active:scale-[0.98] cursor-pointer"
+                      className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-transparent hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all shadow-sm dark:shadow-md active:scale-[0.98] cursor-pointer"
                     >
                       <UserPlus className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                       Publica tu portafolio
@@ -1057,7 +1101,7 @@ export const LandingPage: React.FC = () => {
             <div className="space-y-4">
               
               {/* Results status bar */}
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800/80 pb-3">
                 <h3 className="text-xs font-black tracking-widest text-slate-400 uppercase flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-emerald-400" />
                   Portafolios: {loading ? '...' : filteredPortfolios.length}

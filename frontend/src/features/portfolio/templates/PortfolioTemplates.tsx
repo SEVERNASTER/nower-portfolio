@@ -372,7 +372,7 @@ export const ClassicPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ use
                       return (
                         <span key={tag} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/15 bg-emerald-50 dark:bg-[#1a2b32] px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-slate-200">
                           {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
-                          <span className="truncate max-w-[180px]">{tag}</span>
+                          <span className="truncate max-w-full">{tag}</span>
                         </span>
                       );
                     })}
@@ -392,7 +392,7 @@ export const ClassicPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ use
                           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-emerald-400/15 bg-white dark:bg-[#1a2b32] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                         >
                           <PlatformIcon platform={link.platform_name || ''} className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
-                          <span className="truncate max-w-[160px]">{link.platform_name || link.url}</span>
+                          <span className="truncate max-w-full">{link.platform_name || link.url}</span>
                         </a>
                       ))}
                     </div>
@@ -414,7 +414,7 @@ export const ClassicPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ use
               return (
                 <span key={skill.id} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-[#1e2e35] dark:text-slate-200 px-3 py-1.5 text-xs font-semibold max-w-full">
                   {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
-                  <span className="truncate max-w-[160px]">{skill.name}</span>
+                  <span className="truncate max-w-full">{skill.name}</span>
                 </span>
               );
             })}
@@ -454,7 +454,7 @@ export const ClassicPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ use
                     {exp.institution && (
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/5 text-xs font-bold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/10">
                         <Building2 className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate max-w-[140px]">{exp.institution}</span>
+                        <span className="truncate max-w-full">{exp.institution}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -470,7 +470,7 @@ export const ClassicPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ use
                     {ubicacion && (
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/5 text-xs font-bold text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/10">
                         <MapPin className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate max-w-[120px]">{ubicacion}</span>
+                        <span className="truncate max-w-full">{ubicacion}</span>
                       </div>
                     )}
                   </div>
@@ -518,7 +518,7 @@ export const ClassicPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ use
                   {edu.institution && (
                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-500/5 text-xs font-bold text-violet-700 dark:text-violet-400 border border-violet-200 dark:border-violet-500/10">
                       <Building2 className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-                      <span className="truncate max-w-[180px]">{edu.institution}</span>
+                      <span className="truncate max-w-full">{edu.institution}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -716,7 +716,7 @@ export const ModernPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ user
                     return (
                       <span key={skill.id} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 dark:border-emerald-400/15 dark:bg-[#102637] dark:text-slate-200 px-3 py-1.5 text-xs font-semibold max-w-full">
                         {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
-                        <span className="truncate max-w-[160px]">{skill.name}</span>
+                        <span className="truncate max-w-full">{skill.name}</span>
                       </span>
                     );
                   })}
@@ -813,7 +813,7 @@ export const ModernPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ user
                             return (
                               <span key={tag} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/15 bg-emerald-50 dark:bg-[#102637] px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-slate-200">
                                 {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
-                                <span className="truncate max-w-[180px]">{tag}</span>
+                                <span className="truncate max-w-full">{tag}</span>
                               </span>
                             );
                           })}
@@ -832,7 +832,7 @@ export const ModernPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ user
                                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-emerald-400/15 bg-white dark:bg-[#102637] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                               >
                                 <PlatformIcon platform={link.platform_name || ''} className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
-                                <span className="truncate max-w-[160px]">{link.platform_name || link.url}</span>
+                                <span className="truncate max-w-full">{link.platform_name || link.url}</span>
                               </a>
                             ))}
                           </div>
@@ -882,7 +882,7 @@ export const ModernPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ user
                           {exp.institution && (
                             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/5 text-xs font-bold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/10">
                               <Building2 className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate max-w-[140px]">{exp.institution}</span>
+                              <span className="truncate max-w-full">{exp.institution}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -898,7 +898,7 @@ export const ModernPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ user
                           {ubicacion && (
                             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/5 text-xs font-bold text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/10">
                               <MapPin className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate max-w-[120px]">{ubicacion}</span>
+                              <span className="truncate max-w-full">{ubicacion}</span>
                             </div>
                           )}
                         </div>
@@ -951,7 +951,7 @@ export const ModernPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ user
                         {edu.institution && (
                           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-500/5 text-xs font-bold text-violet-700 dark:text-violet-400 border border-violet-200 dark:border-violet-500/10">
                             <Building2 className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-                            <span className="truncate max-w-[180px]">{edu.institution}</span>
+                            <span className="truncate max-w-full">{edu.institution}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
@@ -1283,7 +1283,7 @@ export const CreativePortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ us
                         return (
                           <span key={tag} className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 dark:border-purple-500/20 bg-purple-50 dark:bg-purple-500/5 px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-300">
                             {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
-                            <span className="truncate max-w-[180px]">{tag}</span>
+                            <span className="truncate max-w-full">{tag}</span>
                           </span>
                         );
                       })}
@@ -1303,7 +1303,7 @@ export const CreativePortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ us
                             className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#0B0B0C] px-3 py-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-300 dark:hover:border-purple-500/20 transition-colors shadow-sm"
                           >
                             <PlatformIcon platform={link.platform_name || ''} className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" />
-                            <span className="truncate max-w-[160px]">{link.platform_name || link.url}</span>
+                            <span className="truncate max-w-full">{link.platform_name || link.url}</span>
                           </a>
                         ))}
                       </div>

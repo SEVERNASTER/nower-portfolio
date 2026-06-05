@@ -72,12 +72,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onCancel} // 🧠 click afuera cierra
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      onClick={onCancel}
     >
       <div
-        className="bg-white dark:bg-[#17262C] rounded-2xl shadow-xl w-full max-w-md p-6 transform transition-all scale-100 opacity-100 border border-slate-200 dark:border-slate-800/80"
-        onClick={(e) => e.stopPropagation()} // ❌ evita cerrar al hacer click dentro
+        className="bg-white dark:bg-[#17262C] rounded-2xl shadow-xl w-full max-w-md p-5 sm:p-6 transform transition-all scale-100 opacity-100 border border-slate-200 dark:border-slate-800/80 max-h-[90dvh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Icon & Title */}
         <div className="flex items-center gap-3 mb-4">
@@ -95,11 +95,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </p>
 
         {/* Buttons */}
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
           <button
             onClick={onCancel}
             disabled={loading}
-            className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-200 disabled:opacity-50 font-medium transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-200 disabled:opacity-50 font-medium transition-colors"
           >
             {cancelText}
           </button>
@@ -107,7 +107,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             onClick={onConfirm}
             disabled={loading}
-            className={`px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition-colors ${currentVariant.btnBg}`}
+            className={`w-full sm:w-auto px-4 py-2.5 rounded-lg font-medium disabled:opacity-50 transition-colors ${currentVariant.btnBg}`}
           >
             {loading ? "Procesando..." : finalConfirmText}
           </button>

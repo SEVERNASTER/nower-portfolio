@@ -46,6 +46,10 @@ export const LoginPage: React.FC = () => {
     result: { status: string | null; createdSessionId: string | null },
   ) => {
     if (result.status === "complete" && result.createdSessionId) {
+      if (!setActive) {
+        setError("No se pudo activar la sesión. Intenta de nuevo.");
+        return false;
+      }
       await setActive({ session: result.createdSessionId });
       goAfterLogin();
       return true;
@@ -140,9 +144,9 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-slate-100 dark:bg-[#0B1120] p-4 lg:p-10 font-sans overflow-hidden">
-      {/* Main Split-Screen Container - Locked height constraints */}
-      <div className="w-full h-full max-h-[850px] max-w-[1300px] flex flex-col lg:flex-row rounded-3xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-emerald-950/10 bg-white dark:bg-[#10221C] border border-slate-200 dark:border-slate-800/60">
+    <div className="min-h-[100dvh] w-full flex items-center justify-center bg-slate-100 dark:bg-[#0B1120] p-4 lg:p-10 font-sans">
+      {/* Main Split-Screen Container */}
+      <div className="w-full max-w-[1300px] flex flex-col lg:flex-row lg:max-h-[850px] rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-emerald-950/10 bg-white dark:bg-[#10221C] border border-slate-200 dark:border-slate-800/60">
         {/* LEFT SIDE: Branding & Value Prop */}
         <div className="hidden lg:flex lg:w-1/2 bg-[#17262C] p-10 flex-col justify-between relative overflow-hidden">
           {/* Background Decorative Element */}
@@ -204,7 +208,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* RIGHT SIDE: Login Form */}
-        <div className="relative w-full lg:w-1/2 flex-1 h-full overflow-hidden p-8 sm:p-10 lg:p-14 flex flex-col justify-center bg-slate-50 dark:bg-gradient-to-br from-[#120F1A] via-[#171E2F] to-[#120F1A] lg:bg-white lg:dark:bg-[#08180d] transition-colors">
+        <div className="relative w-full lg:w-1/2 flex-1 p-6 sm:p-8 lg:p-14 flex flex-col justify-center bg-slate-50 dark:bg-gradient-to-br from-[#120F1A] via-[#171E2F] to-[#120F1A] lg:bg-white lg:dark:bg-[#08180d] transition-colors">
           {/* Background Decorative Element (Mobile Only) */}
           <div className="lg:hidden absolute top-0 left-0 w-full h-full opacity-10 dark:opacity-20 pointer-events-none">
             <div className="absolute w-[40rem] h-[40rem] bg-purple-500 rounded-full blur-[100px] -top-20 -left-20"></div>
