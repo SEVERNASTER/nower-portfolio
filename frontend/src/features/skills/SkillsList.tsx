@@ -6,6 +6,8 @@ import { CustomDropdown } from '../../components/ui/CustomDropdown';
 import { SkillCard } from './components/SkillCard';
 import type { Skill, SkillLevel } from '../../data/mockData';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface BackendSkill {
     id: number | string;
     name: string;
@@ -64,6 +66,7 @@ export const SkillsList: React.FC = () => {
 
     // 1. Manage the list of skills in state
     const [skills, setSkills] = useState<Skill[]>([]);
+    const [error, setError] = useState<Error | null>(null);
     const { getToken, isLoaded, isSignedIn } = useAuth();
 
     useEffect(() => {
@@ -76,7 +79,7 @@ export const SkillsList: React.FC = () => {
         const loadSkills = async () => {
             try {
                 const token = await getToken();
-                const res = await fetch('http://localhost:8000/api/skills', {
+                const res = await fetch(`${API_URL}/skills`, {
                     method: 'GET',
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -99,8 +102,9 @@ export const SkillsList: React.FC = () => {
                 ];
 
                 setSkills(backendSkills.map(mapBackendSkill));
-            } catch (error) {
-                console.error('Error cargando habilidades:', error);
+            } catch (err) {
+                console.error('Error cargando habilidades:', err);
+                setError(err instanceof Error ? err : new Error('Error cargando habilidades'));
                 setSkills([]);
             }
         };
@@ -128,7 +132,7 @@ export const SkillsList: React.FC = () => {
                 proficiency_level: translateLevelToProficiency(newSkillLevel),
             };
 
-            const res = await fetch('http://localhost:8000/api/skills', {
+            const res = await fetch(`${API_URL}/skills`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -161,7 +165,7 @@ export const SkillsList: React.FC = () => {
 
         try {
             const token = await getToken();
-            const res = await fetch(`http://localhost:8000/api/skills/${idToRemove}`, {
+            const res = await fetch(`${API_URL}/skills/${idToRemove}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -183,6 +187,9 @@ export const SkillsList: React.FC = () => {
     const technicalSkills = skills.filter(s => s.category === 'Técnica');
     const softSkills = skills.filter(s => s.category === 'Blanda');
 
+    if (error) {
+        throw error;
+    }
 
     return (
         <div className="w-full space-y-6">

@@ -7,6 +7,8 @@ import { ProjectCard } from "./components/ProjectCard";
 import { ProjectForm } from "./components/ProjectForm";
 import { ConfirmModal } from "./components/ConfirmModal";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export const ProjectsList: React.FC = () => {
   const { getToken } = useAuth(); // 2. Obtener la función para el token
   const [projects, setProjects] = useState<Project[]>([]);
@@ -19,6 +21,7 @@ export const ProjectsList: React.FC = () => {
     id: string;
     title: string;
   } | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const buildFormData = (projectData: any) => {
     const formData = new FormData();
@@ -60,7 +63,7 @@ export const ProjectsList: React.FC = () => {
     const loadSkills = async () => {
       try {
         const token = await getToken(); // 3. Obtener token actual
-        const res = await fetch("http://localhost:8000/api/skills", {
+        const res = await fetch(`${API_URL}/skills`, {
           headers: {
             Authorization: `Bearer ${token}`, // Enviamos el token
             "Content-Type": "application/json",
@@ -97,6 +100,7 @@ export const ProjectsList: React.FC = () => {
         setAvailableSkills(allSkills);
       } catch (err) {
         console.error("Error cargando skills:", err);
+        setError(err instanceof Error ? err : new Error("Error cargando skills"));
       }
     };
     loadSkills();
@@ -106,7 +110,7 @@ export const ProjectsList: React.FC = () => {
   const handleCreateProject = async (newData: any) => {
     try {
       const token = await getToken();
-      const response = await fetch("http://localhost:8000/api/projects", {
+      const response = await fetch(`${API_URL}/projects`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`, // Enviamos el token
@@ -156,7 +160,7 @@ export const ProjectsList: React.FC = () => {
 
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:8000/api/projects/${editingProject.id}`, {
+      const response = await fetch(`${API_URL}/projects/${editingProject.id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -212,7 +216,7 @@ export const ProjectsList: React.FC = () => {
     try {
       const token = await getToken();
       const response = await fetch(
-        `http://localhost:8000/api/projects/${projectToDelete.id}`,
+        `${API_URL}/projects/${projectToDelete.id}`,
         {
           method: "DELETE",
           headers: {
@@ -239,7 +243,7 @@ export const ProjectsList: React.FC = () => {
       setIsLoading(true);
       try {
         const token = await getToken();
-        const res = await fetch("http://localhost:8000/api/projects", {
+        const res = await fetch(`${API_URL}/projects`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
@@ -274,6 +278,9 @@ export const ProjectsList: React.FC = () => {
           createdAt: p.created_at || new Date().toISOString(),
         }));
         setProjects(mappedProjects);
+      } catch (err) {
+        console.error("Error cargando proyectos:", err);
+        setError(err instanceof Error ? err : new Error("Error cargando proyectos"));
       } finally {
         setIsLoading(false);
       }
@@ -282,6 +289,10 @@ export const ProjectsList: React.FC = () => {
   }, [getToken]);
 
   // SI ESTÁ AÑADIENDO O EDITANDO: Muestra el formulario
+  if (error) {
+    throw error;
+  }
+
   if (isAdding) {
     return (
       <div className="w-full space-y-6">
