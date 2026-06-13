@@ -1,29 +1,36 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
 import {
   Briefcase,
+  CalendarRange,
+  ChevronDown,
+  ChevronUp,
   Code2,
   FolderGit2,
   Globe,
-  MapPin,
-  Moon,
-  Sun,
-  Search,
-  Sparkles,
-  User,
-  X,
-  XCircle,
-  Menu,
-  RotateCcw,
-  CalendarRange,
   Layers,
   LogIn,
+  MapPin,
+  Menu,
+  Moon,
+  RotateCcw,
+  Search,
+  Sparkles,
+  Sun,
   TrendingUp,
+  User,
   UserPlus,
-  ChevronDown,
-  ChevronUp,
+  X,
+  XCircle,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+import { useAuth } from '@clerk/clerk-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1183,7 +1190,7 @@ export const LandingPage: React.FC = () => {
                     onClick={resetFilters}
                     className="mt-6 inline-flex items-center gap-2 border border-slate-300 dark:border-slate-700 bg-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-600 dark:text-slate-350 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-2xl transition-all cursor-pointer"
                   >
-                    Ver todos los estudiantes
+                    Ver todos los usuarios
                   </button>
                 </div>
               )}

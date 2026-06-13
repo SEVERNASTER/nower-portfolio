@@ -10,10 +10,10 @@ import {
   ClipboardList,
   Code,
   FolderGit2,
+  FolderKanban,
   Globe,
   Lock,
   User,
-  Users,
 } from 'lucide-react';
 import {
   BrowserRouter,
@@ -141,7 +141,7 @@ const SignedInApp: React.FC = () => {
     userRole === "admin"
       ? [
           { name: "Métricas", icon: BarChart3, path: "/admin/metrics" },
-          { name: "Portafolios", icon: Users, path: "/admin/portafolios" },
+          { name: "Portafolios", icon: FolderKanban, path: "/admin/portafolios" },
           { name: "Reportes", icon: ClipboardList, path: "/admin/reportes" },
         ]
       : [];
