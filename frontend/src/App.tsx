@@ -141,7 +141,7 @@ const SignedInApp: React.FC = () => {
     userRole === "admin"
       ? [
           { name: "Métricas", icon: BarChart3, path: "/admin/metrics" },
-          { name: "Usuarios", icon: Users, path: "/admin/users" },
+          { name: "Portafolios", icon: Users, path: "/admin/portafolios" },
           { name: "Reportes", icon: ClipboardList, path: "/admin/reportes" },
         ]
       : [];

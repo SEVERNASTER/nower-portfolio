@@ -30,6 +30,18 @@ type AdminSectionKey =
     | 'users'
     | 'reports';
 
+type PortfolioStatus =
+    | 'Pendiente'
+    | 'Aprobado'
+    | 'Rechazado'
+    | 'No publicado';
+
+type PortfolioStatusFilter =
+    | 'Todos'
+    | 'Pendiente'
+    | 'Aprobado'
+    | 'Rechazado';
+
 interface PortfolioDetail {
     id: string;
     userId: string;
@@ -60,7 +72,7 @@ interface PortfolioDetail {
         descripcion?: string;
     }>;
     skills: string[];
-    status: 'Pendiente' | 'Aprobado' | 'Rechazado' | 'No publicado';
+    status: PortfolioStatus;
     imagen_profile?: string;
     templateKey: 'classic' | 'modern' | 'creative';
     rawUser: any;
@@ -71,7 +83,7 @@ const parseTags = (tags: any): string[] => {
         try {
             const parsed = JSON.parse(tags);
             if (Array.isArray(parsed)) return parsed;
-        } catch (e) {
+        } catch {
             return tags.split(',').map(t => t.trim()).filter(Boolean);
         }
     }
@@ -81,13 +93,15 @@ const parseTags = (tags: any): string[] => {
 const cardBaseClass =
     'rounded-2xl border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-[#17262C] p-5 shadow-sm';
 
-const getStatusBadge = (status: string) => {
-    if (status === 'Activo' || status === 'Aprobado' || status === 'Aprobada') {
+const getStatusBadge = (status: PortfolioDetail['status']) => {
+    if (status === 'Aprobado') {
         return <Badge variant="success">{status}</Badge>;
     }
-    if (status === 'Inactivo' || status === 'Rechazado' || status === 'Rechazada') {
+
+    if (status === 'Rechazado') {
         return <Badge variant="neutral">{status}</Badge>;
     }
+
     return <Badge variant="warning">{status}</Badge>;
 };
 
@@ -109,7 +123,7 @@ export const AdminSection: React.FC = () => {
     const [reviewToast, setReviewToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
     
     const [searchQuery, setSearchQuery] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'Todos' | 'Pendiente' | 'Aprobado' | 'Rechazado'>('Todos');
+    const [statusFilter, setStatusFilter] = useState<PortfolioStatusFilter>('Todos');
     
     const [reviewComment, setReviewComment] = useState('');
     const [showConfirmModal, setShowConfirmModal] = useState<'approved' | 'rejected' | null>(null);
@@ -196,11 +210,13 @@ export const AdminSection: React.FC = () => {
                         };
                     }),
                     skills: (u.skills || []).map((s: any) => s.name),
-                    status: ((): 'Pendiente' | 'Aprobado' | 'Rechazado' | 'No publicado' => {
-                        if (!u.portfolio || u.portfolio.status === 'unpublished') return 'No publicado';
-                        const rs = u.portfolio?.review_status;
-                        if (rs === 'approved') return 'Aprobado';
-                        if (rs === 'rejected') return 'Rechazado';
+                    status: ((): PortfolioStatus => {
+                        if (!u.portfolio || u.portfolio.status === 'unpublished') {
+                            return 'No publicado';
+                        }
+                        const reviewStatus = u.portfolio?.review_status;
+                        if (reviewStatus === 'approved') return 'Aprobado';
+                        if (reviewStatus === 'rejected') return 'Rechazado';
                         return 'Pendiente';
                     })(),
                     imagen_profile: u.imagen_profile,
@@ -214,12 +230,12 @@ export const AdminSection: React.FC = () => {
             }
         };
 
-        fetchAdminData();
+        void fetchAdminData();
     }, [getToken]);
 
     const sectionByPath: Record<string, AdminSectionKey> = {
         '/admin/metrics': 'metrics',
-        '/admin/users': 'users',
+        '/admin/portafolios': 'users',
         '/admin/reportes': 'reports'
     };
 
@@ -382,7 +398,7 @@ export const AdminSection: React.FC = () => {
                                 <select
                                     className="block w-full sm:w-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#121c22] py-2 pl-3 pr-8 text-sm text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
                                     value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                                    onChange={(e) => setStatusFilter(e.target.value as PortfolioStatusFilter)}
                                 >
                                     <option value="Todos" className="dark:bg-[#162730]">Todos los estados</option>
                                     <option value="Pendiente" className="dark:bg-[#162730]">Pendientes</option>
