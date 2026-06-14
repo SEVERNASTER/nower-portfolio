@@ -13,7 +13,8 @@ class PasswordAssignmentService
     public function __construct(
         protected PasswordGeneratorService $passwordGenerator,
         protected ClerkService $clerkService
-    ) {}
+    ) {
+    }
 
     /**
      * Genera contraseña, la guarda, sincroniza Clerk y envía correo.
@@ -21,6 +22,9 @@ class PasswordAssignmentService
      */
     public function assign(User $user): void
     {
+        Log::info('ENTRO A ASSIGN PASSWORD', [
+                'email' => $user->email,
+            ]);
         if ($user->role === 'admin') {
             throw new \RuntimeException('No se puede asignar contraseña temporal a usuarios administradores.');
         }
@@ -41,6 +45,10 @@ class PasswordAssignmentService
         }
 
         $this->sendCredentialsEmail($user, $plainPassword);
+        Log::info('ASSIGN PASSWORD EJECUTADO', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+        ]);
     }
 
     public function sendCredentialsEmail(User $user, string $plainPassword): void
@@ -72,6 +80,13 @@ class PasswordAssignmentService
         if ($user->role === 'admin') {
             return false;
         }
+
+        Log::info('SHOULD ASSIGN', [
+            'email' => $user->email,
+            'password_null' => $user->password === null,
+            'wasRecentlyCreated' => $wasRecentlyCreated,
+        ]);
+
         return $wasRecentlyCreated || $user->password === null;
     }
 }
