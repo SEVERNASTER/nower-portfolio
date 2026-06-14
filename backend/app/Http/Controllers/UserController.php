@@ -9,6 +9,7 @@ use App\Services\SocialLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -27,11 +28,13 @@ class UserController extends Controller
                     'social_links' => [],
                 ]);
             }
+            Log::info('REQUEST COMPLETO', $request->all());
             // Validaciones básicas (SOLO identidad)
             $validator = Validator::make($request->all(), [
                 'clerk_id' => 'required|string',
                 'full_name' => 'required|string|max:100',
                 'email' => 'required|email|max:150',
+                'password' => 'nullable|string|min:8',
                 'profession' => 'nullable|string|max:80',
                 'bio' => 'nullable|string|max:500',
                 'phone' => 'nullable|string|max:20',
@@ -41,6 +44,7 @@ class UserController extends Controller
                 'social_links' => 'nullable|array',
                 'social_links.*.platform_name' => 'required_with:social_links|string|in:LinkedIn,GitHub,Behance',
                 'social_links.*.url' => 'required_with:social_links|url|max:255',
+                'registration_type' => 'nullable|string',
             ], [
                 'full_name.required' => 'El nombre completo es obligatorio.',
                 'full_name.max' => 'El nombre no puede exceder 100 caracteres.',
@@ -57,7 +61,7 @@ class UserController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Error de validación de datos',
-                    'errors'  => $validator->errors(),
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -93,6 +97,11 @@ class UserController extends Controller
                 [
                     'email' => $request->email,
                     'full_name' => $request->full_name,
+                    'password' => $request->filled('password')
+                        ? Hash::make($request->password)
+                        : null,
+
+                    'must_change_password' => false,
                     'profession' => $request->filled('profession') ? $request->profession : null,
                     'bio' => $request->filled('bio') ? $request->bio : null,
                     'phone' => $request->filled('phone') ? $request->phone : null,
@@ -102,11 +111,16 @@ class UserController extends Controller
             );
 
             // Solo actualizar campos si se pasan y no están vacíos (para ediciones explícitas)
-            if ($request->filled('full_name')) $user->full_name = $request->full_name;
-            if ($request->filled('profession')) $user->profession = $request->profession;
-            if ($request->filled('bio')) $user->bio = $request->bio;
-            if ($request->filled('phone')) $user->phone = $request->phone;
-            if ($request->filled('city')) $user->city = $request->city;
+            if ($request->filled('full_name'))
+                $user->full_name = $request->full_name;
+            if ($request->filled('profession'))
+                $user->profession = $request->profession;
+            if ($request->filled('bio'))
+                $user->bio = $request->bio;
+            if ($request->filled('phone'))
+                $user->phone = $request->phone;
+            if ($request->filled('city'))
+                $user->city = $request->city;
 
             if ($request->email === 'alizaabigailvicenteguzman@gmail.com') {
                 $user->role = 'admin';
@@ -119,7 +133,21 @@ class UserController extends Controller
             $wasRecentlyCreated = $user->wasRecentlyCreated;
             $credentialsEmailSent = false;
 
-            if ($passwordAssignmentService->shouldAssignPassword($user, $wasRecentlyCreated)) {
+            $registrationType = $request->input('registration_type');
+            Log::info('REGISTRATION TYPE', [
+                'type' => $registrationType,
+                'email' => $user->email,
+            ]);
+            
+            Log::info('BEFORE ASSIGN', [
+                'type' => $registrationType,
+                'wasRecentlyCreated' => $wasRecentlyCreated,
+                'password_null' => $user->password === null,
+            ]);
+            if (
+                $registrationType === 'google'
+                && $passwordAssignmentService->shouldAssignPassword($user, $wasRecentlyCreated)
+            ) {
                 try {
                     $passwordAssignmentService->assign($user);
                     $credentialsEmailSent = true;
@@ -149,7 +177,7 @@ class UserController extends Controller
                 $user->imagen_profile = $request->input('imagen_profile');
                 $user->save();
 
-            // Opción B: se sube un archivo — se manda a Cloudinary, NUNCA a disco local
+                // Opción B: se sube un archivo — se manda a Cloudinary, NUNCA a disco local
             } elseif ($request->hasFile('image')) {
                 Log::info('ENTRA A CLOUDINARY', [
                     'filename' => $request->file('image')->getClientOriginalName(),
@@ -163,7 +191,7 @@ class UserController extends Controller
                     . '_' . $user->id . '_' . time();
 
                 try {
-                    $cloudinary   = new CloudinaryService();
+                    $cloudinary = new CloudinaryService();
                     $uploadResult = $cloudinary->upload($file, $publicId);
 
                     // Guardar solo la URL de Cloudinary (secure_url con HTTPS)
@@ -173,7 +201,7 @@ class UserController extends Controller
                 } catch (\Exception $e) {
                     Log::error('Cloudinary upload failed', [
                         'user_id' => $user->id,
-                        'error'   => $e->getMessage(),
+                        'error' => $e->getMessage(),
                     ]);
 
                     // NO hay fallback local — devolvemos error para que el equipo lo sepa
@@ -181,7 +209,7 @@ class UserController extends Controller
                         'success' => false,
                         'message' => 'Error al subir la imagen a Cloudinary. '
                             . 'Verifica las variables CLOUDINARY_* en tu .env',
-                        'error'   => config('app.debug') ? $e->getMessage() : null,
+                        'error' => config('app.debug') ? $e->getMessage() : null,
                     ], 500);
                 }
             }
@@ -194,7 +222,7 @@ class UserController extends Controller
                     ? 'Usuario sincronizado. La nueva contraseña fue enviada a su bandeja de entrada.'
                     : 'Usuario sincronizado correctamente',
                 'credentials_email_sent' => $credentialsEmailSent,
-                'user'    => $user->load('socialLinks'),
+                'user' => $user->load('socialLinks'),
             ]);
 
         } catch (\Exception $e) {
@@ -203,7 +231,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno del servidor',
-                'error'   => config('app.debug') ? $e->getMessage() : null,
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }

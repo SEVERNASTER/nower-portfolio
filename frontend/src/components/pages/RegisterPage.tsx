@@ -3,10 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import { useSignUp } from "@clerk/clerk-react"; // <-- Clerk Hook
 
-
-
 // We removed the onLogin prop since Clerk handles global state
 export const RegisterPage: React.FC = () => {
+  const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api";
   const navigate = useNavigate();
   const { isLoaded, signUp, setActive } = useSignUp();
   // Standard UI State
@@ -30,7 +29,6 @@ export const RegisterPage: React.FC = () => {
   const passwordsMatch =
     form.password !== "" && form.password === form.confirmPassword;
 
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
@@ -50,7 +48,7 @@ export const RegisterPage: React.FC = () => {
     setError("");
 
     try {
-      // 1. Create the user in Clerk
+      // 1. Create the user in Clerk with their own password
       await signUp.create({
         firstName: form.firstName,
         emailAddress: form.emailAddress,
@@ -63,7 +61,6 @@ export const RegisterPage: React.FC = () => {
       // 3. Switch the UI to ask for the code
       setPendingVerification(true);
     } catch (err: any) {
-      // Clerk provides highly specific error messages (e.g., "Email already taken")
       setError(err.errors?.[0]?.message || "Error al crear la cuenta.");
     } finally {
       setIsLoading(false);
@@ -90,6 +87,20 @@ export const RegisterPage: React.FC = () => {
           return;
         }
         await setActive({ session: completeSignUp.createdSessionId });
+        await fetch(`${API_URL}/sync-user`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            clerk_id: signUp.createdUserId,
+            full_name: form.firstName,
+            email: form.emailAddress,
+            password: form.password,
+            registration_type: "password",
+          }),
+        });
         navigate("/dashboard", { replace: true });
       } else {
         console.error(JSON.stringify(completeSignUp, null, 2));
@@ -138,10 +149,18 @@ export const RegisterPage: React.FC = () => {
         {/* RIGHT SIDE (Dynamic Form) */}
         <div className="bg-white p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
           <div className="flex md:hidden items-center gap-3 mb-6">
-            <img src="/nowerLogo.png" alt="NOWER Logo" className="h-12 w-auto object-contain" />
+            <img
+              src="/nowerLogo.png"
+              alt="NOWER Logo"
+              className="h-12 w-auto object-contain"
+            />
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">NOWER</h1>
-              <p className="text-[9px] font-semibold text-slate-500 tracking-widest uppercase">Efficient Web Performance</p>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">
+                NOWER
+              </h1>
+              <p className="text-[9px] font-semibold text-slate-500 tracking-widest uppercase">
+                Efficient Web Performance
+              </p>
             </div>
           </div>
           {/* INLINE ERROR STATE (Replaces `alert()`) */}
