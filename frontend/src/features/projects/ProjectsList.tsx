@@ -121,7 +121,6 @@ export const ProjectsList: React.FC = () => {
           id: savedProject.id.toString(),
           title: savedProject.title,
           description: savedProject.description || "",
-          status: "BORRADOR",
           tags: savedProject.tags || [],
           repositoryUrl: savedProject.evidence_url || undefined,
           liveUrl: undefined,
@@ -175,7 +174,6 @@ export const ProjectsList: React.FC = () => {
           id: updatedProject.id.toString(),
           title: updatedProject.title,
           description: updatedProject.description || "",
-          status: "BORRADOR",
           tags: updatedProject.tags || [],
           repositoryUrl: updatedProject.evidence_url || undefined,
           liveUrl: undefined,
@@ -259,7 +257,6 @@ export const ProjectsList: React.FC = () => {
           id: p.id.toString(),
           title: p.title,
           description: p.description || "",
-          status: "BORRADOR", // Por defecto, el backend no tiene status
           tags: p.tags || [],
           repositoryUrl: p.evidence_url || undefined,
           liveUrl: undefined,

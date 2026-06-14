@@ -20,18 +20,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     <div className="flex flex-col rounded-2xl bg-white dark:bg-[#17262C] p-6 border border-slate-200 dark:border-slate-800/60 shadow-sm hover:shadow-md dark:hover:border-emerald-500 transition-all group">
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <span
-          className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md ${
-            project.status === "PUBLICADO"
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-              : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
-          }`}
-        >
-          {project.status}
-        </span>
-
-        {/* Menu */}
+      <div className="flex items-center justify-end mb-4">
         <div className="relative">
           <button
             onClick={(e) => {
