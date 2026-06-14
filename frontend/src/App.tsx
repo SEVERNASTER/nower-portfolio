@@ -117,9 +117,11 @@ const SignedInApp: React.FC = () => {
 
     const isPublicRoute =
       location.pathname === "/" || location.pathname.startsWith("/p/");
-    if (
+    const isSettingsRoute = location.pathname.startsWith(PASSWORD_SETTINGS_PATH);
+      if (
       userRole === "admin" &&
       !location.pathname.startsWith("/admin") &&
+      !isSettingsRoute &&
       !isPublicRoute &&
       !location.pathname.includes("sso-callback")
     ) {
@@ -201,7 +203,8 @@ const SignedInApp: React.FC = () => {
           localStorage.setItem("userRole", data.user.role);
         }
 
-        const mustChange = Boolean(data.user.must_change_password);
+        const isAdmin = data.user.role === "admin";
+        const mustChange = !isAdmin && Boolean(data.user.must_change_password);
         applyMustChangePassword(mustChange);
 
         if (data.user.must_change_password === undefined) {

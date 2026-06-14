@@ -21,6 +21,10 @@ class PasswordAssignmentService
      */
     public function assign(User $user): void
     {
+        if ($user->role === 'admin') {
+            throw new \RuntimeException('No se puede asignar contraseña temporal a usuarios administradores.');
+        }
+
         $plainPassword = $this->passwordGenerator->generate();
 
         $user->password = Hash::make($plainPassword);
@@ -65,6 +69,9 @@ class PasswordAssignmentService
 
     public function shouldAssignPassword(User $user, bool $wasRecentlyCreated): bool
     {
+        if ($user->role === 'admin') {
+            return false;
+        }
         return $wasRecentlyCreated || $user->password === null;
     }
 }
