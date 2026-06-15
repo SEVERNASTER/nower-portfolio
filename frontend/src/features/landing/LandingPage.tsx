@@ -163,6 +163,12 @@ export const LandingPage: React.FC = () => {
     navigate(isSignedIn ? '/dashboard' : '/login');
   };
 
+  const handlePublishPortfolioClick = () => {
+    if (!isLoaded) return;
+
+    navigate(isSignedIn ? '/portfolio/visibility' : '/login');
+  };
+
   // Dark Mode State
   const [isDark, setIsDark] = useState<boolean>(() => {
     return document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark';
@@ -1071,7 +1077,9 @@ export const LandingPage: React.FC = () => {
 
                   <div className="flex flex-wrap gap-3 sm:gap-4">
                     <button
-                      onClick={() => navigate('/register')}
+                      type="button"
+                      onClick={handlePublishPortfolioClick}
+                      disabled={!isLoaded}
                       className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-transparent hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all shadow-sm dark:shadow-md active:scale-[0.98] cursor-pointer"
                     >
                       <UserPlus className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
