@@ -11,7 +11,7 @@ class UpdateEducationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $clerkId = $this->get('clerk_user_id');
+        $clerkId = $this->attributes->get('clerk_user_id');
 
         if (! $clerkId) {
             return false;

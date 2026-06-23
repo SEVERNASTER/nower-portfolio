@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { CustomDropdown } from "../../components/ui/CustomDropdown";
 import { SkillCard } from "./components/SkillCard";
 import type { Skill, SkillLevel } from "../../data/mockData";
+import { API_URL } from "../profile/profileService";
 
 interface BackendSkill {
   id: number | string;
@@ -78,7 +79,7 @@ export const SkillsList: React.FC = () => {
     const loadSkills = async () => {
       try {
         const token = await getToken();
-        const res = await fetch("http://localhost:8000/api/skills", {
+        const res = await fetch(`${API_URL}/skills`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -121,6 +122,7 @@ export const SkillsList: React.FC = () => {
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isAddingSkill) return;
     if (!newSkillName.trim() || !newSkillCategory || !newSkillLevel) return;
     if (!isLoaded || !isSignedIn) return;
 
@@ -135,7 +137,7 @@ export const SkillsList: React.FC = () => {
         proficiency_level: translateLevelToProficiency(newSkillLevel),
       };
 
-      const res = await fetch("http://localhost:8000/api/skills", {
+      const res = await fetch(`${API_URL}/skills`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -173,7 +175,7 @@ export const SkillsList: React.FC = () => {
     try {
       const token = await getToken();
       const res = await fetch(
-        `http://localhost:8000/api/skills/${idToRemove}`,
+        `${API_URL}/skills/${idToRemove}`,
         {
           method: "DELETE",
           headers: {
