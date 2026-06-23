@@ -1,6 +1,5 @@
 import React, {
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
@@ -16,6 +15,7 @@ import {
 import { useAuth } from '@clerk/clerk-react';
 
 import { Button } from '../../components/ui/Button';
+import { ConfirmModal } from '../projects/components/ConfirmModal';
 import {
   fetchPortfolioPreview,
   fetchPortfolioStatus,
@@ -25,7 +25,6 @@ import {
   unpublishPortfolio,
 } from './portfolioService';
 import { renderPortfolioTemplate } from './templates/PortfolioTemplates';
-import { ConfirmModal } from '../projects/components/ConfirmModal';
 
 const templates: Array<{
   key: PortfolioTemplateKey;
@@ -61,11 +60,6 @@ export const PortfolioVisibility: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUnpublishConfirmOpen, setIsUnpublishConfirmOpen] = useState(false);
-
-  const publicUrl = useMemo(() => {
-    if (!status?.public_url) return null;
-    return `${window.location.origin}${status.public_url}`;
-  }, [status]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -229,19 +223,14 @@ export const PortfolioVisibility: React.FC = () => {
           )}
         </div>
 
-        {publicUrl && status?.is_public && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-900/40 dark:bg-emerald-950/20">
-            <p className="font-semibold text-emerald-800 dark:text-emerald-300">
-              URL pública de tu portafolio:
-            </p>
-            <a
-              href={publicUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 block break-all text-emerald-700 underline dark:text-emerald-300"
-            >
-              {publicUrl}
-            </a>
+        {status?.status === 'published' && status.is_public && (
+          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
+            <div className="flex items-start gap-3">
+              <p>
+                Portafolio aprobado y publicado correctamente.<br></br>
+                Tu portafolio ya está visible en el panel de inicio junto a los portafolios públicos de los demás usuarios.
+              </p>
+            </div>
           </div>
         )}
 

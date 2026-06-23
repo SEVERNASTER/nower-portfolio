@@ -5,9 +5,14 @@ import React, {
   useEffect,
   useMemo,
   useState,
-} from "react";
-import { useAuth, useUser } from "@clerk/clerk-react";
-import { fetchAuthMe } from "../features/auth/authApi";
+} from 'react';
+
+import {
+  useAuth,
+  useUser,
+} from '@clerk/clerk-react';
+
+import { fetchAuthMe } from '../features/auth/authApi';
 
 type AuthStatusContextValue = {
   loading: boolean;
@@ -42,7 +47,9 @@ export function AuthStatusProvider({ children }: { children: React.ReactNode }) 
       }
 
       const { user: authUser } = await fetchAuthMe(token);
-      setMustChangePassword(Boolean(authUser.must_change_password));
+      setMustChangePassword(
+        authUser.role !== "admin" && Boolean(authUser.must_change_password)
+      );
     } catch {
       setMustChangePassword(false);
     } finally {

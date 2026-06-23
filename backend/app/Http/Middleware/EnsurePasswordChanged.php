@@ -18,7 +18,7 @@ class EnsurePasswordChanged
 
         $user = User::where('clerk_id', $clerkId)->first();
 
-        if ($user && $user->must_change_password) {
+        if ($user && $user->role !== 'admin' && $user->must_change_password) {
             return response()->json([
                 'message' => 'Debes cambiar tu contraseña asignada antes de continuar.',
                 'must_change_password' => true,
