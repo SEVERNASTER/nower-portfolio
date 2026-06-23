@@ -994,7 +994,7 @@ export const CreativePortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ us
         {/* About Me Section: Grid Layout with beautiful mockup decorations */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center mb-16">
           <div className="md:col-span-8">
-            <h2 className="text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-6">About Me</h2>
+            <h2 className="text-4xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-6">Sobre mi</h2>
             <p className="text-lg font-semibold text-purple-600 dark:text-purple-400 mb-4">
               {user?.profession || 'Profesional'}
             </p>
@@ -1095,7 +1095,7 @@ export const CreativePortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ us
         {/* Skills & Technologies Section */}
         {skills.length > 0 && (
           <div className="mb-16">
-            <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-8">Skills & Technologies</h2>
+            <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-8">Habilidades y Tecnologías</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Technical / Hard Skills Card */}
@@ -1139,7 +1139,7 @@ export const CreativePortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ us
         {/* Experience Section (mockup year-circle timeline style) */}
         {experiences.length > 0 && (
           <div className="mb-16">
-            <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-8">Experience</h2>
+            <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight mb-8">Experiencia Laboral</h2>
             <div className="relative border-l border-zinc-200 dark:border-zinc-800 ml-8 pl-8 space-y-12">
               {experiences.map((exp: any) => {
                 const expYear = exp.end_date ? new Date(exp.end_date).getFullYear() : 'Act.';
@@ -1167,7 +1167,7 @@ export const CreativePortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ us
                       <div className="flex flex-wrap justify-between items-start gap-2">
                         <div>
                           <h4 className="text-lg font-bold text-zinc-900 dark:text-white">{exp.title}</h4>
-                          <p className="text-sm text-purple-600 dark:text-purple-400 font-semibold mt-0.5">at {exp.institution}</p>
+                          <p className="text-sm text-purple-600 dark:text-purple-400 font-semibold mt-0.5">Empresa: {exp.institution}</p>
                         </div>
 
                         {/* Metadata tags */}
@@ -1221,7 +1221,7 @@ export const CreativePortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ us
                       <div className="flex flex-wrap justify-between items-start gap-2">
                         <div>
                           <h4 className="text-lg font-bold text-zinc-900 dark:text-white">{edu.title}</h4>
-                          <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">at {edu.institution}</p>
+                          <p className="text-sm text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">{edu.institution}</p>
                         </div>
 
                         {edu.status && (

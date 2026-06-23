@@ -10,10 +10,10 @@ import {
   ClipboardList,
   Code,
   FolderGit2,
+  FolderKanban,
   Globe,
   Lock,
   User,
-  Users,
 } from 'lucide-react';
 import {
   BrowserRouter,
@@ -60,6 +60,22 @@ import type { SyncUserResponse } from './lib/apiTypes';
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api";
 const PASSWORD_SETTINGS_PATH = "/settings/password";
+const OAUTH_REGISTRATION_TYPE_KEY = "oauth_registration_type";
+
+function resolveGoogleRegistrationType(
+  clerkUser: NonNullable<ReturnType<typeof useUser>["user"]>,
+): string | undefined {
+  const fromOAuthRedirect = sessionStorage.getItem(OAUTH_REGISTRATION_TYPE_KEY);
+  if (fromOAuthRedirect === "google") {
+    return "google";
+  }
+
+  const hasGoogleAccount = clerkUser.externalAccounts?.some(
+    (account) => account.provider === "google",
+  );
+
+  return hasGoogleAccount ? "google" : undefined;
+}
 
 const baseNavItems: NavItem[] = [
   { name: "Perfil Básico", icon: User, path: "/profile" },
@@ -117,9 +133,11 @@ const SignedInApp: React.FC = () => {
 
     const isPublicRoute =
       location.pathname === "/" || location.pathname.startsWith("/p/");
-    if (
+    const isSettingsRoute = location.pathname.startsWith(PASSWORD_SETTINGS_PATH);
+      if (
       userRole === "admin" &&
       !location.pathname.startsWith("/admin") &&
+      !isSettingsRoute &&
       !isPublicRoute &&
       !location.pathname.includes("sso-callback")
     ) {
@@ -141,7 +159,7 @@ const SignedInApp: React.FC = () => {
     userRole === "admin"
       ? [
           { name: "Métricas", icon: BarChart3, path: "/admin/metrics" },
-          { name: "Usuarios", icon: Users, path: "/admin/users" },
+          { name: "Portafolios", icon: FolderKanban, path: "/admin/portafolios" },
           { name: "Reportes", icon: ClipboardList, path: "/admin/reportes" },
         ]
       : [];
@@ -179,6 +197,8 @@ const SignedInApp: React.FC = () => {
       const email = clerkUser.primaryEmailAddress?.emailAddress;
       if (!email) return;
 
+      const registrationType = resolveGoogleRegistrationType(clerkUser);
+
       const res = await fetch(`${API_URL}/sync-user`, {
         method: "POST",
         headers: {
@@ -190,18 +210,23 @@ const SignedInApp: React.FC = () => {
           full_name: clerkUser.fullName || clerkUser.firstName,
           email,
           imagen_profile: clerkUser.imageUrl,
+          ...(registrationType ? { registration_type: registrationType } : {}),
         }),
       });
 
       const data = (await res.json()) as SyncUserResponse;
 
       if (data.success && data.user) {
+        if (registrationType === "google") {
+          sessionStorage.removeItem(OAUTH_REGISTRATION_TYPE_KEY);
+        }
         if (data.user.role) {
           setUserRole(data.user.role);
           localStorage.setItem("userRole", data.user.role);
         }
 
-        const mustChange = Boolean(data.user.must_change_password);
+        const isAdmin = data.user.role === "admin";
+        const mustChange = !isAdmin && Boolean(data.user.must_change_password);
         applyMustChangePassword(mustChange);
 
         if (data.user.must_change_password === undefined) {

@@ -18,15 +18,13 @@ const SsoCallback = () => {
 
       if (!email) return;
 
-      if (!email.endsWith("@est.umss.edu")) {
-        alert("Solo correos institucionales");
-        return;
-      }
-
       try {
-        const profileRes = await fetch(`${API_URL}/profile?clerk_id=${encodeURIComponent(clerkId)}`, {
-          headers: { Accept: "application/json" },
-        });
+        const profileRes = await fetch(
+          `${API_URL}/profile?clerk_id=${encodeURIComponent(clerkId)}`,
+          {
+            headers: { Accept: "application/json" },
+          }
+        );
 
         if (profileRes.ok) {
           navigate("/profile");
@@ -35,7 +33,10 @@ const SsoCallback = () => {
 
         if (profileRes.status !== 404) {
           const errorData = await profileRes.json();
-          console.error("Error verificando usuario existente:", errorData);
+          console.error(
+            "Error verificando usuario existente:",
+            errorData
+          );
           navigate("/profile");
           return;
         }
@@ -50,6 +51,7 @@ const SsoCallback = () => {
             clerk_id: clerkId,
             full_name: name,
             email,
+            registration_type: "google",
           }),
         });
 

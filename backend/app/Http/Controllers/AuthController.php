@@ -64,7 +64,7 @@ class AuthController extends Controller
 
         return response()->json([
             'sign_in_token' => $signInToken,
-            'must_change_password' => (bool) $user->must_change_password,
+            'must_change_password' => $user->role !== 'admin' && (bool) $user->must_change_password,
             'role' => $user->role,
         ]);
     }
@@ -84,7 +84,7 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'full_name' => $user->full_name,
                 'role' => $user->role,
-                'must_change_password' => (bool) $user->must_change_password,
+                'must_change_password' => $user->role !== 'admin' && (bool) $user->must_change_password,
             ],
         ]);
     }
@@ -98,6 +98,12 @@ class AuthController extends Controller
         ]);
 
         $user = User::findOrFail($request->user_id);
+
+        if ($user->role === 'admin') {
+            return response()->json([
+                'message' => 'No se puede asignar o restablecer contraseña temporal a usuarios administradores.',
+            ], 422);
+        }
 
         try {
             $passwordAssignmentService->assign($user);

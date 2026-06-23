@@ -116,6 +116,7 @@ export const LoginPage: React.FC = () => {
     if (!isLoaded) return;
     setIsGoogleAuthLoading(true);
     try {
+      sessionStorage.setItem("oauth_registration_type", "google");
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",

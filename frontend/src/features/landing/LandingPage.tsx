@@ -1,29 +1,36 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
 import {
   Briefcase,
+  CalendarRange,
+  ChevronDown,
+  ChevronUp,
   Code2,
   FolderGit2,
   Globe,
-  MapPin,
-  Moon,
-  Sun,
-  Search,
-  Sparkles,
-  User,
-  X,
-  XCircle,
-  Menu,
-  RotateCcw,
-  CalendarRange,
   Layers,
   LogIn,
+  MapPin,
+  Menu,
+  Moon,
+  RotateCcw,
+  Search,
+  Sparkles,
+  Sun,
   TrendingUp,
+  User,
   UserPlus,
-  ChevronDown,
-  ChevronUp,
+  X,
+  XCircle,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+import { useAuth } from '@clerk/clerk-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -154,6 +161,12 @@ export const LandingPage: React.FC = () => {
   const handleAuthClick = () => {
     if (!isLoaded) return;
     navigate(isSignedIn ? '/dashboard' : '/login');
+  };
+
+  const handlePublishPortfolioClick = () => {
+    if (!isLoaded) return;
+
+    navigate(isSignedIn ? '/portfolio/visibility' : '/login');
   };
 
   // Dark Mode State
@@ -1064,7 +1077,9 @@ export const LandingPage: React.FC = () => {
 
                   <div className="flex flex-wrap gap-3 sm:gap-4">
                     <button
-                      onClick={() => navigate('/register')}
+                      type="button"
+                      onClick={handlePublishPortfolioClick}
+                      disabled={!isLoaded}
                       className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-transparent hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all shadow-sm dark:shadow-md active:scale-[0.98] cursor-pointer"
                     >
                       <UserPlus className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
@@ -1183,7 +1198,7 @@ export const LandingPage: React.FC = () => {
                     onClick={resetFilters}
                     className="mt-6 inline-flex items-center gap-2 border border-slate-300 dark:border-slate-700 bg-transparent hover:border-slate-400 dark:hover:border-slate-500 text-slate-600 dark:text-slate-350 text-xs font-black uppercase tracking-wider px-5 py-2.5 rounded-2xl transition-all cursor-pointer"
                   >
-                    Ver todos los estudiantes
+                    Ver todos los usuarios
                   </button>
                 </div>
               )}
