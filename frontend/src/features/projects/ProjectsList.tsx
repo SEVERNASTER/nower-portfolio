@@ -6,6 +6,7 @@ import type { Project, Skill } from "../../data/mockData";
 import { ProjectCard } from "./components/ProjectCard";
 import { ProjectForm } from "./components/ProjectForm";
 import { ConfirmModal } from "./components/ConfirmModal";
+import { API_URL } from "../profile/profileService";
 
 const API_URL = import.meta.env.VITE_API_URL;
 

@@ -1,12 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Code2, BrainCircuit, Blocks } from 'lucide-react';
-import { useAuth } from '@clerk/clerk-react';
-import { Button } from '../../components/ui/Button';
-import { CustomDropdown } from '../../components/ui/CustomDropdown';
-import { SkillCard } from './components/SkillCard';
-import type { Skill, SkillLevel } from '../../data/mockData';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import React, { useEffect, useState } from "react";
+import { Plus, Code2, BrainCircuit, Blocks } from "lucide-react";
+import { useAuth } from "@clerk/clerk-react";
+import { Button } from "../../components/ui/Button";
+import { CustomDropdown } from "../../components/ui/CustomDropdown";
+import { SkillCard } from "./components/SkillCard";
+import type { Skill, SkillLevel } from "../../data/mockData";
+import { API_URL } from "../profile/profileService";
 
 interface BackendSkill {
   id: number | string;
@@ -82,7 +81,7 @@ export const SkillsList: React.FC = () => {
       try {
         const token = await getToken();
         const res = await fetch(`${API_URL}/skills`, {
-          method: 'GET',
+          method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -125,6 +124,7 @@ export const SkillsList: React.FC = () => {
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isAddingSkill) return;
     if (!newSkillName.trim() || !newSkillCategory || !newSkillLevel) return;
     if (!isLoaded || !isSignedIn) return;
 
@@ -140,7 +140,7 @@ export const SkillsList: React.FC = () => {
       };
 
       const res = await fetch(`${API_URL}/skills`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -176,12 +176,15 @@ export const SkillsList: React.FC = () => {
 
     try {
       const token = await getToken();
-      const res = await fetch(`${API_URL}/skills/${idToRemove}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${API_URL}/skills/${idToRemove}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);

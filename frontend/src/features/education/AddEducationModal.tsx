@@ -264,6 +264,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
   };
 
   const handleSave = async () => {
+    if (saving) return;
     setSubmitError(null);
     const errs = validate();
     setFieldErrors(errs);

@@ -206,6 +206,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const newErrors: any = {};
 
     if (!title.trim()) {
