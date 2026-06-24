@@ -1,3 +1,4 @@
+import { apiFetch } from '../../lib/apiClient';
 import { API_URL } from '../profile/profileService';
 
 export interface AchievementFile {
@@ -75,7 +76,7 @@ export async function updateAchievement(
   id: string,
   formData: FormData
 ) {
-  const res = await fetch(`${API_URL}/achievements/${id}`, {
+  const res = await apiFetch(`${API_URL}/achievements/${id}`, {
     method: 'PUT',
     headers: authHeaders(token),
     body: formData,
@@ -87,7 +88,7 @@ export async function updateAchievement(
 }
 
 export async function deleteAchievement(token: string | null, id: string) {
-  const res = await fetch(`${API_URL}/achievements/${id}`, {
+  const res = await apiFetch(`${API_URL}/achievements/${id}`, {
     method: 'DELETE',
     headers: authHeaders(token),
   });

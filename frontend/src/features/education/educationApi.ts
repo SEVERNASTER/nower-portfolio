@@ -1,3 +1,4 @@
+import { apiFetch } from '../../lib/apiClient';
 import { API_URL } from '../profile/profileService';
 import type { ApiExperienceRow } from '../experience/experienceApi';
 import {
@@ -110,7 +111,7 @@ export async function updateEducation(
   id: string | number,
   body: EducationCreatePayload
 ): Promise<Experience> {
-  const res = await fetch(`${API_URL}/education/${id}`, {
+  const res = await apiFetch(`${API_URL}/education/${id}`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -136,7 +137,7 @@ export async function updateEducation(
 }
 
 export async function deleteEducation(token: string, id: string | number): Promise<void> {
-  const res = await fetch(`${API_URL}/education/${id}`, {
+  const res = await apiFetch(`${API_URL}/education/${id}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,

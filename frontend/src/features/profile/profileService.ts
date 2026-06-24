@@ -8,6 +8,8 @@
  *   VITE_API_URL=http://127.0.0.1:8000/api
  */
 
+import { apiFetch } from "../../lib/apiClient";
+
 export const API_URL =
   import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api";
 
@@ -116,7 +118,7 @@ export async function getProfile(clerkId: string) {
 
 /** Actualiza solo datos de perfil (sin imagen) */
 export async function updateProfile(data: ProfilePayload) {
-  const res = await fetch(`${API_URL}/profile`, {
+  const res = await apiFetch(`${API_URL}/profile`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(data),
@@ -128,7 +130,7 @@ export async function updateProfile(data: ProfilePayload) {
 
 /** Actualiza solo datos de contacto */
 export async function updateContact(data: ContactPayload) {
-  const res = await fetch(`${API_URL}/profile/contact`, {
+  const res = await apiFetch(`${API_URL}/profile/contact`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(data),

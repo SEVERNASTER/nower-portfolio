@@ -6,6 +6,7 @@ import { CustomDropdown } from "../../components/ui/CustomDropdown";
 import { SkillCard } from "./components/SkillCard";
 import type { Skill, SkillLevel } from "../../data/mockData";
 import { API_URL } from "../profile/profileService";
+import { apiFetch } from "../../lib/apiClient";
 
 interface BackendSkill {
   id: number | string;
@@ -176,7 +177,7 @@ export const SkillsList: React.FC = () => {
 
     try {
       const token = await getToken();
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_URL}/skills/${idToRemove}`,
         {
           method: "DELETE",

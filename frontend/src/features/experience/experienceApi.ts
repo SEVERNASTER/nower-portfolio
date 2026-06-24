@@ -1,4 +1,5 @@
 import type { Experience } from './components/ExperienceCard';
+import { apiFetch } from '../../lib/apiClient';
 import { API_URL } from '../profile/profileService';
 
 export interface ApiExperienceRow {
@@ -170,7 +171,7 @@ export async function updateExperience(
     id: string | number,
     body: ExperienceCreatePayload
 ): Promise<void> {
-    const res = await fetch(`${API_URL}/experience/${id}`, {
+    const res = await apiFetch(`${API_URL}/experience/${id}`, {
         method: 'PUT',
         headers: {
             Authorization: `Bearer ${token}`,
@@ -191,7 +192,7 @@ export async function deleteExperience(
     token: string,
     id: string | number
 ): Promise<void> {
-    const res = await fetch(`${API_URL}/experience/${id}`, {
+    const res = await apiFetch(`${API_URL}/experience/${id}`, {
         method: 'DELETE',
         headers: {
             Authorization: `Bearer ${token}`,

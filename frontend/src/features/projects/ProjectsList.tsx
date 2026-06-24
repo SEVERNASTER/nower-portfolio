@@ -7,8 +7,7 @@ import { ProjectCard } from "./components/ProjectCard";
 import { ProjectForm } from "./components/ProjectForm";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { API_URL } from "../profile/profileService";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiFetch } from "../../lib/apiClient";
 
 export const ProjectsList: React.FC = () => {
   const { getToken } = useAuth(); // 2. Obtener la función para el token
@@ -160,17 +159,13 @@ export const ProjectsList: React.FC = () => {
 
     try {
       const token = await getToken();
-      const response = await fetch(`${API_URL}/projects/${editingProject.id}`, {
-        method: "POST",
+      const response = await apiFetch(`${API_URL}/projects/${editingProject.id}`, {
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Accept": "application/json",
+          Accept: "application/json",
         },
-        body: (() => {
-          const formData = buildFormData(newData);
-          formData.append('_method', 'PUT');
-          return formData;
-        })(),
+        body: buildFormData(newData),
       });
 
       if (response.ok) {
@@ -214,7 +209,7 @@ export const ProjectsList: React.FC = () => {
 
     try {
       const token = await getToken();
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/projects/${projectToDelete.id}`,
         {
           method: "DELETE",
