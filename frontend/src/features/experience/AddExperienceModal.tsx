@@ -145,6 +145,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
   };
 
   const handleSave = async () => {
+    if (saving) return;
     setSubmitError(null);
     const t = title.trim();
     const inst = institution.trim();

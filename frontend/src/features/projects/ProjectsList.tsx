@@ -6,6 +6,7 @@ import type { Project, Skill } from "../../data/mockData";
 import { ProjectCard } from "./components/ProjectCard";
 import { ProjectForm } from "./components/ProjectForm";
 import { ConfirmModal } from "./components/ConfirmModal";
+import { API_URL } from "../profile/profileService";
 
 export const ProjectsList: React.FC = () => {
   const { getToken } = useAuth(); // 2. Obtener la función para el token
@@ -60,7 +61,7 @@ export const ProjectsList: React.FC = () => {
     const loadSkills = async () => {
       try {
         const token = await getToken(); // 3. Obtener token actual
-        const res = await fetch("http://localhost:8000/api/skills", {
+        const res = await fetch(`${API_URL}/skills`, {
           headers: {
             Authorization: `Bearer ${token}`, // Enviamos el token
             "Content-Type": "application/json",
@@ -106,7 +107,7 @@ export const ProjectsList: React.FC = () => {
   const handleCreateProject = async (newData: any) => {
     try {
       const token = await getToken();
-      const response = await fetch("http://localhost:8000/api/projects", {
+      const response = await fetch(`${API_URL}/projects`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`, // Enviamos el token
@@ -155,7 +156,7 @@ export const ProjectsList: React.FC = () => {
 
     try {
       const token = await getToken();
-      const response = await fetch(`http://localhost:8000/api/projects/${editingProject.id}`, {
+      const response = await fetch(`${API_URL}/projects/${editingProject.id}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -210,7 +211,7 @@ export const ProjectsList: React.FC = () => {
     try {
       const token = await getToken();
       const response = await fetch(
-        `http://localhost:8000/api/projects/${projectToDelete.id}`,
+        `${API_URL}/projects/${projectToDelete.id}`,
         {
           method: "DELETE",
           headers: {
@@ -237,7 +238,7 @@ export const ProjectsList: React.FC = () => {
       setIsLoading(true);
       try {
         const token = await getToken();
-        const res = await fetch("http://localhost:8000/api/projects", {
+        const res = await fetch(`${API_URL}/projects`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
