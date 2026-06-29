@@ -113,6 +113,7 @@ class PortfolioService
     {
         $user->loadMissing([
             'socialLinks',
+            'projects',
             'skills',
             'experiences',
         ]);
@@ -145,6 +146,10 @@ class PortfolioService
 
         if ($user->socialLinks->isEmpty()) {
             $missingFields[] = 'Red profesional';
+        }
+
+        if ($user->projects->isEmpty()) {
+            $missingFields[] = 'Mínimo 1 proyecto';
         }
 
         if ($user->skills->count() < 3) {

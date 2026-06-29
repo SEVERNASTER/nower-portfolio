@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Badge } from '../../../components/ui/Badge';
 import {
   PortfolioDetail,
@@ -46,16 +44,29 @@ export const getStatusBadge = (status: PortfolioDetail['status']) => {
 };
 
 export const getPortfolioStatus = (portfolio: any): PortfolioStatus => {
-    if (!portfolio || portfolio.status === 'unpublished') {
+    if (!portfolio) {
         return 'No publicado';
     }
 
     const reviewStatus = portfolio?.review_status;
 
-    if (reviewStatus === 'approved') return 'Aprobado';
-    if (reviewStatus === 'rejected') return 'Rechazado';
+    if (reviewStatus === 'approved') {
+        return 'Aprobado';
+    }
 
-    return 'Pendiente';
+    if (reviewStatus === 'rejected') {
+        return 'Rechazado';
+    }
+
+    if (portfolio.status === 'pending_review') {
+        return 'Pendiente';
+    }
+
+    if (portfolio.status === 'published') {
+        return 'Aprobado';
+    }
+
+    return 'No publicado';
 };
 
 export const formatSubmittedAt = (date?: string): string => {

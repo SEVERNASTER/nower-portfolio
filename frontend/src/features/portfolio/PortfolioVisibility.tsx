@@ -91,6 +91,14 @@ const getMissingBasicProfileFields = (user: any): string[] => {
     missingFields.push('Red profesional');
   }
 
+  const projects = Array.isArray(user.projects)
+    ? user.projects
+    : [];
+
+  if (projects.length === 0) {
+    missingFields.push('Mínimo 1 proyecto');
+  }
+
   const skills = Array.isArray(user.skills)
     ? user.skills
     : [];
@@ -365,7 +373,7 @@ export const PortfolioVisibility: React.FC = () => {
               </h3>
 
               <p className="mt-1 leading-relaxed">
-                Para enviar tu portafolio a revisión, debes completar tu perfil básico, registrar al menos 3 habilidades y agregar una formación academica.
+                Para enviar tu portafolio a revisión, debes completar tu perfil basico, registrar al menos 1 proyecto, agregar 3 habilidades y completar una formación academica.
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
