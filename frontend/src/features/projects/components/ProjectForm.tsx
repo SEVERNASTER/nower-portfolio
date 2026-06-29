@@ -207,6 +207,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     }
   };
 
+  const normalizeUrl = (url: string) => {
+    if (!url.trim()) return "";
+  
+    if (/^https?:\/\//i.test(url)) {
+      return url;
+    }
+  
+    return `https://${url}`;
+  };
+
   const handleUrlChange = (val: string) => {
     setCurrentUrl(val);
     validateUrl(val);
@@ -263,11 +273,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
     setIsSubmitting(true);
     try {
+      const formattedLinks = links.map((link) => ({
+        ...link,
+        url: normalizeUrl(link.url),
+      }));
+      
       await onSubmit({
         title,
         description,
         tags,
-        links,
+        links: formattedLinks,
         images,
         remove_image_ids: removedImageIds,
         evidence_url: "",
