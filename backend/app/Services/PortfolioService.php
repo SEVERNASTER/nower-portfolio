@@ -6,13 +6,13 @@ use App\Models\Portfolio;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PortfolioService
 {
     public const STATUS_UNPUBLISHED = 'unpublished';
     public const STATUS_PENDING_REVIEW = 'pending_review';
     public const STATUS_PUBLISHED = 'published';
-
     public const TEMPLATE_CLASSIC = 'classic';
     public const TEMPLATE_MODERN = 'modern';
     public const TEMPLATE_CREATIVE = 'creative';
@@ -51,6 +51,8 @@ class PortfolioService
     public function publish(User $user, string $templateKey): Portfolio
     {
         try {
+            $this->ensureBasicProfileIsComplete($user);
+
             $portfolio = $this->getPortfolioForUser($user);
 
             $portfolio->update([
@@ -91,6 +93,57 @@ class PortfolioService
             Log::error("Failed to unpublish portfolio for user {$user->id}: {$e->getMessage()}");
             throw $e;
         }
+    }
+
+    private function ensureBasicProfileIsComplete(User $user): void
+    {
+        $missingFields = $this->getMissingBasicProfileFields($user);
+
+        if (!empty($missingFields)) {
+            throw ValidationException::withMessages([
+                'profile' => [
+                    'Completa la información básica de tu perfil antes de enviar el portafolio a revisión.',
+                ],
+                'missing_fields' => $missingFields,
+            ]);
+        }
+    }
+
+    private function getMissingBasicProfileFields(User $user): array
+    {
+        $user->loadMissing('socialLinks');
+
+        $missingFields = [];
+
+        if (!trim((string) $user->full_name)) {
+            $missingFields[] = 'Nombre completo';
+        }
+
+        if (!trim((string) $user->profession)) {
+            $missingFields[] = 'Profesión';
+        }
+
+        if (!trim((string) $user->bio)) {
+            $missingFields[] = 'Biografía personal';
+        }
+
+        if (!trim((string) $user->email)) {
+            $missingFields[] = 'Correo electrónico';
+        }
+
+        if (!preg_match('/^[0-9]{8}$/', (string) $user->phone)) {
+            $missingFields[] = 'Teléfono';
+        }
+
+        if (!trim((string) $user->city)) {
+            $missingFields[] = 'Ciudad';
+        }
+
+        if ($user->socialLinks->isEmpty()) {
+            $missingFields[] = 'Red profesional';
+        }
+
+        return $missingFields;
     }
 
     private function generateUniqueSlug(User $user): string

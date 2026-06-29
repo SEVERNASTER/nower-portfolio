@@ -1,9 +1,11 @@
 import React, {
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
 import {
+  AlertCircle,
   CheckCircle2,
   Globe,
   LayoutTemplate,
@@ -48,6 +50,50 @@ const templates: Array<{
   },
 ];
 
+const getMissingBasicProfileFields = (user: any): string[] => {
+  const missingFields: string[] = [];
+
+  if (!user) {
+    return missingFields;
+  }
+
+  if (!String(user.full_name ?? '').trim()) {
+    missingFields.push('Nombre completo');
+  }
+
+  if (!String(user.profession ?? '').trim()) {
+    missingFields.push('Profesión');
+  }
+
+  if (!String(user.bio ?? '').trim()) {
+    missingFields.push('Biografía personal');
+  }
+
+  if (!String(user.email ?? '').trim()) {
+    missingFields.push('Correo electrónico');
+  }
+
+  if (!/^[0-9]{8}$/.test(String(user.phone ?? ''))) {
+    missingFields.push('Teléfono');
+  }
+
+  if (!String(user.city ?? '').trim()) {
+    missingFields.push('Ciudad');
+  }
+
+  const socialLinks = Array.isArray(user.social_links)
+    ? user.social_links
+    : Array.isArray(user.socialLinks)
+      ? user.socialLinks
+      : [];
+
+  if (socialLinks.length === 0) {
+    missingFields.push('Red profesional');
+  }
+
+  return missingFields;
+};
+
 export const PortfolioVisibility: React.FC = () => {
   const { getToken, isLoaded, isSignedIn } = useAuth();
 
@@ -60,6 +106,13 @@ export const PortfolioVisibility: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUnpublishConfirmOpen, setIsUnpublishConfirmOpen] = useState(false);
+
+  const missingBasicProfileFields = useMemo(
+    () => getMissingBasicProfileFields(previewUser),
+    [previewUser]
+  );
+
+  const canRequestReview = missingBasicProfileFields.length === 0;
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -100,6 +153,13 @@ export const PortfolioVisibility: React.FC = () => {
   };
 
   const handlePublish = async () => {
+    if (!canRequestReview) {
+      setError(
+        `Completa la información basica antes de enviar el portafolio a revisión: ${missingBasicProfileFields.join(', ')}.`
+      );
+      return;
+    }
+
     setActionLoading(true);
     setError(null);
     setMessage(null);
@@ -272,6 +332,37 @@ export const PortfolioVisibility: React.FC = () => {
         </div>
       )}
 
+      {!canRequestReview && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
+          <div className="flex gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+
+            <div>
+              <h3 className="font-bold">
+                Completa tu perfil basico antes de publicar
+              </h3>
+
+              <p className="mt-1 leading-relaxed">
+                Para enviar tu portafolio a revisión, primero debes completar la información basica del módulo Perfil Basico.
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {missingBasicProfileFields.map((field) => (
+                  <span
+                    key={field}
+                    className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200 dark:bg-black/20 dark:text-amber-300 dark:ring-amber-900/50"
+                  >
+                    {field}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/60 dark:bg-[#17262C]">
         <div className="mb-5 flex items-center gap-3">
           <LayoutTemplate className="h-5 w-5 text-emerald-500" />
@@ -337,6 +428,7 @@ export const PortfolioVisibility: React.FC = () => {
                     onClick={handlePublish}
                     disabled={
                     actionLoading ||
+                    !canRequestReview ||
                     status?.status === 'pending_review' ||
                     status?.status === 'published'
                     }
@@ -344,7 +436,11 @@ export const PortfolioVisibility: React.FC = () => {
                 >
                     {actionLoading 
                         ? 'Enviando...' 
-                        : (status?.review_status === 'rejected' ? 'Volver a solicitar revisión' : 'Publicar portafolio')}
+                        : !canRequestReview
+                          ? 'Completa tu perfil para publicar'
+                          : status?.review_status === 'rejected'
+                            ? 'Volver a solicitar revisión'
+                            : 'Publicar portafolio'}
                 </Button>
             </div>
         </div>
