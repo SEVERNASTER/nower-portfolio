@@ -243,13 +243,15 @@ class AchievementController extends Controller
         }
 
         $validated = $request->validate([
-            'title' => 'required|string|max:150',
+            'title' => ['required', 'string', 'max:100', 'regex:/^[\p{L}\p{N}\s.,\'\-()\/:]+$/u'],
             'institution' => 'required|string|max:150',
             'obtained_at' => 'required|date',
             'hours' => 'nullable|integer|min:1|max:9999',
             'description' => 'nullable|string|max:1000',
             'remove_file_ids' => 'nullable|array',
             'remove_file_ids.*' => 'integer|exists:achievement_files,id',
+        ], [
+            'title.regex' => 'El símbolo no es aceptado en el sistema',
         ]);
 
         $files = $this->normalizeEvidenceFiles($request);
