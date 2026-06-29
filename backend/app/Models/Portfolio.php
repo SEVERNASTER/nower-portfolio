@@ -14,7 +14,7 @@ class Portfolio extends Model
         'user_id',
         'status',
         'is_public',
-
+        'content_dirty',
         'review_status',
         'review_comment',
         'reviewed_at',
