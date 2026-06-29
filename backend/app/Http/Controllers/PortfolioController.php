@@ -101,7 +101,7 @@ class PortfolioController extends Controller
             ]);
         } catch (ValidationException $e) {
             return response()->json([
-                'message' => 'Completa la información básica de tu perfil antes de enviar el portafolio a revisión.',
+                'message' => 'Completa la información minima requerida antes de enviar el portafolio a revisión.',
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {

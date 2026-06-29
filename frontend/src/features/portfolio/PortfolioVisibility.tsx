@@ -91,6 +91,26 @@ const getMissingBasicProfileFields = (user: any): string[] => {
     missingFields.push('Red profesional');
   }
 
+  const skills = Array.isArray(user.skills)
+    ? user.skills
+    : [];
+
+  if (skills.length < 3) {
+    missingFields.push('Mínimo 3 habilidades');
+  }
+
+  const experiences = Array.isArray(user.experiences)
+    ? user.experiences
+    : [];
+
+  const hasAcademicExperience = experiences.some(
+    (experience: any) => experience.type === 'academic'
+  );
+
+  if (!hasAcademicExperience) {
+    missingFields.push('Formación académica');
+  }
+
   return missingFields;
 };
 
@@ -155,7 +175,7 @@ export const PortfolioVisibility: React.FC = () => {
   const handlePublish = async () => {
     if (!canRequestReview) {
       setError(
-        `Completa la información basica antes de enviar el portafolio a revisión: ${missingBasicProfileFields.join(', ')}.`
+        `Completa la información minima requerida antes de enviar el portafolio a revisión: ${missingBasicProfileFields.join(', ')}.`
       );
       return;
     }
@@ -341,11 +361,11 @@ export const PortfolioVisibility: React.FC = () => {
 
             <div>
               <h3 className="font-bold">
-                Completa tu perfil basico antes de publicar
+                Completa la información minima antes de publicar
               </h3>
 
               <p className="mt-1 leading-relaxed">
-                Para enviar tu portafolio a revisión, primero debes completar la información basica del módulo Perfil Basico.
+                Para enviar tu portafolio a revisión, debes completar tu perfil básico, registrar al menos 3 habilidades y agregar una formación academica.
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
@@ -437,7 +457,7 @@ export const PortfolioVisibility: React.FC = () => {
                     {actionLoading 
                         ? 'Enviando...' 
                         : !canRequestReview
-                          ? 'Completa tu perfil para publicar'
+                          ? 'Completa datos minimos para publicar'
                           : status?.review_status === 'rejected'
                             ? 'Volver a solicitar revisión'
                             : 'Publicar portafolio'}

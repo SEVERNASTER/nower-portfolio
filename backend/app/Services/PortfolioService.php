@@ -102,7 +102,7 @@ class PortfolioService
         if (!empty($missingFields)) {
             throw ValidationException::withMessages([
                 'profile' => [
-                    'Completa la información básica de tu perfil antes de enviar el portafolio a revisión.',
+                    'Completa la información minima requerida antes de enviar el portafolio a revisión.',
                 ],
                 'missing_fields' => $missingFields,
             ]);
@@ -111,7 +111,11 @@ class PortfolioService
 
     private function getMissingBasicProfileFields(User $user): array
     {
-        $user->loadMissing('socialLinks');
+        $user->loadMissing([
+            'socialLinks',
+            'skills',
+            'experiences',
+        ]);
 
         $missingFields = [];
 
@@ -141,6 +145,18 @@ class PortfolioService
 
         if ($user->socialLinks->isEmpty()) {
             $missingFields[] = 'Red profesional';
+        }
+
+        if ($user->skills->count() < 3) {
+            $missingFields[] = 'Mínimo 3 habilidades';
+        }
+
+        $hasAcademicExperience = $user->experiences
+            ->where('type', 'academic')
+            ->isNotEmpty();
+
+        if (!$hasAcademicExperience) {
+            $missingFields[] = 'Formación académica';
         }
 
         return $missingFields;
