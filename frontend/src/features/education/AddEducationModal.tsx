@@ -221,7 +221,9 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
       if (!endMonth)
         errs.end_month = "La fecha de fin es obligatoria para este estado.";
       else {
-        if (startMonth && endMonth) {
+        if (endMonth > capYm) {
+          errs.end_month = "La fecha de fin no puede ser futura.";
+        } else if (startMonth && endMonth) {
           const start = new Date(`${startMonth}-01`);
           const end = new Date(`${endMonth}-01`);
 
@@ -468,6 +470,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                         setDegreeCustom(filterSpecialChars(e.target.value));
                         clearField("degree_type");
                       }}
+                      // Let me fix that inline to match the original one exactly to avoid reference error
                       placeholder="Describe el tipo de grado"
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm outline-none focus:border-teal-500 text-slate-900 dark:text-white"
                     />

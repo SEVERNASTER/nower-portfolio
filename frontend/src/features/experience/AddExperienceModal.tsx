@@ -179,7 +179,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
       setSubmitError("La empresa solo puede contener letras y espacios.");
       return;
     }
-    if (loc && /[^a-zA-ZáéíóüñÁÉÍÓÚÜÑ\s]/.test(loc)) {
+    if (loc && /[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/.test(loc)) {
       setSubmitError("La ubicación solo puede contener letras y espacios.");
       return;
     }
@@ -195,11 +195,26 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
       setSubmitError("Indica la fecha de inicio.");
       return;
     }
-    if (!isEndDateDisabled && !endMonth) {
-      setSubmitError('Indica la fecha de fin o marca el estado correspondiente.');
+    const d = new Date();
+    const capYm = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (startMonth > capYm) {
+      setSubmitError("La fecha de inicio no puede ser futura.");
       return;
     }
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    if (!isEndDateDisabled) {
+      if (!endMonth) {
+        setSubmitError('Indica la fecha de fin o marca el estado correspondiente.');
+        return;
+      }
+      if (endMonth > capYm) {
+        setSubmitError("La fecha de fin no puede ser futura.");
+        return;
+      }
+      if (startMonth && endMonth && endMonth <= startMonth) {
+        setSubmitError("La fecha de fin debe ser posterior a la de inicio.");
+        return;
+      }
+    }
 
     const startDate = monthInputToStartDate(startMonth);
     const endDate = isEndDateDisabled ? null : monthInputToEndDate(endMonth);
