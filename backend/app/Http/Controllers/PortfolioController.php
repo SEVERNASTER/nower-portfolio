@@ -166,6 +166,7 @@ class PortfolioController extends Controller
             'template_key' => $portfolio->template_key ?? PortfolioService::TEMPLATE_CLASSIC,
             'public_slug' => $portfolio->public_slug,
             'public_url' => $portfolio->public_slug ? '/p/' . $portfolio->public_slug : null,
+            'content_dirty' => $portfolio->content_dirty,
         ];
     }
 

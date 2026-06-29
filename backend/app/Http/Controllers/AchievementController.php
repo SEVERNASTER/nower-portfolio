@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Achievement;
 use App\Services\CloudinaryService;
+use App\Services\PortfolioService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -14,10 +15,11 @@ use Illuminate\Validation\ValidationException;
 class AchievementController extends Controller
 {
     protected $cloudinaryService;
-
-    public function __construct(CloudinaryService $cloudinaryService)
+    protected $portfolioService;
+    public function __construct(CloudinaryService $cloudinaryService, PortfolioService $portfolioService)
     {
         $this->cloudinaryService = $cloudinaryService;
+        $this->portfolioService = $portfolioService;
     }
 
     /**
@@ -88,6 +90,8 @@ class AchievementController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
+
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'success' => true,
@@ -173,7 +177,7 @@ class AchievementController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
-
+        $this->portfolioService->markAsDirty($user);    
         return response()->json([
             'success' => true,
             'message' => 'Logro actualizado correctamente',
@@ -223,6 +227,7 @@ class AchievementController extends Controller
             }
 
             $achievement->delete();
+            $this->portfolioService->markAsDirty($user);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Error eliminando logro: ' . $e->getMessage()], 500);
         }

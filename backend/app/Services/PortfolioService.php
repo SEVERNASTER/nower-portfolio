@@ -41,6 +41,7 @@ class PortfolioService
                 'reviewed_at' => null,
                 'template_key' => self::TEMPLATE_CLASSIC,
                 'public_slug' => $this->generateUniqueSlug($user),
+                'content_dirty' => false,
             ]
         );
     }
@@ -61,6 +62,7 @@ class PortfolioService
                 'reviewed_at' => null,
                 'template_key' => $templateKey,
                 'public_slug' => $portfolio->public_slug ?: $this->generateUniqueSlug($user),
+                'content_dirty' => false,
             ]);
 
             return $portfolio->fresh();
@@ -69,6 +71,8 @@ class PortfolioService
             throw $e;
         }
     }
+
+
 
     /**
      * despublica portafolio, ya no queda publico ni pendiente de revision
@@ -92,6 +96,19 @@ class PortfolioService
             throw $e;
         }
     }
+
+    public function markAsDirty(User $user): Portfolio
+{
+    $portfolio = $this->getPortfolioForUser($user);
+
+    if ($portfolio->status === self::STATUS_PUBLISHED) {
+        $portfolio->update([
+            'content_dirty' => true,
+        ]);
+    }
+
+    return $portfolio->fresh();
+}
 
     private function generateUniqueSlug(User $user): string
     {
