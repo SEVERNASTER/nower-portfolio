@@ -20,6 +20,14 @@ import {
 
 import type { Experience } from "./components/ExperienceCard";
 
+const ALLOWED_CHARS_REGEX = /[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g;
+const ALLOWED_TECH_CHARS_REGEX = /[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s.+#\-]/g;
+const ALLOWED_DESC_CHARS_REGEX = /[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s.,:;()\-?¡!¿"']/g;
+
+const filterSpecialChars = (val: string) => val.replace(ALLOWED_CHARS_REGEX, "");
+const filterTechChars = (val: string) => val.replace(ALLOWED_TECH_CHARS_REGEX, "");
+const filterDescriptionSpecialChars = (val: string) => val.replace(ALLOWED_DESC_CHARS_REGEX, "");
+
 interface AddExperienceModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -149,6 +157,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
     setSubmitError(null);
     const t = title.trim();
     const inst = institution.trim();
+    const loc = location.trim();
 
     if (!t || !inst) {
       setSubmitError("Completa todos los campos obligatorios.");
@@ -158,12 +167,28 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
       setSubmitError("El cargo no puede superar los 100 caracteres.");
       return;
     }
+    if (/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/.test(t)) {
+      setSubmitError("El cargo solo puede contener letras y espacios.");
+      return;
+    }
     if (inst.length > 70) {
       setSubmitError("La empresa no puede superar los 70 caracteres.");
       return;
     }
+    if (/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/.test(inst)) {
+      setSubmitError("La empresa solo puede contener letras y espacios.");
+      return;
+    }
+    if (loc && /[^a-zA-ZáéíóüñÁÉÍÓÚÜÑ\s]/.test(loc)) {
+      setSubmitError("La ubicación solo puede contener letras y espacios.");
+      return;
+    }
     if (description.length > 500) {
       setSubmitError("La descripción no puede superar los 500 caracteres.");
+      return;
+    }
+    if (description.trim() && /[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s.,:;()\-?¡!¿"']/.test(description.trim())) {
+      setSubmitError("La descripción contiene caracteres especiales no permitidos.");
       return;
     }
     if (!startMonth) {
@@ -174,6 +199,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
       setSubmitError('Indica la fecha de fin o marca el estado correspondiente.');
       return;
     }
+    const currentMonth = new Date().toISOString().slice(0, 7);
 
     const startDate = monthInputToStartDate(startMonth);
     const endDate = isEndDateDisabled ? null : monthInputToEndDate(endMonth);
@@ -263,7 +289,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                     type="text"
                     value={title}
                     maxLength={100}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => setTitle(filterSpecialChars(e.target.value))}
                     placeholder="Ej. Frontend Developer"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-purple-500"
                   />
@@ -285,7 +311,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                     type="text"
                     value={institution}
                     maxLength={70}
-                    onChange={(e) => setInstitution(e.target.value)}
+                    onChange={(e) => setInstitution(filterSpecialChars(e.target.value))}
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-amber-500"
                   />
                 </div>
@@ -316,7 +342,7 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                   <input
                     type="text"
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    onChange={(e) => setLocation(filterSpecialChars(e.target.value))}
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none"
                   />
                 </div>
@@ -388,38 +414,9 @@ export const AddExperienceModal: React.FC<AddExperienceModalProps> = ({
                   rows={4}
                   value={description}
                   maxLength={500}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => setDescription(filterDescriptionSpecialChars(e.target.value))}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none resize-none"
                 />
-              </div>
-            </div>
-
-            {/* Tecnologías */}
-            <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Tecnologías Usadas</label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Terminal className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={techInput}
-                    onChange={(e) => setTechInput(e.target.value)}
-                    onKeyDown={handleAddTech}
-                    placeholder="Enter para añadir"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none"
-                  />
-                </div>
-                <button type="button" onClick={handleAddTech} className="px-4 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {technologies.map((tech) => (
-                  <div key={tech} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-semibold">
-                    {tech}
-                    <button type="button" onClick={() => removeTech(tech)}><X className="h-3 w-3" /></button>
-                  </div>
-                ))}
               </div>
             </div>
 

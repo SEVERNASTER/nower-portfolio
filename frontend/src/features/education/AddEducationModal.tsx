@@ -11,6 +11,12 @@ import {
 } from "./educationApi";
 import type { Experience } from "../experience/components/ExperienceCard";
 
+const ALLOWED_CHARS_REGEX = /[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/g;
+const ALLOWED_DESC_CHARS_REGEX = /[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s.,:;()\-?¡!¿"']/g;
+
+const filterSpecialChars = (val: string) => val.replace(ALLOWED_CHARS_REGEX, "");
+const filterDescriptionSpecialChars = (val: string) => val.replace(ALLOWED_DESC_CHARS_REGEX, "");
+
 const DEGREE_PRESETS = [
   "Licenciatura",
   "Maestría",
@@ -185,19 +191,27 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
       errs.institution = "Indica al menos 3 caracteres para la institución.";
     else if (inst.length > 70)
       errs.institution = "La institución no puede superar los 70 caracteres.";
+    else if (/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/.test(inst))
+      errs.institution = "La institución solo puede contener letras y espacios.";
 
     if (!tit) errs.title = "El título o grado es obligatorio.";
     else if (tit.length < 2)
       errs.title = "El título debe tener al menos 2 caracteres.";
     else if (tit.length > 100)
       errs.title = "El título no puede superar los 100 caracteres.";
+    else if (/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/.test(tit))
+      errs.title = "El título solo puede contener letras y espacios.";
 
     if (description.length > 500) {
       errs.description = "La descripción no puede superar los 500 caracteres.";
+    } else if (description.trim() && /[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s.,:;()\-?¡!¿"']/.test(description.trim())) {
+      errs.description = "La descripción contiene caracteres especiales no permitidos.";
     }
 
     const dt = resolveDegreeType();
     if (!dt) errs.degree_type = "Selecciona o describe el tipo de grado.";
+    else if (degreePreset === OTRO && /[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/.test(degreeCustom))
+      errs.degree_type = "El tipo de grado solo puede contener letras y espacios.";
 
     if (!startMonth) errs.start_month = "La fecha de inicio es obligatoria.";
     else if (startMonth > capYm)
@@ -378,7 +392,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                     value={institution}
                     maxLength={70}
                     onChange={(e) => {
-                      setInstitution(e.target.value);
+                      setInstitution(filterSpecialChars(e.target.value));
                       clearField("institution");
                     }}
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none focus:border-teal-500"
@@ -408,7 +422,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                     value={title}
                     maxLength={100}
                     onChange={(e) => {
-                      setTitle(e.target.value);
+                      setTitle(filterSpecialChars(e.target.value));
                       clearField("title");
                     }}
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm outline-none focus:border-teal-500 text-slate-900 dark:text-white"
@@ -451,10 +465,9 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                       type="text"
                       value={degreeCustom}
                       onChange={(e) => {
-                        setDegreeCustom(e.target.value);
+                        setDegreeCustom(filterSpecialChars(e.target.value));
                         clearField("degree_type");
                       }}
-                      // Let me fix that inline to match the original one exactly to avoid reference error
                       placeholder="Describe el tipo de grado"
                       className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm outline-none focus:border-teal-500 text-slate-900 dark:text-white"
                     />
@@ -565,7 +578,7 @@ export const AddEducationModal: React.FC<AddEducationModalProps> = ({
                   value={description}
                   maxLength={500}
                   onChange={(e) => {
-                    setDescription(e.target.value);
+                    setDescription(filterDescriptionSpecialChars(e.target.value));
                     clearField("description");
                   }}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-[#111827] text-sm text-slate-900 dark:text-white outline-none resize-none focus:border-teal-500"
