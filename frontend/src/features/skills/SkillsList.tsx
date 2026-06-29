@@ -140,19 +140,16 @@ export const SkillsList: React.FC = () => {
     const allowedCharsRegex = /^[a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s\+\#\.\-\/_@&:\(\),]+$/i;
     const isAllowedChars = allowedCharsRegex.test(trimmedName);
 
-    if (!hasLetter) {
-      setValidationError("El nombre de la habilidad debe contener al menos una letra.");
-      return;
-    }
+    const generalErrorMessage = "El nombre de la habilidad no es válido o contiene caracteres extraños.";
 
-    if (!isAllowedChars) {
-      setValidationError("El nombre de la habilidad contiene caracteres no permitidos.");
+    if (!hasLetter || !isAllowedChars) {
+      setValidationError(generalErrorMessage);
       return;
     }
 
     // Check for 5 or more consecutive digits
     if (/\d{5,}/.test(trimmedName)) {
-      setValidationError("El nombre de la habilidad no debe contener más de 4 números seguidos.");
+      setValidationError(generalErrorMessage);
       return;
     }
 
@@ -160,7 +157,7 @@ export const SkillsList: React.FC = () => {
     const alphanumericChars = trimmedName.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ]/g, "");
     const letterChars = trimmedName.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/g, "");
     if (alphanumericChars.length > 0 && (letterChars.length / alphanumericChars.length) < 0.3) {
-      setValidationError("El nombre de la habilidad debe contener una mayor proporción de letras.");
+      setValidationError(generalErrorMessage);
       return;
     }
 

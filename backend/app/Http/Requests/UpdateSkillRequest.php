@@ -24,6 +24,8 @@ class UpdateSkillRequest extends FormRequest
      */
     public function rules(): array
     {
+        $generalErrorMessage = 'El nombre de la habilidad no es válido o contiene caracteres extraños.';
+
         return [
             'name'              => [
                 'sometimes',
@@ -31,10 +33,10 @@ class UpdateSkillRequest extends FormRequest
                 'max:100',
                 'regex:/[\p{L}]/u', // Must contain at least one letter
                 'regex:/^[\p{L}\p{N}\s\+\#\.\-\/_@&:\(\),]+$/u', // Only allowed characters
-                function ($attribute, $value, $fail) {
+                function ($attribute, $value, $fail) use ($generalErrorMessage) {
                     // Check for 5 or more consecutive digits
                     if (preg_match('/\d{5,}/', $value)) {
-                        $fail('El nombre de la habilidad no debe contener más de 4 números seguidos.');
+                        $fail($generalErrorMessage);
                     }
 
                     // Check letter ratio (must be at least 30% letters)
@@ -43,7 +45,7 @@ class UpdateSkillRequest extends FormRequest
                     $totalLength = mb_strlen($alphanumeric);
                     $letterLength = mb_strlen($letters);
                     if ($totalLength > 0 && ($letterLength / $totalLength) < 0.3) {
-                        $fail('El nombre de la habilidad debe contener una mayor proporción de letras.');
+                        $fail($generalErrorMessage);
                     }
                 }
             ],
@@ -61,7 +63,7 @@ class UpdateSkillRequest extends FormRequest
     {
         return [
             'name.max'              => 'El nombre no puede exceder los 100 caracteres.',
-            'name.regex'            => 'El nombre de la habilidad debe contener al menos una letra y usar caracteres válidos.',
+            'name.regex'            => 'El nombre de la habilidad no es válido o contiene caracteres extraños.',
             'type.in'               => 'El tipo debe ser "technical" o "soft".',
             'proficiency_level.min' => 'El nivel de dominio debe ser al menos 1.',
             'proficiency_level.max' => 'El nivel de dominio no puede ser mayor a 5.',
