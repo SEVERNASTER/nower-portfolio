@@ -3,7 +3,6 @@ import React from 'react';
 import {
   Award,
   Bookmark,
-  BookOpen,
   Briefcase,
   Building2,
   Calendar,
@@ -16,8 +15,6 @@ import {
   MapPin,
   Phone,
 } from 'lucide-react';
-
-import { PlatformIcon } from '../../projects/components/PlatformIcon';
 import {
   FaCss3Alt,
   FaFigma,
@@ -32,6 +29,8 @@ import {
   SiTailwindcss,
   SiTypescript,
 } from 'react-icons/si';
+
+import { PlatformIcon } from '../../projects/components/PlatformIcon';
 
 const skillMetaMap: Record<
   string,
@@ -286,6 +285,12 @@ export const ClassicPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ use
   const education = getEducation(user);
   const achievements = user?.achievements || [];
 
+  const hasProjects = projects.length > 0;
+  const hasSkills = skills.length > 0;
+  const hasExperiences = experiences.length > 0;
+  const hasEducation = education.length > 0;
+  const hasAchievements = achievements.length > 0;
+
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-[#17262C]">
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-8 text-white">
@@ -349,251 +354,305 @@ export const ClassicPortfolioTemplate: React.FC<PortfolioTemplateProps> = ({ use
           </section>
         )}
 
-        <section>
-          <SectionTitle icon={<FolderGit2 className="h-5 w-5 text-emerald-500" />} title="Proyectos" />
-          <div className="grid gap-6 md:grid-cols-2">
-            {projects.map((project: any) => (
-              <article key={project.id} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:bg-[#1e2e35] dark:border-slate-700 p-5 transition-all hover:border-emerald-300 dark:hover:border-emerald-300/30">
-                {project.images?.[0]?.url && (
-                  <div className="mb-4 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
-                    <img src={project.images[0].url} alt={project.title} className="h-44 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  </div>
-                )}
-                <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors break-words">{project.title}</h4>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 break-words whitespace-pre-wrap overflow-hidden">{project.description}</p>
-                
-                {(project.tags || []).length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {(project.tags || []).map((tag: string) => {
-                      const techMeta = skillMetaMap[normalizeSkillName(tag)];
-                      const Icon = techMeta?.icon;
-                      const iconClassName = techMeta?.iconClassName ?? 'text-emerald-500 dark:text-emerald-400';
-
-                      return (
-                        <span key={tag} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/15 bg-emerald-50 dark:bg-[#1a2b32] px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-slate-200">
-                          {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
-                          <span className="truncate max-w-full">{tag}</span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-                
-                {Array.isArray(project.links) && project.links.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/40">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Enlaces</p>
-                    <div className="flex flex-wrap gap-2">
-                      {project.links.map((link: any, idx: number) => (
-                        <a
-                          key={idx}
-                          href={link.url?.startsWith('http') ? link.url : `https://${link.url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-emerald-400/15 bg-white dark:bg-[#1a2b32] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                        >
-                          <PlatformIcon platform={link.platform_name || ''} className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
-                          <span className="truncate max-w-full">{link.platform_name || link.url}</span>
-                        </a>
-                      ))}
+        {hasProjects && (
+          <section>
+            <SectionTitle icon={<FolderGit2 className="h-5 w-5 text-emerald-500" />} title="Proyectos" />
+            <div className="grid gap-6 md:grid-cols-2">
+              {projects.map((project: any) => (
+                <article key={project.id} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:bg-[#1e2e35] dark:border-slate-700 p-5 transition-all hover:border-emerald-300 dark:hover:border-emerald-300/30">
+                  {project.images?.[0]?.url && (
+                    <div className="mb-4 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                      <img src={project.images[0].url} alt={project.title} className="h-44 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     </div>
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
+                  )}
 
-        <section>
-          <SectionTitle icon={<Code className="h-5 w-5 text-emerald-500" />} title="Habilidades" />
-          <div className="flex flex-wrap gap-2">
-            {skills.map((skill: any) => {
-              const techMeta = skillMetaMap[normalizeSkillName(skill.name || '')];
-              const Icon = techMeta?.icon;
-              const iconClassName = techMeta?.iconClassName ?? 'text-emerald-500 dark:text-emerald-400';
-
-              return (
-                <span key={skill.id} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-[#1e2e35] dark:text-slate-200 px-3 py-1.5 text-xs font-semibold max-w-full">
-                  {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
-                  <span className="truncate max-w-full">{skill.name}</span>
-                </span>
-              );
-            })}
-          </div>
-        </section>
-
-        <section>
-          <SectionTitle icon={<Briefcase className="h-5 w-5 text-emerald-500" />} title="Experiencia" />
-          <div className="relative border-l border-amber-200/60 dark:border-amber-800/30 ml-4 pl-6 space-y-8">
-            {experiences.map((exp: any) => {
-              const rawDesc: string = exp.description || '';
-              let modalidad: string | undefined;
-              let ubicacion: string | undefined;
-              const cleanLines: string[] = [];
-              rawDesc.split('\n').forEach((line: string) => {
-                const t = line.trim();
-                if (t.startsWith('Modalidad:')) modalidad = t.replace('Modalidad:', '').trim();
-                else if (t.startsWith('Ubicación:')) ubicacion = t.replace('Ubicación:', '').trim();
-                else if (!t.startsWith('Tecnologías:')) cleanLines.push(t);
-              });
-              const cleanDesc = cleanLines.filter(Boolean).join('\n').trim();
-
-              return (
-                <div key={exp.id} className="relative group">
-                  <div className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full border-4 border-white dark:border-[#17262C] bg-amber-500 ring-4 ring-amber-500/10" />
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors break-words">{exp.title}</h4>
-                    {!exp.end_date && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Actual
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    {exp.institution && (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/5 text-xs font-bold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/10">
-                        <Building2 className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate max-w-full">{exp.institution}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                      <Calendar className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-                      <span>{formatDate(exp.start_date)} — {formatDate(exp.end_date)}</span>
-                    </div>
-                    {modalidad && (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/5 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/10">
-                        <Laptop className="h-3.5 w-3.5 shrink-0" />
-                        <span>{modalidad}</span>
-                      </div>
-                    )}
-                    {ubicacion && (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/5 text-xs font-bold text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/10">
-                        <MapPin className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate max-w-full">{ubicacion}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {cleanDesc && <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 break-words whitespace-pre-wrap overflow-hidden">{cleanDesc}</p>}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section>
-          <SectionTitle icon={<GraduationCap className="h-5 w-5 text-emerald-500" />} title="Formación Académica" />
-          <div className="relative border-l border-violet-200/60 dark:border-violet-800/30 ml-4 pl-6 space-y-8">
-            {education.map((edu: any) => (
-              <div key={edu.id} className="relative group">
-                <div className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full border-4 border-white dark:border-[#17262C] bg-violet-500 ring-4 ring-violet-500/10" />
-                <div className="flex flex-wrap items-center gap-2">
-                  <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors break-words text-lg">
-                    {edu.title}
+                  <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors break-words">
+                    {project.title}
                   </h4>
-                  {edu.status && (
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${
-                      edu.status === 'Pausado'
-                        ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'
-                        : edu.status === 'En curso'
-                        ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'
-                        : 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
-                    }`}>
-                      {edu.status === 'En curso' && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                      {edu.status === 'Pausado' && <Bookmark className="h-3 w-3 shrink-0 text-amber-500" />}
-                      {edu.status === 'Graduado' && <GraduationCap className="h-3 w-3 shrink-0 text-blue-500" />}
-                      {edu.status}
-                    </span>
-                  )}
-                </div>
 
-                {edu.degree_type && (
-                  <p className="text-sm font-semibold text-teal-600 dark:text-teal-400 mt-1 break-words">
-                    {edu.degree_type}
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400 break-words whitespace-pre-wrap overflow-hidden">
+                    {project.description}
                   </p>
-                )}
 
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {edu.institution && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-500/5 text-xs font-bold text-violet-700 dark:text-violet-400 border border-violet-200 dark:border-violet-500/10">
-                      <Building2 className="h-3.5 w-3.5 shrink-0 text-violet-500" />
-                      <span className="truncate max-w-full">{edu.institution}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                    <Calendar className="h-3.5 w-3.5 shrink-0 text-violet-400" />
-                    <span>{formatDate(edu.start_date)} — {formatDate(edu.end_date)}</span>
-                  </div>
-                </div>
-
-                {edu.description && (
-                  <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 break-words whitespace-pre-wrap overflow-hidden">
-                    {edu.description}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <SectionTitle icon={<Award className="h-5 w-5 text-emerald-500" />} title="Logros y Certificaciones" />
-          <div className="grid gap-4 md:grid-cols-2">
-            {achievements.map((a: any) => {
-              const files: string[] = [];
-              if (Array.isArray(a.files) && a.files.length > 0) {
-                a.files.forEach((f: any) => { if (f?.url) files.push(f.url); });
-              } else if (a.file_url) {
-                files.push(a.file_url);
-              }
-
-              return (
-                <div key={a.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex flex-col items-start bg-slate-50 dark:bg-[#1e2e35] transition-all hover:border-emerald-300 dark:hover:border-emerald-300/30">
-                  <h4 className="font-bold text-slate-900 dark:text-white text-base break-words w-full">{a.title}</h4>
-                  <p className="text-sm text-slate-500 mt-1 break-words w-full">{a.institution}</p>
-                  {a.hours != null && a.hours > 0 && (
-                    <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mt-1">{a.hours} horas</p>
-                  )}
-                  {a.description && <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 break-words w-full">{a.description}</p>}
-                  
-                  {files.length > 0 && (
-                    <div className="mt-3.5 flex flex-wrap gap-1.5 w-full">
-                      {files.map((url, idx) => {
-                        const fileName = url.split('/').pop() || 'certificado';
-                        let displayName = 'Ver certificado';
-                        try {
-                          const decoded = decodeURIComponent(fileName);
-                          const base = decoded.split('-').slice(1).join('-') || decoded;
-                          if (base.length > 25) {
-                            displayName = base.substring(0, 22) + '...';
-                          } else if (base.length > 4) {
-                            displayName = base;
-                          }
-                        } catch {
-                          displayName = 'Ver certificado';
-                        }
+                  {(project.tags || []).length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {(project.tags || []).map((tag: string) => {
+                        const techMeta = skillMetaMap[normalizeSkillName(tag)];
+                        const Icon = techMeta?.icon;
+                        const iconClassName = techMeta?.iconClassName ?? 'text-emerald-500 dark:text-emerald-400';
 
                         return (
-                          <a
-                            key={idx}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-xs font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors shadow-sm"
-                          >
-                            <FileText className="h-4 w-4 shrink-0 text-emerald-500" />
-                            <span>{displayName}</span>
-                          </a>
+                          <span key={tag} className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/15 bg-emerald-50 dark:bg-[#1a2b32] px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-slate-200">
+                            {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
+                            <span className="truncate max-w-full">{tag}</span>
+                          </span>
                         );
                       })}
                     </div>
                   )}
+
+                  {Array.isArray(project.links) && project.links.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/40">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Enlaces
+                      </p>
+
+                      <div className="flex flex-wrap gap-2">
+                        {project.links.map((link: any, idx: number) => (
+                          <a
+                            key={idx}
+                            href={link.url?.startsWith('http') ? link.url : `https://${link.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-emerald-400/15 bg-white dark:bg-[#1a2b32] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                          >
+                            <PlatformIcon platform={link.platform_name || ''} className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
+                            <span className="truncate max-w-full">{link.platform_name || link.url}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {hasSkills && (
+          <section>
+            <SectionTitle icon={<Code className="h-5 w-5 text-emerald-500" />} title="Habilidades" />
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill: any) => {
+                const techMeta = skillMetaMap[normalizeSkillName(skill.name || '')];
+                const Icon = techMeta?.icon;
+                const iconClassName = techMeta?.iconClassName ?? 'text-emerald-500 dark:text-emerald-400';
+
+                return (
+                  <span key={skill.id} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-[#1e2e35] dark:text-slate-200 px-3 py-1.5 text-xs font-semibold max-w-full">
+                    {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${iconClassName}`} />}
+                    <span className="truncate max-w-full">{skill.name}</span>
+                  </span>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {hasExperiences && (
+          <section>
+            <SectionTitle icon={<Briefcase className="h-5 w-5 text-emerald-500" />} title="Experiencia" />
+            <div className="relative border-l border-amber-200/60 dark:border-amber-800/30 ml-4 pl-6 space-y-8">
+              {experiences.map((exp: any) => {
+                const rawDesc: string = exp.description || '';
+                let modalidad: string | undefined;
+                let ubicacion: string | undefined;
+                const cleanLines: string[] = [];
+
+                rawDesc.split('\n').forEach((line: string) => {
+                  const t = line.trim();
+
+                  if (t.startsWith('Modalidad:')) modalidad = t.replace('Modalidad:', '').trim();
+                  else if (t.startsWith('Ubicación:')) ubicacion = t.replace('Ubicación:', '').trim();
+                  else if (!t.startsWith('Tecnologías:')) cleanLines.push(t);
+                });
+
+                const cleanDesc = cleanLines.filter(Boolean).join('\n').trim();
+
+                return (
+                  <div key={exp.id} className="relative group">
+                    <div className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full border-4 border-white dark:border-[#17262C] bg-amber-500 ring-4 ring-amber-500/10" />
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors break-words">
+                        {exp.title}
+                      </h4>
+
+                      {!exp.end_date && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Actual
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {exp.institution && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/5 text-xs font-bold text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/10">
+                          <Building2 className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate max-w-full">{exp.institution}</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        <Calendar className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                        <span>{formatDate(exp.start_date)} — {formatDate(exp.end_date)}</span>
+                      </div>
+
+                      {modalidad && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/5 text-xs font-bold text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/10">
+                          <Laptop className="h-3.5 w-3.5 shrink-0" />
+                          <span>{modalidad}</span>
+                        </div>
+                      )}
+
+                      {ubicacion && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/5 text-xs font-bold text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-500/10">
+                          <MapPin className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate max-w-full">{ubicacion}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {cleanDesc && (
+                      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 break-words whitespace-pre-wrap overflow-hidden">
+                        {cleanDesc}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {hasEducation && (
+          <section>
+            <SectionTitle icon={<GraduationCap className="h-5 w-5 text-emerald-500" />} title="Formación Académica" />
+            <div className="relative border-l border-violet-200/60 dark:border-violet-800/30 ml-4 pl-6 space-y-8">
+              {education.map((edu: any) => (
+                <div key={edu.id} className="relative group">
+                  <div className="absolute -left-[31px] top-1.5 w-3.5 h-3.5 rounded-full border-4 border-white dark:border-[#17262C] bg-violet-500 ring-4 ring-violet-500/10" />
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors break-words text-lg">
+                      {edu.title}
+                    </h4>
+
+                    {edu.status && (
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${
+                        edu.status === 'Pausado'
+                          ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20'
+                          : edu.status === 'En curso'
+                            ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20'
+                            : 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
+                      }`}>
+                        {edu.status === 'En curso' && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                        {edu.status === 'Pausado' && <Bookmark className="h-3 w-3 shrink-0 text-amber-500" />}
+                        {edu.status === 'Graduado' && <GraduationCap className="h-3 w-3 shrink-0 text-blue-500" />}
+                        {edu.status}
+                      </span>
+                    )}
+                  </div>
+
+                  {edu.degree_type && (
+                    <p className="text-sm font-semibold text-teal-600 dark:text-teal-400 mt-1 break-words">
+                      {edu.degree_type}
+                    </p>
+                  )}
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {edu.institution && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-500/5 text-xs font-bold text-violet-700 dark:text-violet-400 border border-violet-200 dark:border-violet-500/10">
+                        <Building2 className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                        <span className="truncate max-w-full">{edu.institution}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/60 text-xs font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                      <Calendar className="h-3.5 w-3.5 shrink-0 text-violet-400" />
+                      <span>{formatDate(edu.start_date)} — {formatDate(edu.end_date)}</span>
+                    </div>
+                  </div>
+
+                  {edu.description && (
+                    <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300 break-words whitespace-pre-wrap overflow-hidden">
+                      {edu.description}
+                    </p>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {hasAchievements && (
+          <section>
+            <SectionTitle icon={<Award className="h-5 w-5 text-emerald-500" />} title="Logros y Certificaciones" />
+            <div className="grid gap-4 md:grid-cols-2">
+              {achievements.map((a: any) => {
+                const files: string[] = [];
+
+                if (Array.isArray(a.files) && a.files.length > 0) {
+                  a.files.forEach((f: any) => {
+                    if (f?.url) files.push(f.url);
+                  });
+                } else if (a.file_url) {
+                  files.push(a.file_url);
+                }
+
+                return (
+                  <div key={a.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex flex-col items-start bg-slate-50 dark:bg-[#1e2e35] transition-all hover:border-emerald-300 dark:hover:border-emerald-300/30">
+                    <h4 className="font-bold text-slate-900 dark:text-white text-base break-words w-full">
+                      {a.title}
+                    </h4>
+
+                    <p className="text-sm text-slate-500 mt-1 break-words w-full">
+                      {a.institution}
+                    </p>
+
+                    {a.hours != null && a.hours > 0 && (
+                      <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mt-1">
+                        {a.hours} horas
+                      </p>
+                    )}
+
+                    {a.description && (
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 break-words w-full">
+                        {a.description}
+                      </p>
+                    )}
+
+                    {files.length > 0 && (
+                      <div className="mt-3.5 flex flex-wrap gap-1.5 w-full">
+                        {files.map((url, idx) => {
+                          const fileName = url.split('/').pop() || 'certificado';
+                          let displayName = 'Ver certificado';
+
+                          try {
+                            const decoded = decodeURIComponent(fileName);
+                            const base = decoded.split('-').slice(1).join('-') || decoded;
+
+                            if (base.length > 25) {
+                              displayName = base.substring(0, 22) + '...';
+                            } else if (base.length > 4) {
+                              displayName = base;
+                            }
+                          } catch {
+                            displayName = 'Ver certificado';
+                          }
+
+                          return (
+                            <a
+                              key={idx}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-xs font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors shadow-sm"
+                            >
+                              <FileText className="h-4 w-4 shrink-0 text-emerald-500" />
+                              <span>{displayName}</span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
