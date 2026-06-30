@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Code2, BrainCircuit, Blocks } from "lucide-react";
+import { Plus, Code2, BrainCircuit, Blocks, Trash2 } from "lucide-react";
 import { useAuth } from "@clerk/clerk-react";
 import { Button } from "../../components/ui/Button";
 import { CustomDropdown } from "../../components/ui/CustomDropdown";
@@ -7,6 +7,7 @@ import { SkillCard } from "./components/SkillCard";
 import type { Skill, SkillLevel } from "../../data/mockData";
 import { API_URL } from "../profile/profileService";
 import { apiFetch } from "../../lib/apiClient";
+import { ConfirmModal } from "../projects/components/ConfirmModal";
 
 interface BackendSkill {
   id: number | string;
@@ -121,6 +122,10 @@ export const SkillsList: React.FC = () => {
     "Técnica" | "Blanda" | ""
   >("");
   const [isAddingSkill, setIsAddingSkill] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [skillToDelete, setSkillToDelete] = useState<Skill | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // 3. Handler to add a new skill to the list
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,13 +134,41 @@ export const SkillsList: React.FC = () => {
     if (!newSkillName.trim() || !newSkillCategory || !newSkillLevel) return;
     if (!isLoaded || !isSignedIn) return;
 
+    // Frontend validation
+    const trimmedName = newSkillName.trim();
+    const hasLetter = /[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/i.test(trimmedName);
+    const allowedCharsRegex = /^[a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ\s\+\#\.\-\/_@&:\(\),]+$/i;
+    const isAllowedChars = allowedCharsRegex.test(trimmedName);
+
+    const generalErrorMessage = "El nombre de la habilidad no es válido o contiene caracteres extraños.";
+
+    if (!hasLetter || !isAllowedChars) {
+      setValidationError(generalErrorMessage);
+      return;
+    }
+
+    // Check for 5 or more consecutive digits
+    if (/\d{5,}/.test(trimmedName)) {
+      setValidationError(generalErrorMessage);
+      return;
+    }
+
+    // Check letter ratio (must be at least 30% letters of alphanumeric characters)
+    const alphanumericChars = trimmedName.replace(/[^a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ]/g, "");
+    const letterChars = trimmedName.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/g, "");
+    if (alphanumericChars.length > 0 && (letterChars.length / alphanumericChars.length) < 0.3) {
+      setValidationError(generalErrorMessage);
+      return;
+    }
+
     try {
       setIsAddingSkill(true);
+      setValidationError(null);
 
       const token = await getToken();
 
       const body = {
-        name: newSkillName.trim(),
+        name: trimmedName,
         type: translateCategoryToType(newSkillCategory),
         proficiency_level: translateLevelToProficiency(newSkillLevel),
       };
@@ -152,7 +185,8 @@ export const SkillsList: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data?.message ?? "Error creando habilidad");
+        const errorMsg = data?.errors?.name?.[0] || data?.message || "Error creando habilidad";
+        throw new Error(errorMsg);
       }
 
       const createdSkill = mapBackendSkill(data.data);
@@ -163,19 +197,38 @@ export const SkillsList: React.FC = () => {
       setNewSkillLevel("");
     } catch (error) {
       console.error("Error creando habilidad:", error);
+      if (error instanceof Error) {
+        setValidationError(error.message);
+      } else {
+        setValidationError("Ocurrió un error al agregar la habilidad.");
+      }
     } finally {
       setIsAddingSkill(false);
     }
   };
 
-  // 4. Handler to remove a skill
-  const handleRemoveSkill = async (idToRemove: string) => {
-    if (!isLoaded || !isSignedIn) {
-      setSkills(skills.filter((skill) => skill.id !== idToRemove));
-      return;
+  // 4. Handler to initiate removal (opens confirmation modal)
+  const handleInitiateRemove = (idToRemove: string) => {
+    const skill = skills.find((s) => s.id === idToRemove);
+    if (skill) {
+      setSkillToDelete(skill);
     }
+  };
+
+  // 5. Handler to confirm removal
+  const handleConfirmRemove = async () => {
+    if (!skillToDelete) return;
 
     try {
+      setIsDeleting(true);
+      const idToRemove = skillToDelete.id;
+
+      if (!isLoaded || !isSignedIn) {
+        setSkills(skills.filter((skill) => skill.id !== idToRemove));
+        setSkillToDelete(null);
+        return;
+      }
+
       const token = await getToken();
       const res = await apiFetch(
         `${API_URL}/skills/${idToRemove}`,
@@ -193,8 +246,11 @@ export const SkillsList: React.FC = () => {
       }
 
       setSkills(skills.filter((skill) => skill.id !== idToRemove));
+      setSkillToDelete(null);
     } catch (error) {
       console.error("Error eliminando habilidad:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -238,7 +294,10 @@ export const SkillsList: React.FC = () => {
             <input
               type="text"
               value={newSkillName}
-              onChange={(e) => setNewSkillName(e.target.value)}
+              onChange={(e) => {
+                setNewSkillName(e.target.value);
+                setValidationError(null);
+              }}
               placeholder="Ej. GraphQL, Figma, Kubernetes..."
               className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#10221C] px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
             />
@@ -285,6 +344,11 @@ export const SkillsList: React.FC = () => {
             {isAddingSkill ? "Cargando..." : "Añadir"}
           </Button>
         </form>
+        {validationError && (
+          <p className="mt-3 text-sm text-red-500 dark:text-red-400 font-medium">
+            {validationError}
+          </p>
+        )}
       </div>
 
       {/* Skills Display Grids */}
@@ -293,7 +357,7 @@ export const SkillsList: React.FC = () => {
           title="Hard Skills (Técnicas)"
           icon={Code2}
           skills={technicalSkills}
-          onRemoveSkill={handleRemoveSkill}
+          onRemoveSkill={handleInitiateRemove}
           emptyMessage="Usa el formulario superior para añadir habilidades técnicas."
         />
 
@@ -301,10 +365,23 @@ export const SkillsList: React.FC = () => {
           title="Soft Skills (Blandas)"
           icon={BrainCircuit}
           skills={softSkills}
-          onRemoveSkill={handleRemoveSkill}
+          onRemoveSkill={handleInitiateRemove}
           emptyMessage="No hay habilidades blandas registradas."
         />
       </div>
+
+      <ConfirmModal
+        isOpen={skillToDelete !== null}
+        title="Eliminar Habilidad"
+        message={`¿Estás seguro de que deseas eliminar la habilidad "${skillToDelete?.name}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmRemove}
+        onCancel={() => setSkillToDelete(null)}
+        loading={isDeleting}
+        variant="danger"
+        icon={<Trash2 className="h-5 w-5" />}
+      />
     </div>
   );
 };

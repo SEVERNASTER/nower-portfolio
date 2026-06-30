@@ -6,13 +6,13 @@ use App\Models\Portfolio;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PortfolioService
 {
     public const STATUS_UNPUBLISHED = 'unpublished';
     public const STATUS_PENDING_REVIEW = 'pending_review';
     public const STATUS_PUBLISHED = 'published';
-
     public const TEMPLATE_CLASSIC = 'classic';
     public const TEMPLATE_MODERN = 'modern';
     public const TEMPLATE_CREATIVE = 'creative';
@@ -53,6 +53,8 @@ class PortfolioService
     public function publish(User $user, string $templateKey): Portfolio
     {
         try {
+            $this->ensureBasicProfileIsComplete($user);
+
             $portfolio = $this->getPortfolioForUser($user);
             $hasApprovedVersion = !empty($portfolio->approved_content);
 
@@ -189,6 +191,78 @@ class PortfolioService
             'approved_at' => now()->toISOString(),
             'user' => $portfolio->user->toArray(),
         ];
+    }
+
+    private function ensureBasicProfileIsComplete(User $user): void
+    {
+        $missingFields = $this->getMissingBasicProfileFields($user);
+
+        if (!empty($missingFields)) {
+            throw ValidationException::withMessages([
+                'profile' => [
+                    'Completa la información minima requerida antes de enviar el portafolio a revisión.',
+                ],
+                'missing_fields' => $missingFields,
+            ]);
+        }
+    }
+
+    private function getMissingBasicProfileFields(User $user): array
+    {
+        $user->loadMissing([
+            'socialLinks',
+            'projects',
+            'skills',
+            'experiences',
+        ]);
+
+        $missingFields = [];
+
+        if (!trim((string) $user->full_name)) {
+            $missingFields[] = 'Nombre completo';
+        }
+
+        if (!trim((string) $user->profession)) {
+            $missingFields[] = 'Profesión';
+        }
+
+        if (!trim((string) $user->bio)) {
+            $missingFields[] = 'Biografía personal';
+        }
+
+        if (!trim((string) $user->email)) {
+            $missingFields[] = 'Correo electrónico';
+        }
+
+        if (!preg_match('/^[0-9]{8}$/', (string) $user->phone)) {
+            $missingFields[] = 'Teléfono';
+        }
+
+        if (!trim((string) $user->city)) {
+            $missingFields[] = 'Ciudad';
+        }
+
+        if ($user->socialLinks->isEmpty()) {
+            $missingFields[] = 'Red profesional';
+        }
+
+        if ($user->projects->isEmpty()) {
+            $missingFields[] = 'Mínimo 1 proyecto';
+        }
+
+        if ($user->skills->count() < 3) {
+            $missingFields[] = 'Mínimo 3 habilidades';
+        }
+
+        $hasAcademicExperience = $user->experiences
+            ->where('type', 'academic')
+            ->isNotEmpty();
+
+        if (!$hasAcademicExperience) {
+            $missingFields[] = 'Formación académica';
+        }
+
+        return $missingFields;
     }
 
     private function generateUniqueSlug(User $user): string

@@ -30,6 +30,11 @@ interface AchievementFormProps {
   achievementId?: string;
 }
 
+const READABLE_TITLE_PATTERN = /^[\p{L}\p{N}\s.,''\-()/:]*$/u;
+const INVALID_SYMBOL_MESSAGE = 'El símbolo no es aceptado en el sistema';
+
+const hasInvalidTitleChars = (value: string) => !READABLE_TITLE_PATTERN.test(value);
+
 export const AchievementForm: React.FC<AchievementFormProps> = ({
   onSubmit,
   onCancel,
@@ -196,11 +201,33 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
     });
   };
 
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+
+    if (!value.trim()) {
+      setErrors((prev) => ({ ...prev, title: undefined }));
+      return;
+    }
+
+    if (hasInvalidTitleChars(value)) {
+      setErrors((prev) => ({ ...prev, title: INVALID_SYMBOL_MESSAGE }));
+      return;
+    }
+
+    if (value.length > 100) {
+      setErrors((prev) => ({ ...prev, title: 'El título no puede exceder 100 caracteres' }));
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, title: undefined }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: any = {};
 
     if (!title.trim()) newErrors.title = 'El título es obligatorio';
+    else if (hasInvalidTitleChars(title)) newErrors.title = INVALID_SYMBOL_MESSAGE;
     else if (title.length > 100) newErrors.title = 'El título no puede exceder 100 caracteres';
     if (!institution.trim()) newErrors.institution = 'La institución es obligatoria';
     else if (institution.length > 70) newErrors.institution = 'La institución no puede exceder 70 caracteres';
@@ -249,7 +276,13 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
   const previewFile = getPreviewFile();
   const totalFiles = existingFiles.length + selectedFiles.length;
   const hasEvidence = totalFiles > 0;
-  const isSaveDisabled = !title.trim() || !institution.trim() || !obtainedAt || !hasEvidence || isSubmitting;
+  const isSaveDisabled =
+    !title.trim() ||
+    hasInvalidTitleChars(title) ||
+    !institution.trim() ||
+    !obtainedAt ||
+    !hasEvidence ||
+    isSubmitting;
 
   return (
     <form
@@ -271,7 +304,7 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
             type="text"
             value={title}
             maxLength={100}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => handleTitleChange(e.target.value)}
             className={`w-full pl-10 pr-4 py-2.5 rounded-xl border ${errors.title ? "border-red-500" : "border-slate-200 dark:border-slate-700"} bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-colors`}
             placeholder="Ej: Certificación en Desarrollo Web"
           />
