@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PortfolioController extends Controller
 {
@@ -98,6 +99,11 @@ class PortfolioController extends Controller
                 'message' => 'Tu portafolio fue enviado a revisión de los administradores.',
                 'data' => $this->portfolioPayload($portfolio),
             ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Completa la información minima requerida antes de enviar el portafolio a revisión.',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
             Log::error("Error sending portfolio to review: " . $e->getMessage());
 

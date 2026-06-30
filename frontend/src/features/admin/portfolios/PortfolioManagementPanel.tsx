@@ -52,108 +52,108 @@ export const PortfolioManagementPanel: React.FC<PortfolioManagementPanelProps> =
     const [reviewComment, setReviewComment] = useState('');
     const [showConfirmModal, setShowConfirmModal] = useState<ReviewAction | null>(null);
 
-    useEffect(() => {
-        const fetchAdminData = async () => {
-            try {
-                const token = await getToken();
-                if (!token) return;
+    const fetchAdminData = useCallback(async () => {
+        try {
+            const token = await getToken();
+            if (!token) return;
 
-                const response = await fetch(`${API_URL}/admin/users-data`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/json',
-                    },
-                });
+            const response = await fetch(`${API_URL}/admin/users-data`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json',
+                },
+            });
 
-                if (!response.ok) throw new Error('Error al obtener datos');
+            if (!response.ok) throw new Error('Error al obtener datos');
 
-                const data = await response.json();
+            const data = await response.json();
 
-                const adminPortfolios: PortfolioDetail[] = data.map((u: any) => ({
-                    id: `PRT-${u.id}`,
-                    userId: u.id.toString(),
-                    portfolioId: u.portfolio?.id ?? null,
-                    nombre: u.full_name || 'Sin nombre',
-                    rol: u.profession || 'Desconocido',
-                    ciudad: u.city || 'Desconocida',
-                    email: u.email,
-                    telefono: u.phone || 'N/A',
-                    bio: u.bio || '',
-                    proyectos: (u.projects || []).map((p: any) => {
-                        const fallBackLink =
-                            Array.isArray(p.links) && p.links.length > 0
-                                ? p.links[0].url
-                                : '#';
+            const adminPortfolios: PortfolioDetail[] = data.map((u: any) => ({
+                id: `PRT-${u.id}`,
+                userId: u.id.toString(),
+                portfolioId: u.portfolio?.id ?? null,
+                nombre: u.full_name || 'Sin nombre',
+                rol: u.profession || 'Desconocido',
+                ciudad: u.city || 'Desconocida',
+                email: u.email,
+                telefono: u.phone || 'N/A',
+                bio: u.bio || '',
+                proyectos: (u.projects || []).map((p: any) => {
+                    const fallBackLink =
+                        Array.isArray(p.links) && p.links.length > 0
+                            ? p.links[0].url
+                            : '#';
 
-                        return {
-                            id: p.id.toString(),
-                            titulo: p.title || 'Sin título',
-                            descripcion: p.description || '',
-                            tecnologias: parseTags(p.tags),
-                            enlace: ensureValidUrl(p.evidence_url || fallBackLink),
-                            imagenes: Array.isArray(p.images)
-                                ? p.images.map((img: any) => img.url)
-                                : [],
-                            links: p.links || [],
-                        };
-                    }),
-                    experiencia: (u.experiences || []).map((exp: any) => {
-                        const start = formatPeriodDate(exp.start_date);
-                        const end = exp.end_date ? formatPeriodDate(exp.end_date) : 'Presente';
+                    return {
+                        id: p.id.toString(),
+                        titulo: p.title || 'Sin título',
+                        descripcion: p.description || '',
+                        tecnologias: parseTags(p.tags),
+                        enlace: ensureValidUrl(p.evidence_url || fallBackLink),
+                        imagenes: Array.isArray(p.images)
+                            ? p.images.map((img: any) => img.url)
+                            : [],
+                        links: p.links || [],
+                    };
+                }),
+                experiencia: (u.experiences || []).map((exp: any) => {
+                    const start = formatPeriodDate(exp.start_date);
+                    const end = exp.end_date ? formatPeriodDate(exp.end_date) : 'Presente';
 
-                        const rawDesc: string = exp.description || '';
-                        let modalidad: string | undefined;
-                        let ubicacion: string | undefined;
-                        const cleanLines: string[] = [];
+                    const rawDesc: string = exp.description || '';
+                    let modalidad: string | undefined;
+                    let ubicacion: string | undefined;
+                    const cleanLines: string[] = [];
 
-                        rawDesc.split('\n').forEach(line => {
-                            const trimmed = line.trim();
+                    rawDesc.split('\n').forEach(line => {
+                        const trimmed = line.trim();
 
-                            if (trimmed.startsWith('Modalidad:')) {
-                                modalidad = trimmed.replace('Modalidad:', '').trim();
-                            } else if (trimmed.startsWith('Ubicación:')) {
-                                ubicacion = trimmed.replace('Ubicación:', '').trim();
-                            } else if (trimmed.startsWith('Tecnologías:')) {
-                                // skip tech line — it is already shown in skills
-                            } else {
-                                cleanLines.push(trimmed);
-                            }
-                        });
+                        if (trimmed.startsWith('Modalidad:')) {
+                            modalidad = trimmed.replace('Modalidad:', '').trim();
+                        } else if (trimmed.startsWith('Ubicación:')) {
+                            ubicacion = trimmed.replace('Ubicación:', '').trim();
+                        } else if (trimmed.startsWith('Tecnologías:')) {
+                            // skip tech line — it is already shown in skills
+                        } else {
+                            cleanLines.push(trimmed);
+                        }
+                    });
 
-                        const cleanDesc = cleanLines.filter(Boolean).join('\n').trim();
+                    const cleanDesc = cleanLines.filter(Boolean).join('\n').trim();
 
-                        return {
-                            id: exp.id.toString(),
-                            tipo: exp.type === 'academic' ? 'academic' : 'work',
-                            cargo: exp.title || '',
-                            empresa: exp.institution || '',
-                            periodo: start ? `${start} - ${end}` : 'N/A',
-                            modalidad,
-                            ubicacion,
-                            descripcion: cleanDesc || undefined,
-                        };
-                    }),
-                    skills: (u.skills || []).map((s: any) => s.name),
-                    status: getPortfolioStatus(u.portfolio),
-                    imagen_profile: u.imagen_profile,
-                    templateKey: u.portfolio?.template_key || 'classic',
-                    rawUser: u,
-                }));
+                    return {
+                        id: exp.id.toString(),
+                        tipo: exp.type === 'academic' ? 'academic' : 'work',
+                        cargo: exp.title || '',
+                        empresa: exp.institution || '',
+                        periodo: start ? `${start} - ${end}` : 'N/A',
+                        modalidad,
+                        ubicacion,
+                        descripcion: cleanDesc || undefined,
+                    };
+                }),
+                skills: (u.skills || []).map((s: any) => s.name),
+                status: getPortfolioStatus(u.portfolio),
+                imagen_profile: u.imagen_profile,
+                templateKey: u.portfolio?.template_key || 'classic',
+                rawUser: u,
+            }));
 
-                setPortfolios(adminPortfolios);
-            } catch (error) {
-                console.error('Failed to load admin dashboard data:', error);
-            }
-        };
-
-        void fetchAdminData();
+            setPortfolios(adminPortfolios);
+        } catch (error) {
+            console.error('Failed to load admin dashboard data:', error);
+        }
     }, [getToken]);
+
+    useEffect(() => {
+        void fetchAdminData();
+    }, [fetchAdminData]);
 
     const filteredPortfoliosList = useMemo(() => {
         let result = portfolios.filter((portfolio) =>
-            portfolio.status !== 'No publicado' &&
             portfolio.portfolioId !== null &&
-            portfolio.rawUser?.role !== 'admin'
+            portfolio.rawUser?.role !== 'admin' &&
+            ['Pendiente', 'Aprobado', 'Rechazado'].includes(portfolio.status)
         );
 
         if (statusFilter !== 'Todos') {
@@ -169,11 +169,25 @@ export const PortfolioManagementPanel: React.FC<PortfolioManagementPanelProps> =
             );
         }
 
+        const statusPriority: Record<PortfolioStatus, number> = {
+            Pendiente: 1,
+            Aprobado: 2,
+            Rechazado: 3,
+            'No publicado': 4,
+        };
+
         result.sort((a, b) => {
+            const priorityA = statusPriority[a.status];
+            const priorityB = statusPriority[b.status];
+
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+
             const dateA = new Date(a.rawUser?.portfolio?.updated_at || 0).getTime();
             const dateB = new Date(b.rawUser?.portfolio?.updated_at || 0).getTime();
 
-            return dateA - dateB;
+            return dateB - dateA;
         });
 
         return result;
@@ -246,6 +260,8 @@ export const PortfolioManagementPanel: React.FC<PortfolioManagementPanelProps> =
                 )
             );
 
+            await fetchAdminData();
+
             showToast(
                 'success',
                 action === 'approved'
@@ -259,7 +275,7 @@ export const PortfolioManagementPanel: React.FC<PortfolioManagementPanelProps> =
         } finally {
             setReviewLoading(null);
         }
-    }, [selectedPortfolio, reviewComment, getToken, showToast]);
+    }, [selectedPortfolio, reviewComment, getToken, showToast, fetchAdminData]);
 
     return (
         <div className="space-y-6">
