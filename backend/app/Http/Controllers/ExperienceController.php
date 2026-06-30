@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateExperienceRequest;
 use App\Http\Resources\ExperienceResource;
 use App\Models\User;
 use App\Services\ExperienceService;
+use App\Services\PortfolioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,7 @@ class ExperienceController extends Controller
 {
     public function __construct(
         private readonly ExperienceService $experienceService,
+        private readonly PortfolioService $portfolioService,
     ) {}
 
     /**
@@ -40,6 +42,7 @@ class ExperienceController extends Controller
     {
         $user       = $this->resolveUser($request);
         $experience = $this->experienceService->create($user, $request->validated());
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'message' => 'Experiencia creada exitosamente.',
@@ -75,6 +78,7 @@ class ExperienceController extends Controller
     {
         $user       = $this->resolveUser($request);
         $experience = $this->experienceService->update($user, $id, $request->validated());
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'message' => 'Experiencia actualizada exitosamente.',
@@ -91,6 +95,7 @@ class ExperienceController extends Controller
     {
         $user = $this->resolveUser($request);
         $this->experienceService->delete($user, $id);
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'message' => 'Experiencia eliminada exitosamente.',
@@ -115,6 +120,7 @@ class ExperienceController extends Controller
     {
         $user        = $this->resolveUser($request);
         $experience = $this->experienceService->create($user, $request->validated());
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'message' => 'Formación académica registrada correctamente.',
@@ -130,6 +136,7 @@ class ExperienceController extends Controller
         $user = $this->resolveUser($request);
         $data = array_merge($request->validated(), ['type' => 'academic']);
         $experience = $this->experienceService->update($user, $id, $data);
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'message' => 'Formación académica actualizada correctamente.',
@@ -147,6 +154,7 @@ class ExperienceController extends Controller
             ->where('type', 'academic')
             ->findOrFail($id);
         $experience->delete();
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'message' => 'Formación académica eliminada correctamente.',

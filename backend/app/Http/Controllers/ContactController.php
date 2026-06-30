@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Services\PortfolioService;
 
 class ContactController extends Controller
 {
+    public function __construct(
+        private readonly PortfolioService $portfolioService,
+    ) {}
+
     public function updateContact(Request $request)
     {
         try {
@@ -31,6 +36,8 @@ class ContactController extends Controller
                 'phone' => $request->phone,
                 'city' => $request->city,
             ]);
+
+            $this->portfolioService->markAsDirty($user);
 
             return response()->json([
                 'message' => 'Contacto actualizado correctamente',
