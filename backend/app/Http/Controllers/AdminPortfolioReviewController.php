@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Portfolio;
+use App\Services\PortfolioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PortfolioReviewMail;
 
 class AdminPortfolioReviewController extends Controller
 {
+    public function __construct(
+        private readonly PortfolioService $portfolioService,
+    ) {}
+
     public function review(Request $request)
     {
         $request->validate([
@@ -20,28 +25,11 @@ class AdminPortfolioReviewController extends Controller
         $portfolio = Portfolio::with('user')
             ->findOrFail($request->portfolio_id);
 
-        // Guardar revisión
-        $portfolio->review_status = $request->status;
-        $portfolio->review_comment = $request->comment;
-        $portfolio->reviewed_at = now();
-
-        // Si se aprueba → publicar automáticamente
         if ($request->status === 'approved') {
-
-            $portfolio->status = 'published';
-
-            $portfolio->is_public = true;
+            $portfolio = $this->portfolioService->approve($portfolio, $request->comment);
+        } else {
+            $portfolio = $this->portfolioService->reject($portfolio, $request->comment);
         }
-
-        // Si se rechaza → ocultar
-        if ($request->status === 'rejected') {
-
-            $portfolio->status = 'unpublished';
-
-            $portfolio->is_public = false;
-        }
-
-        $portfolio->save();
 
         // Enviar correo automático solo si se aprueba
         if ($request->status === 'approved') {

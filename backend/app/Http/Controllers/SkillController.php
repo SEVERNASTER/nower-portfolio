@@ -6,6 +6,7 @@ use App\Http\Requests\StoreSkillRequest;
 use App\Http\Requests\UpdateSkillRequest;
 use App\Http\Resources\SkillResource;
 use App\Models\User;
+use App\Services\PortfolioService;
 use App\Services\SkillService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class SkillController extends Controller
 {
     public function __construct(
         private readonly SkillService $skillService,
+        private readonly PortfolioService $portfolioService,
     ) {}
 
     /**
@@ -42,6 +44,7 @@ class SkillController extends Controller
     {
         $user  = $this->resolveUser($request);
         $skill = $this->skillService->create($user, $request->validated());
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'message' => 'Habilidad creada exitosamente.',
@@ -58,6 +61,7 @@ class SkillController extends Controller
     {
         $user  = $this->resolveUser($request);
         $skill = $this->skillService->update($user, $id, $request->validated());
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'message' => 'Habilidad actualizada exitosamente.',
@@ -74,6 +78,7 @@ class SkillController extends Controller
     {
         $user = $this->resolveUser($request);
         $this->skillService->delete($user, $id);
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json([
             'message' => 'Habilidad eliminada exitosamente.',

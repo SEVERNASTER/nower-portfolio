@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Services\PortfolioService;
 
 class ProfileController extends Controller
 {
+    public function __construct(
+        private readonly PortfolioService $portfolioService,
+    ) {}
+
     // 🔹 GET /profile
     public function getProfile(Request $request)
     {
@@ -72,6 +77,8 @@ class ProfileController extends Controller
                     'bio' => $request->bio,
                 ]
             );
+
+            $this->portfolioService->markAsDirty($user);
 
             return response()->json([
                 'message' => 'Perfil actualizado correctamente',

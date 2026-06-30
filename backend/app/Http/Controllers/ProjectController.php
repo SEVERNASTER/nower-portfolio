@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Services\CloudinaryService;
+use App\Services\PortfolioService;
 use App\Services\ProjectLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,11 +13,17 @@ class ProjectController extends Controller
 {
     protected $projectLinkService;
     protected $cloudinaryService;
+    protected $portfolioService;
 
-    public function __construct(ProjectLinkService $projectLinkService, CloudinaryService $cloudinaryService)
+    public function __construct(
+        ProjectLinkService $projectLinkService,
+        CloudinaryService $cloudinaryService,
+        PortfolioService $portfolioService
+    )
     {
         $this->projectLinkService = $projectLinkService;
         $this->cloudinaryService = $cloudinaryService;
+        $this->portfolioService = $portfolioService;
     }
 
     /**
@@ -82,6 +89,7 @@ class ProjectController extends Controller
         }
 
         $this->uploadProjectImages($project, $request);
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json($project->load(['links', 'images']), 201);
     }
@@ -150,6 +158,7 @@ class ProjectController extends Controller
         }
 
         $this->uploadProjectImages($project, $request);
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json($project->load(['links', 'images']));
     }
@@ -192,6 +201,7 @@ class ProjectController extends Controller
         }
 
         $project->delete();
+        $this->portfolioService->markAsDirty($user);
 
         return response()->json(['message' => 'Project deleted successfully']);
     }
