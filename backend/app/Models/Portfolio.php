@@ -14,6 +14,8 @@ class Portfolio extends Model
         'user_id',
         'status',
         'is_public',
+        'content_dirty',
+        'approved_content',
 
         'review_status',
         'review_comment',
@@ -25,6 +27,8 @@ class Portfolio extends Model
 
     protected $casts = [
         'is_public' => 'boolean',
+        'content_dirty' => 'boolean',
+        'approved_content' => 'array',
         'reviewed_at' => 'datetime',
     ];
 

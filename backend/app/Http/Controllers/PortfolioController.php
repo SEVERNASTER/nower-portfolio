@@ -135,22 +135,15 @@ class PortfolioController extends Controller
     public function showPublic(string $slug): JsonResponse
     {
         $portfolio = Portfolio::query()
-            ->with([
-                'user.socialLinks',
-                'user.projects.links',
-                'user.projects.images',
-                'user.skills',
-                'user.experiences',
-                'user.achievements.files',
-            ])
             ->where('public_slug', $slug)
-            ->where('status', 'published')
             ->where('is_public', true)
             ->firstOrFail();
 
+        abort_unless($this->portfolioService->hasPublicVersion($portfolio), 404);
+
         return response()->json([
             'portfolio' => $this->portfolioPayload($portfolio),
-            'user' => $portfolio->user,
+            'user' => $this->portfolioService->publicUserPayload($portfolio),
         ]);
     }
 
@@ -166,6 +159,7 @@ class PortfolioController extends Controller
             'template_key' => $portfolio->template_key ?? PortfolioService::TEMPLATE_CLASSIC,
             'public_slug' => $portfolio->public_slug,
             'public_url' => $portfolio->public_slug ? '/p/' . $portfolio->public_slug : null,
+            'content_dirty' => $portfolio->content_dirty,
         ];
     }
 
