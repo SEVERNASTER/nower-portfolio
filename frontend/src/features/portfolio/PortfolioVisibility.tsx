@@ -144,6 +144,15 @@ export const PortfolioVisibility: React.FC = () => {
   const renderStatusBadge = () => {
     if (!status) return null;
 
+    if (status.review_status === 'rejected') {
+      return (
+        <span className="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">
+          <XCircle className="h-4 w-4" />
+          Rechazado
+        </span>
+      );
+    }
+
     if (status.status === 'published' && status.is_public) {
       return (
         <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
@@ -158,15 +167,6 @@ export const PortfolioVisibility: React.FC = () => {
         <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
           <Send className="h-4 w-4" />
           Pendiente de revisión
-        </span>
-      );
-    }
-
-    if (status.review_status === 'rejected') {
-      return (
-        <span className="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">
-          <XCircle className="h-4 w-4" />
-          Rechazado
         </span>
       );
     }
@@ -231,6 +231,12 @@ export const PortfolioVisibility: React.FC = () => {
                 Tu portafolio ya está visible en el panel de inicio junto a los portafolios públicos de los demás usuarios.
               </p>
             </div>
+          </div>
+        )}
+
+        {status?.is_public && status?.content_dirty && (
+          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
+            Tienes cambios nuevos en tu portafolio. La versión pública seguirá mostrando el último contenido aprobado hasta que vuelvas a enviarlos y sean aprobados.
           </div>
         )}
 
@@ -338,13 +344,15 @@ export const PortfolioVisibility: React.FC = () => {
                     disabled={
                     actionLoading ||
                     status?.status === 'pending_review' ||
-                    status?.status === 'published'
+                    (status?.status === 'published' && !status?.content_dirty)
                     }
                     className="w-full justify-center px-10 py-3 text-base font-semibold lg:min-w-[300px]"
                 >
                     {actionLoading 
                         ? 'Enviando...' 
-                        : (status?.review_status === 'rejected' ? 'Volver a solicitar revisión' : 'Publicar portafolio')}
+                        : status?.content_dirty
+                          ? 'Publicar cambios'
+                          : (status?.review_status === 'rejected' ? 'Volver a solicitar revisión' : 'Publicar portafolio')}
                 </Button>
             </div>
         </div>

@@ -12,6 +12,7 @@ export interface PortfolioStatus {
   template_key: PortfolioTemplateKey;
   public_slug?: string | null;
   public_url?: string | null;
+  content_dirty: boolean;
 }
 
 export interface PortfolioPreviewResponse {
