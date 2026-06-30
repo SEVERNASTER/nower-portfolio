@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Plus, ChevronDown, Folder, AlignLeft, Terminal, Link } from "lucide-react";
+import {
+  X,
+  Plus,
+  ChevronDown,
+  Folder,
+  AlignLeft,
+  Terminal,
+  Link,
+} from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Skill, Project } from "../../../data/mockData";
 import { PlatformIcon, PREDEFINED_PLATFORMS } from "./PlatformIcon";
@@ -18,11 +26,17 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   initialData,
 }) => {
   const [title, setTitle] = useState(initialData?.title || "");
-  const [description, setDescription] = useState(initialData?.description || "");
+  const [description, setDescription] = useState(
+    initialData?.description || "",
+  );
   const [techInput, setTechInput] = useState("");
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
-  const [links, setLinks] = useState<{ platform_name: string; url: string }[]>(initialData?.links || []);
-  const [currentPlatform, setCurrentPlatform] = useState(PREDEFINED_PLATFORMS[0]);
+  const [links, setLinks] = useState<{ platform_name: string; url: string }[]>(
+    initialData?.links || [],
+  );
+  const [currentPlatform, setCurrentPlatform] = useState(
+    PREDEFINED_PLATFORMS[0],
+  );
   const [customPlatform, setCustomPlatform] = useState("");
   const [currentUrl, setCurrentUrl] = useState("");
   const [urlError, setUrlError] = useState("");
@@ -31,20 +45,23 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<File[]>([]);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const [existingImages, setExistingImages] = useState<{
-    id: string;
-    url: string;
-    public_id?: string;
-  }[]>(initialData?.images || []);
+  const [existingImages, setExistingImages] = useState<
+    {
+      id: string;
+      url: string;
+      public_id?: string;
+    }[]
+  >(initialData?.images || []);
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
   const [imageAlert, setImageAlert] = useState<{
-    type: 'success' | 'error' | 'info';
+    type: "success" | "error" | "info";
     message: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{
     title?: string;
     description?: string;
+    tags?: string;
   }>({});
 
   // Actualizar estados cuando cambia initialData
@@ -61,7 +78,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -75,8 +95,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     } else {
       setTags([...tags, skillName]);
     }
+    setErrors((prev) => ({ ...prev, tags: undefined }));
   };
-  
+
   const addTag = () => {
     const trimmed = techInput.trim();
     if (trimmed && !tags.includes(trimmed)) {
@@ -97,7 +118,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     const maxSize = 2 * 1024 * 1024; // 2 MB
 
     files.forEach((file) => {
-      if (!['image/png', 'image/jpeg'].includes(file.type)) {
+      if (!["image/png", "image/jpeg"].includes(file.type)) {
         messages.push(`El formato ${file.name} no está permitido.`);
         return;
       }
@@ -118,18 +139,18 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
     if (acceptedFiles.length > 0 && messages.length === 0) {
       setImageAlert({
-        type: 'success',
+        type: "success",
         message: `${acceptedFiles.length} imagen(es) válida(s) agregada(s). Se guardarán al enviar el proyecto.`,
       });
     } else if (acceptedFiles.length > 0 && messages.length > 0) {
       setImageAlert({
-        type: 'info',
-        message: `${acceptedFiles.length} imagen(es) agregada(s). ${messages.join(' ')}`,
+        type: "info",
+        message: `${acceptedFiles.length} imagen(es) agregada(s). ${messages.join(" ")}`,
       });
     } else {
       setImageAlert({
-        type: 'error',
-        message: messages.join(' '),
+        type: "error",
+        message: messages.join(" "),
       });
     }
   };
@@ -138,8 +159,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     setImages((prev) => prev.filter((_, i) => i !== index));
     setPreviewImages((prev) => prev.filter((_, i) => i !== index));
     setImageAlert({
-      type: 'info',
-      message: 'Imagen nueva eliminada antes de guardar.',
+      type: "info",
+      message: "Imagen nueva eliminada antes de guardar.",
     });
   };
 
@@ -152,13 +173,14 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       return prev.filter((_, i) => i !== index);
     });
     setImageAlert({
-      type: 'info',
-      message: 'Imagen existente eliminada. Se eliminará al guardar.',
+      type: "info",
+      message: "Imagen existente eliminada. Se eliminará al guardar.",
     });
   };
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter((t) => t !== tagToRemove));
+    setErrors((prev) => ({ ...prev, tags: undefined }));
   };
 
   const validateUrl = (url: string) => {
@@ -166,13 +188,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       setUrlError("");
       return true;
     }
-    const pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-      '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
-      '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-      '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
-      '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
-      '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
-    
+    const pattern = new RegExp(
+      "^(https?:\\/\\/)?" + // protocol
+        "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
+        "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
+        "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
+        "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
+        "(\\#[-a-z\\d_]*)?$",
+      "i",
+    ); // fragment locator
+
     if (pattern.test(url)) {
       setUrlError("");
       return true;
@@ -180,6 +205,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       setUrlError("Enlace no válido");
       return false;
     }
+  };
+
+  const normalizeUrl = (url: string) => {
+    if (!url.trim()) return "";
+  
+    if (/^https?:\/\//i.test(url)) {
+      return url;
+    }
+  
+    return `https://${url}`;
   };
 
   const handleUrlChange = (val: string) => {
@@ -190,9 +225,13 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
   const addLink = () => {
     if (urlError || !currentUrl.trim()) return;
 
-    const finalPlatform = currentPlatform === "Otros" ? customPlatform.trim() : currentPlatform;
+    const finalPlatform =
+      currentPlatform === "Otros" ? customPlatform.trim() : currentPlatform;
     if (finalPlatform && currentUrl.trim()) {
-      setLinks([...links, { platform_name: finalPlatform, url: currentUrl.trim() }]);
+      setLinks([
+        ...links,
+        { platform_name: finalPlatform, url: currentUrl.trim() },
+      ]);
       setCurrentPlatform(PREDEFINED_PLATFORMS[0]);
       setCustomPlatform("");
       setCurrentUrl("");
@@ -216,9 +255,15 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     }
 
     if (description.length < 20) {
-      newErrors.description = "La descripción debe tener al menos 20 caracteres";
+      newErrors.description =
+        "La descripción debe tener al menos 20 caracteres";
     } else if (description.length > 500) {
-      newErrors.description = "La descripción no puede superar los 500 caracteres";
+      newErrors.description =
+        "La descripción no puede superar los 500 caracteres";
+    }
+
+    if (tags.length === 0) {
+      newErrors.tags = "Debe agregar al menos una habilidad";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -228,11 +273,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 
     setIsSubmitting(true);
     try {
+      const formattedLinks = links.map((link) => ({
+        ...link,
+        url: normalizeUrl(link.url),
+      }));
+      
       await onSubmit({
         title,
         description,
         tags,
-        links,
+        links: formattedLinks,
         images,
         remove_image_ids: removedImageIds,
         evidence_url: "",
@@ -252,7 +302,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Título del Proyecto <span className="text-red-500">*</span>
           </label>
-          <span className={`text-xs font-semibold ${title.length > 90 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+          <span
+            className={`text-xs font-semibold ${title.length > 90 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}
+          >
             {title.length}/100
           </span>
         </div>
@@ -275,7 +327,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
             Descripción <span className="text-red-500">*</span>
           </label>
-          <span className={`text-xs font-semibold ${description.length > 450 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}>
+          <span
+            className={`text-xs font-semibold ${description.length > 450 ? "text-amber-500" : "text-slate-400 dark:text-slate-500"}`}
+          >
             {description.length}/500
           </span>
         </div>
@@ -312,17 +366,18 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               type="button"
               key={skill.id}
               onClick={() => toggleTag(skill.name)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${tags.includes(skill.name)
-                ? "bg-emerald-500 border-emerald-600 text-white shadow-md scale-105"
-                : "bg-white dark:bg-[#17262C] border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-emerald-400"
-                }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                tags.includes(skill.name)
+                  ? "bg-emerald-500 border-emerald-600 text-white shadow-md scale-105"
+                  : "bg-white dark:bg-[#17262C] border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-emerald-400"
+              }`}
             >
               {tags.includes(skill.name) ? "✓ " : "+ "}
               {skill.name}
             </button>
           ))}
         </div>
-
+        {errors.tags && <p className="text-xs text-red-500">{errors.tags}</p>}
         {/* Input opcional por si quieres añadir algo que NO esté en tus skills generales */}
         <div className="flex gap-2 mt-4">
           <div className="relative flex-1">
@@ -389,13 +444,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               className="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-transparent dark:text-white outline-none focus:border-emerald-500 transition-all hover:border-emerald-400"
             >
               <span className="flex items-center gap-2 truncate">
-                <PlatformIcon platform={currentPlatform} className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                <PlatformIcon
+                  platform={currentPlatform}
+                  className="h-4 w-4 text-slate-500 dark:text-slate-400"
+                />
                 <span className="truncate">{currentPlatform}</span>
               </span>
-              <ChevronDown 
+              <ChevronDown
                 className={`h-4 w-4 text-slate-400 transition-transform duration-300 ease-in-out ${
-                  isDropdownOpen ? 'rotate-180' : ''
-                }`} 
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
               />
             </button>
 
@@ -411,12 +469,15 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                         setIsDropdownOpen(false);
                       }}
                       className={`w-full flex items-center gap-2 p-2.5 text-left text-sm transition-colors ${
-                        currentPlatform === plat 
-                          ? "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold" 
+                        currentPlatform === plat
+                          ? "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold"
                           : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
                       }`}
                     >
-                      <PlatformIcon platform={plat} className={`h-4 w-4 ${currentPlatform === plat ? "text-emerald-500" : "text-slate-400"}`} />
+                      <PlatformIcon
+                        platform={plat}
+                        className={`h-4 w-4 ${currentPlatform === plat ? "text-emerald-500" : "text-slate-400"}`}
+                      />
                       {plat}
                     </button>
                   ))}
@@ -450,8 +511,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
                 }}
                 placeholder="https://..."
                 className={`w-full pl-10 pr-4 py-2.5 rounded-xl border bg-transparent dark:text-white outline-none transition-colors ${
-                  urlError 
-                    ? "border-red-500 focus:border-red-600" 
+                  urlError
+                    ? "border-red-500 focus:border-red-600"
                     : "border-slate-200 dark:border-slate-700 focus:border-emerald-500"
                 }`}
               />
@@ -463,7 +524,12 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             )}
           </div>
 
-          <Button type="button" onClick={addLink} variant="secondary" className="px-4">
+          <Button
+            type="button"
+            onClick={addLink}
+            variant="secondary"
+            className="px-4"
+          >
             Añadir
           </Button>
         </div>
@@ -481,11 +547,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           {imageAlert && (
             <div
               className={`mb-4 rounded-2xl border px-4 py-3 text-sm ${
-                imageAlert.type === 'success'
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-200'
-                  : imageAlert.type === 'error'
-                    ? 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200'
+                imageAlert.type === "success"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-200"
+                  : imageAlert.type === "error"
+                    ? "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200"
+                    : "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200"
               }`}
             >
               {imageAlert.message}
@@ -556,13 +622,18 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             </p>
             <div className="flex flex-row flex-wrap gap-3">
               {links.map((link, index) => {
-                const isCustom = !PREDEFINED_PLATFORMS.includes(link.platform_name);
+                const isCustom = !PREDEFINED_PLATFORMS.includes(
+                  link.platform_name,
+                );
                 return (
                   <div
                     key={index}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-[#10221C] border border-slate-200 dark:border-slate-700/50 shadow-sm group"
                   >
-                    <PlatformIcon platform={link.platform_name} className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+                    <PlatformIcon
+                      platform={link.platform_name}
+                      className="h-5 w-5 text-slate-600 dark:text-slate-300"
+                    />
                     {isCustom && (
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         {link.platform_name}
@@ -584,11 +655,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
           Cancelar
         </Button>
         <Button type="submit" variant="primary" disabled={isSubmitting}>
-          {isSubmitting ? 'Guardando...' : 'Guardar Proyecto'}
+          {isSubmitting ? "Guardando..." : "Guardar Proyecto"}
         </Button>
       </div>
     </form>
