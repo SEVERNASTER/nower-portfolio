@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Cloudinary\Cloudinary;
+use Cloudinary\Api\Exception\AuthorizationRequired;
 use Illuminate\Http\UploadedFile;
 
 class CloudinaryService
@@ -11,14 +12,20 @@ class CloudinaryService
 
     public function __construct()
     {
-        $cloudName = config('cloudinary.cloud_name');
-        $apiKey = config('cloudinary.api_key');
-        $apiSecret = config('cloudinary.api_secret');
+        $cloudName = trim((string) config('cloudinary.cloud_name'));
+        $apiKey = preg_replace('/\s+/', '', (string) config('cloudinary.api_key'));
+        $apiSecret = trim((string) config('cloudinary.api_secret'));
 
         if (!$cloudName || !$apiKey || !$apiSecret) {
             throw new \Exception(
                 'Credenciales de Cloudinary no configuradas. ' .
                 'Asegúrate de definir CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET en tu .env'
+            );
+        }
+
+        if (!preg_match('/^\d+$/', $apiKey)) {
+            throw new \Exception(
+                'CLOUDINARY_API_KEY tiene un formato inválido. Solo debe contener números.'
             );
         }
 
@@ -71,7 +78,18 @@ class CloudinaryService
             $uploadOptions['upload_preset'] = $uploadPreset;
         }
 
-        $result = $this->cloudinary->uploadApi()->upload($realPath, $uploadOptions);
+        try {
+            $result = $this->cloudinary->uploadApi()->upload($realPath, $uploadOptions);
+        } catch (AuthorizationRequired $e) {
+            $maskedKey = $this->maskApiKey((string) config('cloudinary.api_key'));
+
+            throw new \Exception(
+                "Cloudinary rechazó las credenciales (API key cargada: {$maskedKey}). " .
+                'Verifica CLOUDINARY_CLOUD_NAME/CLOUDINARY_API_KEY/CLOUDINARY_API_SECRET y limpia caché con: php artisan optimize:clear',
+                0,
+                $e
+            );
+        }
 
         if (empty($result['secure_url'])) {
             throw new \Exception('Cloudinary no devolvió una URL segura.');
@@ -86,10 +104,47 @@ class CloudinaryService
 
     public function delete(string $publicId): bool
     {
-        $result = $this->cloudinary->uploadApi()->destroy($publicId, [
-            'resource_type' => 'auto',
-        ]);
+        try {
+            $result = $this->cloudinary->uploadApi()->destroy($publicId, [
+                'resource_type' => 'auto',
+            ]);
+        } catch (AuthorizationRequired $e) {
+            throw new \Exception(
+                'Cloudinary rechazó credenciales al eliminar recursos. Revisa CLOUDINARY_* y ejecuta php artisan optimize:clear',
+                0,
+                $e
+            );
+        }
 
         return isset($result['result']) && $result['result'] === 'ok';
+    }
+
+    /**
+     * Verifica credenciales con un ping a Admin API.
+     *
+     * @return mixed
+     */
+    public function ping(): mixed
+    {
+        try {
+            return $this->cloudinary->adminApi()->ping();
+        } catch (AuthorizationRequired $e) {
+            throw new \Exception(
+                'Cloudinary ping falló por credenciales inválidas. Revisa CLOUDINARY_* y limpia caché con php artisan optimize:clear',
+                0,
+                $e
+            );
+        }
+    }
+
+    private function maskApiKey(string $apiKey): string
+    {
+        $clean = preg_replace('/\s+/', '', trim($apiKey));
+
+        if (strlen($clean) <= 4) {
+            return '****';
+        }
+
+        return str_repeat('*', max(strlen($clean) - 4, 4)) . substr($clean, -4);
     }
 }
